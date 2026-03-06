@@ -1,14 +1,9 @@
 import { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  ActivityIndicator,
-  Alert,
+  View, Text, Modal, Pressable, ActivityIndicator, Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { supabase } from "@/integrations/supabase/client";
+import { apiRequest } from "@/integrations/api/client";
 
 interface LanguageDialogProps {
   open: boolean;
@@ -29,30 +24,18 @@ const languages = [
   { value: "pa", label: "ਪੰਜਾਬੀ (Punjabi)" },
 ];
 
-export const LanguageDialog = ({
-  open,
-  onOpenChange,
-  userId,
-}: LanguageDialogProps) => {
+export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState("en");
 
   useEffect(() => {
-    if (open && userId) {
-      loadLanguage();
-    }
+    if (open && userId) loadLanguage();
   }, [open, userId]);
 
   const loadLanguage = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("language")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data?.language) setLanguage(data.language);
+      const data = await apiRequest("/auth/profile");
+      if (data.user?.language) setLanguage(data.user.language);
     } catch {
       Alert.alert("Error", "Error loading language preference");
     }
@@ -61,13 +44,7 @@ export const LanguageDialog = ({
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: userId,
-        language,
-      });
-
-      if (error) throw error;
-
+      await apiRequest("/auth/profile", "PUT", { language });
       Alert.alert("Success", "Language preference updated");
       onOpenChange(false);
     } catch (error: any) {
@@ -81,21 +58,13 @@ export const LanguageDialog = ({
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 bg-black/50 items-center justify-center">
         <View className="bg-card w-[90%] rounded-2xl p-4">
-          <Text className="text-xl font-bold mb-4">Language Preferences</Text>
-
-          <Text className="mb-2 font-medium">Preferred Language</Text>
+          <Text className="text-xl font-bold mb-4 text-foreground">Language Preferences</Text>
+          <Text className="mb-2 font-medium text-foreground">Preferred Language</Text>
 
           <View className="border border-border rounded-lg mb-3">
-            <Picker
-              selectedValue={language}
-              onValueChange={(itemValue) => setLanguage(itemValue)}
-            >
+            <Picker selectedValue={language} onValueChange={(v) => setLanguage(v)}>
               {languages.map((lang) => (
-                <Picker.Item
-                  key={lang.value}
-                  label={lang.label}
-                  value={lang.value}
-                />
+                <Picker.Item key={lang.value} label={lang.label} value={lang.value} />
               ))}
             </Picker>
           </View>
@@ -105,23 +74,11 @@ export const LanguageDialog = ({
           </Text>
 
           <View className="flex-row justify-end gap-3">
-            <Pressable
-              onPress={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg border border-border"
-            >
+            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-border">
               <Text className="text-foreground">Cancel</Text>
             </Pressable>
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading}
-              className="px-4 py-2 rounded-lg bg-primary"
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white">Save</Text>
-              )}
+            <Pressable onPress={handleSubmit} disabled={loading} className="px-4 py-2 rounded-lg bg-primary">
+              {loading ? <ActivityIndicator color="white" /> : <Text className="text-white">Save</Text>}
             </Pressable>
           </View>
         </View>
@@ -129,4 +86,3 @@ export const LanguageDialog = ({
     </Modal>
   );
 };
-

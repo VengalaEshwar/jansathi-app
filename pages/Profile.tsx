@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
+
 import {
   User,
   Globe,
@@ -17,9 +18,9 @@ import {
   HelpCircle,
   LogOut,
 } from "lucide-react-native";
-
+import { signOut } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/integrations/firebase/client";
 
 import { PersonalInfoDialog } from "@/components/profile/PersonalInfoDialog";
 import { LanguageDialog } from "@/components/profile/LanguageDialog";
@@ -27,45 +28,36 @@ import { NotificationsDialog } from "@/components/profile/NotificationsDialog";
 import { AccessibilityDialog } from "@/components/profile/AccessibilityDialog";
 import { HelpSupportDialog } from "@/components/profile/HelpSupportDialog";
 import { ProfileChatbot } from "@/components/profile/ProfileChatbot";
-
+import { apiRequest } from "@/integrations/api/client";
 export default function Profile() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
 
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [helpSupportOpen, setHelpSupportOpen] = useState(false);
+
   useEffect(() => {
+    testBackend();
     if (!loading && !user) {
       router.replace("/auth");
-    } else if (user) {
-      loadProfile();
     }
   }, [user, loading]);
 
-  const loadProfile = async () => {
-    if (!user) return;
+    const testBackend = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(data);
+      const data = await apiRequest("/auth/profile");
+      console.log("Backend response:", data);
     } catch (e) {
-      console.log("Profile load error:", e);
+      console.log("Backend error:", e);
     }
-  };
+};
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      Alert.alert("Signed out", "You have been logged out successfully");
+      await signOut(auth);
       router.replace("/auth");
     } catch {
       Alert.alert("Error", "Failed to sign out");
@@ -122,6 +114,10 @@ export default function Profile() {
     },
   ];
 
+  // Parse name from Firebase displayName
+  const displayName = user.displayName ?? "Welcome Back!";
+  // const displayName = JSON.stringify(user) ?? "Welcome Back!";
+
   return (
     <View className="flex-1 bg-background">
       <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -131,7 +127,7 @@ export default function Profile() {
             <View className="w-12 h-12 rounded-xl bg-primary items-center justify-center">
               <User size={22} color="white" />
             </View>
-            <Text className="text-2xl font-bold">Your Profile</Text>
+            <Text className="text-2xl font-bold text-foreground">Your Profile</Text>
           </View>
           <Text className="text-muted mt-2">
             Manage your account and preferences
@@ -146,9 +142,7 @@ export default function Profile() {
             </View>
             <View className="flex-1">
               <Text className="text-white text-xl font-bold">
-                {profile?.first_name
-                  ? `${profile.first_name} ${profile.last_name}`
-                  : "Welcome Back!"}
+                {displayName}
               </Text>
               <Text className="text-white/80">{user.email}</Text>
             </View>
@@ -184,7 +178,7 @@ export default function Profile() {
                 <s.icon size={18} color="white" />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold">{s.title}</Text>
+                <Text className="font-semibold text-foreground">{s.title}</Text>
                 <Text className="text-muted text-sm">{s.desc}</Text>
               </View>
             </View>
@@ -205,33 +199,32 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      {/* Dialogs */}
+      {/* Dialogs - pass firebase uid */}
       <PersonalInfoDialog
         open={personalInfoOpen}
         onOpenChange={setPersonalInfoOpen}
-        userId={user.id}
+        userId={user.uid}
       />
       <LanguageDialog
         open={languageOpen}
         onOpenChange={setLanguageOpen}
-        userId={user.id}
+        userId={user.uid}
       />
       <NotificationsDialog
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
-        userId={user.id}
+        userId={user.uid}
       />
       <AccessibilityDialog
         open={accessibilityOpen}
         onOpenChange={setAccessibilityOpen}
-        userId={user.id}
+        userId={user.uid}
       />
       <HelpSupportDialog
         open={helpSupportOpen}
         onOpenChange={setHelpSupportOpen}
       />
 
-      {/* Chatbot */}
       <ProfileChatbot />
     </View>
   );

@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  Switch,
-  ActivityIndicator,
-  Alert,
+  View, Text, Modal, Pressable, Switch, ActivityIndicator, Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { supabase } from "@/integrations/supabase/client";
+import { apiRequest } from "@/integrations/api/client";
 
 interface AccessibilityDialogProps {
   open: boolean;
@@ -17,11 +11,7 @@ interface AccessibilityDialogProps {
   userId: string;
 }
 
-export const AccessibilityDialog = ({
-  open,
-  onOpenChange,
-  userId,
-}: AccessibilityDialogProps) => {
+export const AccessibilityDialog = ({ open, onOpenChange, userId }: AccessibilityDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     text_size: "medium",
@@ -31,21 +21,20 @@ export const AccessibilityDialog = ({
   });
 
   useEffect(() => {
-    if (open && userId) {
-      loadSettings();
-    }
+    if (open && userId) loadSettings();
   }, [open, userId]);
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("text_size, high_contrast, screen_reader, voice_navigation")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) setSettings(data);
+      const data = await apiRequest("/auth/profile");
+      if (data.user?.accessibility) {
+        setSettings({
+          text_size: data.user.accessibility.textSize || "medium",
+          high_contrast: data.user.accessibility.highContrast || false,
+          screen_reader: data.user.accessibility.screenReader || false,
+          voice_navigation: data.user.accessibility.voiceNavigation ?? true,
+        });
+      }
     } catch {
       Alert.alert("Error", "Error loading accessibility settings");
     }
@@ -54,13 +43,14 @@ export const AccessibilityDialog = ({
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: userId,
-        ...settings,
+      await apiRequest("/auth/profile", "PUT", {
+        accessibility: {
+          textSize: settings.text_size,
+          highContrast: settings.high_contrast,
+          screenReader: settings.screen_reader,
+          voiceNavigation: settings.voice_navigation,
+        },
       });
-
-      if (error) throw error;
-
       Alert.alert("Success", "Accessibility settings updated");
       onOpenChange(false);
     } catch (error: any) {
@@ -73,20 +63,15 @@ export const AccessibilityDialog = ({
   return (
     <Modal visible={open} transparent animationType="fade">
       <View className="flex-1 bg-black/50 items-center justify-center">
-        <View className="bg-white w-[90%] rounded-xl p-4">
-          <Text className="text-xl font-bold mb-4">
-            Accessibility Settings
-          </Text>
+        <View className="bg-card w-[90%] rounded-xl p-4">
+          <Text className="text-xl font-bold mb-4 text-foreground">Accessibility Settings</Text>
 
-          {/* Text Size */}
           <View className="mb-4">
-            <Text className="mb-1 font-medium">Text Size</Text>
-            <View className="border rounded-lg">
+            <Text className="mb-1 font-medium text-foreground">Text Size</Text>
+            <View className="border border-border rounded-lg">
               <Picker
                 selectedValue={settings.text_size}
-                onValueChange={(value) =>
-                  setSettings({ ...settings, text_size: value })
-                }
+                onValueChange={(value) => setSettings({ ...settings, text_size: value })}
               >
                 <Picker.Item label="Small" value="small" />
                 <Picker.Item label="Medium" value="medium" />
@@ -96,58 +81,36 @@ export const AccessibilityDialog = ({
             </View>
           </View>
 
-          {/* High Contrast */}
           <View className="flex-row items-center justify-between mb-3">
-            <Text>High Contrast Mode</Text>
+            <Text className="text-foreground">High Contrast Mode</Text>
             <Switch
               value={settings.high_contrast}
-              onValueChange={(checked) =>
-                setSettings({ ...settings, high_contrast: checked })
-              }
+              onValueChange={(v) => setSettings({ ...settings, high_contrast: v })}
             />
           </View>
 
-          {/* Screen Reader */}
           <View className="flex-row items-center justify-between mb-3">
-            <Text>Screen Reader Support</Text>
+            <Text className="text-foreground">Screen Reader Support</Text>
             <Switch
               value={settings.screen_reader}
-              onValueChange={(checked) =>
-                setSettings({ ...settings, screen_reader: checked })
-              }
+              onValueChange={(v) => setSettings({ ...settings, screen_reader: v })}
             />
           </View>
 
-          {/* Voice Navigation */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text>Voice Navigation</Text>
+            <Text className="text-foreground">Voice Navigation</Text>
             <Switch
               value={settings.voice_navigation}
-              onValueChange={(checked) =>
-                setSettings({ ...settings, voice_navigation: checked })
-              }
+              onValueChange={(v) => setSettings({ ...settings, voice_navigation: v })}
             />
           </View>
 
-          {/* Buttons */}
           <View className="flex-row justify-end gap-3">
-            <Pressable
-              onPress={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg border border-gray-300"
-            >
-              <Text>Cancel</Text>
+            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-border">
+              <Text className="text-foreground">Cancel</Text>
             </Pressable>
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading}
-              className="px-4 py-2 rounded-lg bg-black"
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white">Save</Text>
-              )}
+            <Pressable onPress={handleSubmit} disabled={loading} className="px-4 py-2 rounded-lg bg-primary">
+              {loading ? <ActivityIndicator color="white" /> : <Text className="text-white">Save</Text>}
             </Pressable>
           </View>
         </View>
