@@ -8,6 +8,10 @@
     "scheme": "jansathiapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+     "extra": {
+      "SUPABASE_URL": "https://ofgwgfxswtltzteprwvo.supabase.co",
+      "SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mZ3dnZnhzd3RsdHp0ZXByd3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTY2OTAsImV4cCI6MjA3NDczMjY5MH0.EEH9cOYQyGgmiJv7kqR592rT9OxLY4OnSguloStlo_o"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -22,6 +26,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
