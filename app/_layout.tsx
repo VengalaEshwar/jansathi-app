@@ -12,9 +12,13 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <View className="flex-1">
-          <Stack screenOptions={{ headerShown: false }} />
+          <View className="w-full h-full">
+            <Stack screenOptions={{ headerShown: false }} />
+          </View>
+          
           <NavBar />
           <GlobalChatbot />
+          
         </View>
       </SafeAreaProvider>
     </QueryClientProvider>

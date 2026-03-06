@@ -3,7 +3,9 @@ import { Heart, Target, Users, Mail, Globe } from "lucide-react-native";
 
 export default function AboutUs() {
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1 bg-background"
+    contentContainerStyle={{ paddingBottom : 40}}
+    >
       <View className="p-4 pb-16">
 
         {/* Header */}

@@ -119,8 +119,8 @@ export default function Profile() {
   // const displayName = JSON.stringify(user) ?? "Welcome Back!";
 
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+    <View className="flex-1 bg-background ">
+      <ScrollView contentContainerStyle={{ padding: 16 ,paddingBottom : 100}}>
         {/* Header */}
         <View className="mb-6">
           <View className="flex-row items-center gap-3">
@@ -173,8 +173,8 @@ export default function Profile() {
             onPress={s.action}
             className="p-4 mb-3 rounded-xl bg-card border border-border"
           >
-            <View className="flex-row gap-3">
-              <View className="w-10 h-10 rounded-lg bg-primary items-center justify-center">
+            <View className="flex-row gap-3 justify-center items-center">
+              <View className=" rounded-lg bg-primary items-center justify-center p-4">
                 <s.icon size={18} color="white" />
               </View>
               <View className="flex-1">
@@ -186,11 +186,11 @@ export default function Profile() {
         ))}
 
         {/* Stats */}
-        <View className="flex-row gap-3 mt-6">
+        <View className="flex-row gap-3 mt-6 p-10" >
           {["Scans", "Forms", "Schemes"].map((label, i) => (
             <View
               key={i}
-              className="flex-1 bg-secondary p-3 rounded-xl items-center"
+              className="flex-1 bg-secondary p-3 rounded-xl items-center pb-"
             >
               <Text className="text-primary text-xl font-bold">0</Text>
               <Text className="text-muted text-sm">{label}</Text>
