@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Send, X } from "lucide-react-native";
+import { apiRequest } from "@/integrations/api/client";
 
 export const ProfileChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,24 +27,20 @@ export const ProfileChatbot = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const sendMessage = async () => {
+    const sendMessage = async () => {
     if (!input.trim() || loading) return;
-
+  
     const userMessage = input;
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setLoading(true);
-
+  
     try {
-      const { data, error } = await supabase.functions.invoke("voice-chat", {
-        body: {
-          message: userMessage,
-          conversationHistory: messages,
-        },
+      const data = await apiRequest("/chat", "POST", {
+        message: userMessage,
+        conversationHistory: messages,
       });
-
-      if (error) throw error;
-
+  
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.reply },
