@@ -31,23 +31,30 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
-      "expo-web-browser"
-    ],
+  "expo-router",
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/images/splash-icon.png",
+      "imageWidth": 200,
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff",
+      "dark": {
+        "backgroundColor": "#000000"
+      }
+    }
+  ],
+  "@react-native-firebase/app",
+  "@react-native-firebase/auth",
+  "expo-web-browser",
+  [
+    "expo-speech-recognition",
+    {
+      "microphonePermission": "Allow JanSathi to use the microphone for voice chat.",
+      "speechRecognitionPermission": "Allow JanSathi to recognize your speech."
+    }
+  ]
+],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

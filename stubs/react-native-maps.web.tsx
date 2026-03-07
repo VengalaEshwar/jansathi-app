@@ -1,0 +1,5 @@
+export default function MapView({ children, style }: any) {
+  return null;
+}
+export function Marker() { return null; }
+export const PROVIDER_GOOGLE = "google";

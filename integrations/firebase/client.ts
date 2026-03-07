@@ -13,4 +13,21 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const auth = getAuth(app);
+let auth: any;
+
+try {
+  if (Platform.OS !== "web") {
+    const { initializeAuth, getReactNativePersistence } = require("firebase/auth");
+    const ReactNativeAsyncStorage = require("@react-native-async-storage/async-storage").default;
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    });
+  } else {
+    auth = getAuth(app);
+  }
+} catch (e) {
+  // Already initialized — just get the existing instance
+  auth = getAuth(app);
+}
+
+export { auth };

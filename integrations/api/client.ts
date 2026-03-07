@@ -1,8 +1,13 @@
 import { auth } from "@/integrations/firebase/client";
 
-// const BASE_URL = "http://10.0.2.2:5000/api"; // Android emulator
-export const BASE_URL = "http://localhost:5000/api"; // iOS simulator or web
+import { Platform } from "react-native";
 
+const getBaseUrl = () => {
+  if (Platform.OS === "web") return "http://localhost:5000/api";
+  return "http://10.100.67.143:5000/api"; // your PC's IP for mobile
+};
+
+export const BASE_URL = getBaseUrl();
 export const apiRequest = async (
   endpoint: string,
   method: string = "GET",
