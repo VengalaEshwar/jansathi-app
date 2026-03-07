@@ -40,7 +40,7 @@ export default function Profile() {
   const [helpSupportOpen, setHelpSupportOpen] = useState(false);
 
   useEffect(() => {
-    testBackend();
+    // testBackend();
     if (!loading && !user) {
       router.replace("/auth");
     }

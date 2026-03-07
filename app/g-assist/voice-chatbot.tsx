@@ -7,13 +7,22 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Mic, MicOff, Volume2 } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Mic,
+  MicOff,
+  Volume2,
+  Send,
+  VolumeX,
+} from "lucide-react-native";
 import * as Speech from "expo-speech";
 import { apiRequest } from "@/integrations/api/client";
 
-// Only import on native after build
+// Native speech recognition
 let ExpoSpeechRecognitionModule: any;
 let useSpeechRecognitionEvent: any;
 
@@ -27,10 +36,24 @@ if (Platform.OS !== "web") {
   }
 }
 
-// Fallback no-op hook for web/Expo Go
 if (!useSpeechRecognitionEvent) {
   useSpeechRecognitionEvent = (_event: string, _cb: any) => {};
 }
+
+const isNativeVoiceAvailable =
+  !!ExpoSpeechRecognitionModule && Platform.OS !== "web";
+
+// Check web speech API availability
+const isWebVoiceAvailable = () => {
+  if (Platform.OS !== "web") return false;
+  return (
+    typeof window !== "undefined" &&
+    !!(
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition
+    )
+  );
+};
 
 interface Message {
   role: "user" | "assistant";
@@ -41,6 +64,7 @@ interface Message {
 export default function VoiceChatbot() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const webRecognitionRef = useRef<any>(null);
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -54,21 +78,23 @@ export default function VoiceChatbot() {
   const [isThinking, setIsThinking] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [textInput, setTextInput] = useState("");
   const [language, setLanguage] = useState<"en" | "hi">("en");
   const [hasPermission, setHasPermission] = useState(false);
+  const [webVoiceSupported] = useState(isWebVoiceAvailable);
 
-  // Speech recognition events
+  const voiceAvailable = isNativeVoiceAvailable || webVoiceSupported;
+
+  // Native speech recognition events
   useSpeechRecognitionEvent("start", () => setIsListening(true));
   useSpeechRecognitionEvent("end", () => setIsListening(false));
-
   useSpeechRecognitionEvent("result", (event: any) => {
     const text = event.results[0]?.transcript || "";
     setTranscript(text);
     if (event.isFinal && text.trim()) {
-      handleVoiceInput(text.trim());
+      handleInput(text.trim());
     }
   });
-
   useSpeechRecognitionEvent("error", (event: any) => {
     console.log("Speech error:", event.error);
     setIsListening(false);
@@ -78,22 +104,27 @@ export default function VoiceChatbot() {
   });
 
   useEffect(() => {
-    if (Platform.OS !== "web" && ExpoSpeechRecognitionModule) {
-      requestPermission();
+    if (isNativeVoiceAvailable) {
+      requestNativePermission();
+    } else {
+      // On web or Expo Go, no permission needed
+      setHasPermission(true);
     }
     return () => {
-      if (Platform.OS !== "web" && ExpoSpeechRecognitionModule) {
-        ExpoSpeechRecognitionModule.abort();
-      }
+      if (isNativeVoiceAvailable) ExpoSpeechRecognitionModule.abort();
+      if (webRecognitionRef.current) webRecognitionRef.current.abort();
       Speech.stop();
     };
   }, []);
 
   useEffect(() => {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    setTimeout(
+      () => scrollRef.current?.scrollToEnd({ animated: true }),
+      100
+    );
   }, [messages]);
 
-  const requestPermission = async () => {
+  const requestNativePermission = async () => {
     if (!ExpoSpeechRecognitionModule) return;
     try {
       const result =
@@ -104,8 +135,7 @@ export default function VoiceChatbot() {
       } else {
         Alert.alert(
           "Microphone Permission",
-          "Please allow microphone access to use voice chat.",
-          [{ text: "OK" }]
+          "Please allow microphone access to use voice chat."
         );
       }
     } catch (e) {
@@ -113,32 +143,98 @@ export default function VoiceChatbot() {
     }
   };
 
-  const startListening = async () => {
-    if (isSpeaking || isThinking || !ExpoSpeechRecognitionModule) return;
-    try {
-      await ExpoSpeechRecognitionModule.start({
-        lang: language === "hi" ? "hi-IN" : "en-IN",
-        interimResults: true,
-        continuous: false,
-      });
-    } catch (e) {
-      console.log("Start listening error:", e);
-    }
+  // ─── Web Speech API ───────────────────────────────────────────
+  const startWebListening = () => {
+    if (!webVoiceSupported) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === "hi" ? "hi-IN" : "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => {
+      setIsListening(false);
+      setTranscript("");
+    };
+    recognition.onresult = (event: any) => {
+      const result = event.results[event.results.length - 1];
+      const text = result[0].transcript;
+      setTranscript(text);
+      if (result.isFinal && text.trim()) {
+        handleInput(text.trim());
+      }
+    };
+    recognition.onerror = (event: any) => {
+      console.log("Web speech error:", event.error);
+      setIsListening(false);
+      setTranscript("");
+    };
+
+    webRecognitionRef.current = recognition;
+    recognition.start();
   };
 
-  const stopListening = () => {
-    if (!ExpoSpeechRecognitionModule) return;
-    ExpoSpeechRecognitionModule.stop();
+  const stopWebListening = () => {
+    if (webRecognitionRef.current) {
+      webRecognitionRef.current.stop();
+      webRecognitionRef.current = null;
+    }
     setIsListening(false);
     setTranscript("");
   };
 
-  const handleVoiceInput = async (text: string) => {
-    stopListening();
+  // ─── Unified controls ─────────────────────────────────────────
+  const startListening = () => {
+    if (isSpeaking || isThinking) return;
+    if (Platform.OS === "web") {
+      startWebListening();
+    } else if (isNativeVoiceAvailable) {
+      ExpoSpeechRecognitionModule.start({
+        lang: language === "hi" ? "hi-IN" : "en-IN",
+        interimResults: true,
+        continuous: false,
+      }).catch((e: any) => console.log("Start error:", e));
+    }
+  };
+
+  const stopListening = () => {
+    if (Platform.OS === "web") {
+      stopWebListening();
+    } else if (isNativeVoiceAvailable) {
+      ExpoSpeechRecognitionModule.stop();
+      setIsListening(false);
+      setTranscript("");
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) stopListening();
+    else startListening();
+  };
+
+  const toggleLanguage = () => {
+    const newLang = language === "en" ? "hi" : "en";
+    setLanguage(newLang);
+    if (isListening) {
+      stopListening();
+      setTimeout(() => startListening(), 300);
+    }
+  };
+
+  // ─── Handle message input ─────────────────────────────────────
+  const handleInput = async (text: string) => {
+    if (!text.trim()) return;
+    if (isListening) stopListening();
     setTranscript("");
+    setTextInput("");
 
     const isHindi = /[\u0900-\u097F]/.test(text);
-    const detectedLang = isHindi ? "hi" : "en";
+    const detectedLang = isHindi ? "hi" : language;
 
     const userMessage: Message = {
       role: "user",
@@ -171,13 +267,28 @@ export default function VoiceChatbot() {
       speakResponse(data.reply, detectedLang);
     } catch (e: any) {
       Alert.alert("Error", e.message || "Failed to get response");
-      setTimeout(() => startListening(), 500);
     } finally {
       setIsThinking(false);
     }
   };
 
   const speakResponse = (text: string, lang: "en" | "hi") => {
+    // Web TTS using browser API
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang === "hi" ? "hi-IN" : "en-IN";
+        utterance.rate = 0.9;
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+      }
+      return;
+    }
+
+    // Native TTS
     setIsSpeaking(true);
     Speech.speak(text, {
       language: lang === "hi" ? "hi-IN" : "en-IN",
@@ -185,40 +296,30 @@ export default function VoiceChatbot() {
       rate: 0.9,
       onDone: () => {
         setIsSpeaking(false);
-        setTimeout(() => startListening(), 500);
+        if (isNativeVoiceAvailable) setTimeout(() => startListening(), 500);
       },
       onStopped: () => setIsSpeaking(false),
-      onError: () => {
-        setIsSpeaking(false);
-        setTimeout(() => startListening(), 500);
-      },
+      onError: () => setIsSpeaking(false),
     });
   };
 
-  const toggleListening = () => {
-    if (isListening) {
-      stopListening();
+  const stopSpeaking = () => {
+    if (Platform.OS === "web") {
+      window.speechSynthesis?.cancel();
     } else {
-      startListening();
+      Speech.stop();
     }
+    setIsSpeaking(false);
   };
 
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "hi" : "en";
-    setLanguage(newLang);
-    if (isListening) {
-      stopListening();
-      setTimeout(() => startListening(), 300);
-    }
-  };
-
+  // ─── UI helpers ───────────────────────────────────────────────
   const getStatusText = () => {
-    if (Platform.OS === "web") return "Voice chat available on mobile only";
-    if (!ExpoSpeechRecognitionModule) return "Rebuild app to enable voice";
     if (isThinking) return "Thinking...";
     if (isSpeaking) return "Speaking...";
     if (isListening) return transcript || "Listening...";
-    return "Tap mic to start";
+    if (!voiceAvailable) return "Type your message below";
+    if (Platform.OS === "web") return "Click mic to speak";
+    return "Tap mic to speak";
   };
 
   const getStatusColor = () => {
@@ -229,7 +330,10 @@ export default function VoiceChatbot() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <KeyboardAvoidingView
+      className="flex-1 bg-background"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
         <Pressable
@@ -241,10 +345,9 @@ export default function VoiceChatbot() {
         </Pressable>
 
         <Text className="text-foreground font-bold text-lg">
-          Voice Assistant
+          AI Assistant
         </Text>
 
-        {/* Language Toggle */}
         <Pressable
           onPress={toggleLanguage}
           className="px-3 py-1 rounded-full bg-primary"
@@ -259,7 +362,7 @@ export default function VoiceChatbot() {
       <ScrollView
         ref={scrollRef}
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingVertical: 12 }}
+        contentContainerStyle={{ paddingVertical: 12, paddingBottom: 20 }}
       >
         {messages.map((msg, i) => (
           <View
@@ -308,51 +411,83 @@ export default function VoiceChatbot() {
         )}
       </ScrollView>
 
-      {/* Voice Control */}
-      <View className="px-4 pb-8 pt-4 items-center border-t border-border">
+      {/* Bottom Controls */}
+      <View className="px-4 pb-6 pt-3 border-t border-border bg-background">
+        {/* Status */}
         <Text
           style={{ color: getStatusColor() }}
-          className="text-sm mb-4 font-medium"
+          className="text-xs mb-3 font-medium text-center"
         >
           {getStatusText()}
         </Text>
 
-        {/* Mic Button */}
-        <Pressable
-          onPress={toggleListening}
-          disabled={
-            isThinking ||
-            isSpeaking ||
-            (!hasPermission && Platform.OS !== "web")
-          }
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 40,
-            backgroundColor: isListening ? "#8B5CF6" : "#1E293B",
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 3,
-            borderColor: isListening ? "#A78BFA" : "#334155",
-            opacity:
-              isThinking || isSpeaking || Platform.OS === "web" ? 0.5 : 1,
-          }}
-        >
-          {isListening ? (
-            <Mic size={32} color="white" />
-          ) : (
-            <MicOff size={32} color="#64748B" />
-          )}
-        </Pressable>
+        {/* Mic button — shown when voice available */}
+        {voiceAvailable && (
+          <View className="items-center mb-4">
+            <View className="flex-row items-center gap-4">
+              {isSpeaking && (
+                <Pressable
+                  onPress={stopSpeaking}
+                  className="w-12 h-12 rounded-full bg-red-500 items-center justify-center"
+                >
+                  <VolumeX size={20} color="white" />
+                </Pressable>
+              )}
+              <Pressable
+                onPress={toggleListening}
+                disabled={isThinking || isSpeaking || !hasPermission}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  backgroundColor: isListening ? "#8B5CF6" : "#1E293B",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 3,
+                  borderColor: isListening ? "#A78BFA" : "#334155",
+                  opacity: isThinking || isSpeaking ? 0.5 : 1,
+                }}
+              >
+                {isListening ? (
+                  <Mic size={28} color="white" />
+                ) : (
+                  <MicOff size={28} color="#64748B" />
+                )}
+              </Pressable>
+            </View>
+            <Text className="text-muted text-xs mt-2 text-center">
+              {language === "en"
+                ? "Speak in English or Hindi"
+                : "हिंदी या English में बोलें"}
+            </Text>
+          </View>
+        )}
 
-        <Text className="text-muted text-xs mt-3 text-center">
-          {Platform.OS === "web"
-            ? "Voice chat requires mobile app"
-            : language === "en"
-            ? "Speak in English or Hindi"
-            : "हिंदी या English में बोलें"}
-        </Text>
+        {/* Text Input — always visible */}
+        <View className="flex-row items-center gap-2">
+          <TextInput
+            value={textInput}
+            onChangeText={setTextInput}
+            placeholder={
+              language === "hi" ? "अपना सवाल लिखें..." : "Type your message..."
+            }
+            placeholderTextColor="#94A3B8"
+            className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-foreground text-sm"
+            multiline={false}
+            returnKeyType="send"
+            onSubmitEditing={() => handleInput(textInput)}
+            editable={!isThinking}
+          />
+          <Pressable
+            onPress={() => handleInput(textInput)}
+            disabled={!textInput.trim() || isThinking}
+            className="w-12 h-12 rounded-xl bg-primary items-center justify-center"
+            style={{ opacity: !textInput.trim() || isThinking ? 0.5 : 1 }}
+          >
+            <Send size={18} color="white" />
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
