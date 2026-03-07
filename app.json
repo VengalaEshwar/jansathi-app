@@ -1,16 +1,20 @@
 {
   "expo": {
-    "name": "jansathi-app",
+    "name": "jansathi",
     "slug": "jansathi-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "jansathiapp",
+    "scheme": "jansathi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "extra": {
       "SUPABASE_URL": "https://ofgwgfxswtltzteprwvo.supabase.co",
-      "SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mZ3dnZnhzd3RsdHp0ZXByd3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTY2OTAsImV4cCI6MjA3NDczMjY5MH0.EEH9cOYQyGgmiJv7kqR592rT9OxLY4OnSguloStlo_o"
+      "SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mZ3dnZnhzd3RsdHp0ZXByd3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTY2OTAsImV4cCI6MjA3NDczMjY5MH0.EEH9cOYQyGgmiJv7kqR592rT9OxLY4OnSguloStlo_o",
+      "router": {},
+      "eas": {
+        "projectId": "2d9c6699-57e4-45b3-a23b-aa6039a8c92a"
+      }
     },
     "ios": {
       "supportsTablet": true,
@@ -20,20 +24,20 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundImage": "./assets/images/icon.png",
-        "monochromeImage": "./assets/images/icon.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.RECORD_AUDIO"
-      ],
-      "package": "com.eshwar_1617.jansathiapp"
-    },
+  "adaptiveIcon": {
+    "backgroundColor": "#E6F4FE",
+    "foregroundImage": "./assets/images/icon.png",
+    "backgroundImage": "./assets/images/icon.png",
+    "monochromeImage": "./assets/images/icon.png"
+  },
+  "googleServicesFile": "./android/app/google-services.json",
+  "edgeToEdgeEnabled": true,
+  "predictiveBackGestureEnabled": false,
+  "permissions": [
+    "android.permission.RECORD_AUDIO"
+  ],
+  "package": "com.eshwar_1617.jansathiapp"
+},
     "web": {
       "bundler": "metro",
       "output": "static",

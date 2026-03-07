@@ -160,6 +160,9 @@ export const t = {
     accountCreated: "Account created successfully!",
     signupFailed: "Signup failed",
     signinFailed: "Signin failed",
+    orContinueWith: "or continue with", 
+    continueWithGoogle: "Continue with Google",
+     googleFailed: "Google sign-in failed"
   },
   health: {
   title: "Health Services",
@@ -514,6 +517,9 @@ scheme: {
     accountCreated: "खाता सफलतापूर्वक बनाया गया!",
     signupFailed: "साइनअप विफल",
     signinFailed: "साइनइन विफल",
+    orContinueWith: "या जारी रखें", 
+    continueWithGoogle: "Google से जारी रखें",
+     googleFailed: "Google साइन-इन विफल" 
   },
   health: {
   title: "स्वास्थ्य सेवाएं",
@@ -843,6 +849,9 @@ scheme: {
     accountCreated: "ఖాతా విజయవంతంగా తయారైంది!",
     signupFailed: "సైనప్ విఫలమైంది",
     signinFailed: "సైనిన్ విఫలమైంది",
+    orContinueWith: "లేదా కొనసాగించండి",
+     continueWithGoogle: "Google తో కొనసాగించండి", 
+     googleFailed: "Google సైన్-ఇన్ విఫలమైంది"
   },
   health: {
   title: "ఆరోగ్య సేవలు",

@@ -8,6 +8,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
 import { User } from "lucide-react-native";
@@ -15,12 +18,24 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch } from "@/store/hooks";
 import { setAppLanguage } from "@/store/slices/appSlice";
 import type { Language } from "@/translations";
+import { Platform } from "react-native";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "hi", label: "हि" },
   { code: "te", label: "తె" },
 ];
+
+// ─── Replace these with your actual OAuth client IDs ───────────────────────
+// Get from: https://console.firebase.google.com → your project → Authentication → Sign-in method → Google → Web SDK configuration
+const GOOGLE_WEB_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
+const GOOGLE_ANDROID_CLIENT_ID = "926203078040-sj5debr8q4sqsh2pkg4rifbfb6rf3n0l.apps.googleusercontent.com";
+const GOOGLE_IOS_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
+// ───────────────────────────────────────────────────────────────────────────
 
 export default function Auth() {
   const router = useRouter();
@@ -29,10 +44,56 @@ export default function Auth() {
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+
+  // expo-auth-session Google provider (works on Expo Go + native builds)
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+  });
+
+  // Handle Google sign-in response
+  const handleGoogleSignIn = async () => {
+    if (Platform.OS === "web") {
+      // Web: use Firebase popup directly
+      setGoogleLoading(true);
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        router.replace("/");
+      } catch (e: any) {
+        Alert.alert(t.common.error, e.message || t.auth.googleFailed);
+      } finally {
+        setGoogleLoading(false);
+      }
+      return;
+    }
+
+    // Native: use expo-auth-session
+    setGoogleLoading(true);
+    try {
+      const result = await promptAsync();
+      if (result?.type === "success") {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        await signInWithCredential(auth, credential);
+        router.replace("/");
+      } else if (result?.type === "cancel" || result?.type === "dismiss") {
+        // User cancelled, do nothing
+      } else {
+        Alert.alert(t.common.error, t.auth.googleFailed);
+      }
+    } catch (e: any) {
+      Alert.alert(t.common.error, e.message || t.auth.googleFailed);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSignUp = async () => {
     if (!email || !password || !firstName || !lastName) {
@@ -71,7 +132,7 @@ export default function Auth() {
   return (
     <View className="flex-1 bg-background items-center justify-center px-5">
 
-      {/* Language Selector - top right */}
+      {/* Language Selector */}
       <View className="absolute top-12 right-4 flex-row gap-1">
         {LANGUAGES.map((lang) => (
           <Pressable
@@ -183,6 +244,33 @@ export default function Auth() {
             <Text className="text-white font-semibold">
               {mode === "signin" ? t.auth.signIn : t.auth.createAccount}
             </Text>
+          )}
+        </Pressable>
+
+        {/* Divider */}
+        <View className="flex-row items-center my-3">
+          <View className="flex-1 h-px bg-border" />
+          <Text className="text-muted text-xs mx-3">{t.auth.orContinueWith}</Text>
+          <View className="flex-1 h-px bg-border" />
+        </View>
+
+        {/* Google Sign-In Button */}
+        <Pressable
+          onPress={handleGoogleSignIn}
+          disabled={googleLoading || (!request && Platform.OS !== "web")}
+          className="border border-border bg-card py-3 rounded-lg items-center flex-row justify-center gap-2"
+          style={{ opacity: googleLoading ? 0.7 : 1 }}
+        >
+          {googleLoading ? (
+            <ActivityIndicator color="#8B5CF6" />
+          ) : (
+            <>
+              {/* Google "G" logo */}
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#4285F4" }}>G</Text>
+              <Text className="text-foreground font-semibold ml-1">
+                {t.auth.continueWithGoogle}
+              </Text>
+            </>
           )}
         </Pressable>
       </View>
