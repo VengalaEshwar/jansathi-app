@@ -30,7 +30,7 @@
     "backgroundImage": "./assets/images/icon.png",
     "monochromeImage": "./assets/images/icon.png"
   },
-  "googleServicesFile": "./android/app/google-services.json",
+  "googleServicesFile": "./google-services.json",
   "edgeToEdgeEnabled": true,
   "predictiveBackGestureEnabled": false,
   "permissions": [
