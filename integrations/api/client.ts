@@ -32,3 +32,40 @@ export const apiRequest = async (
 
   return response.json();
 };
+export const apiUploadImage = async (endpoint: string, imageUri: string) => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("Not authenticated");
+
+  const token = await currentUser.getIdToken();
+
+  const formData = new FormData();
+
+  if (imageUri.startsWith("data:") || imageUri.startsWith("http") || imageUri.startsWith("blob:")) {
+    // Web: fetch the image and convert to blob
+    const imageResponse = await fetch(imageUri);
+    const blob = await imageResponse.blob();
+    formData.append("image", blob, "image.jpg");
+  } else {
+    // Mobile: use URI directly
+    formData.append("image", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "image.jpg",
+    } as any);
+  }
+
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Upload failed");
+  }
+
+  return response.json();
+};

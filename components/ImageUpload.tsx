@@ -3,10 +3,11 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 
 interface ImageUploadProps {
-  onImageSelect: (imageDataUrl: string) => void;
+  onImageSelect: (imageUri: string) => void; // now returns URI not base64
   onClear?: () => void;
   disabled?: boolean;
 }
+
 
 export const ImageUpload = ({
   onImageSelect,
@@ -51,12 +52,12 @@ export const ImageUpload = ({
   };
 
   const handleResult = (result: ImagePicker.ImagePickerResult) => {
-    if (!result.canceled && result.assets[0].base64) {
-      const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      setPreview(result.assets[0].uri);
-      onImageSelect(base64Image);
-    }
-  };
+  if (!result.canceled && result.assets[0]) {
+    const uri = result.assets[0].uri;
+    setPreview(uri);
+    onImageSelect(uri); // send URI directly
+  }
+};
 
   const handleClear = () => {
     setPreview(null);

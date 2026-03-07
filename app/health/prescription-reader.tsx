@@ -7,52 +7,58 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { ArrowLeft, Volume2 } from "lucide-react-native";
-import * as Speech from "expo-speech";
 
+import { useRouter } from "expo-router";
+import { ArrowLeft, Volume2,VolumeX } from "lucide-react-native";
+import * as Speech from "expo-speech";
+import { apiUploadImage } from "@/integrations/api/client";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "@/components/ImageUpload";
-
+import { apiRequest } from "@/integrations/api/client";
+import Markdown from "react-native-markdown-display";
 export default function PrescriptionReader() {
   const router = useRouter();
   const [isReading, setIsReading] = useState(false);
   const [prescriptionText, setPrescriptionText] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+ const handleRead = async (imageDataUrl: string) => {
+  setIsReading(true);
+  setSelectedImage(imageDataUrl);
+  setPrescriptionText("");
 
-  const handleRead = async (imageDataUrl: string) => {
-    setIsReading(true);
-    setSelectedImage(imageDataUrl);
-    setPrescriptionText("");
+  try {
+    // ImageUpload component gives us a data URL, we need the URI
+    // Update ImageUpload to also return the raw URI
+    const data = await apiUploadImage("/ocr/prescription", imageDataUrl);
+    setPrescriptionText(data.prescriptionText);
+    Alert.alert("Success", "Prescription read successfully");
+  } catch (e: any) {
+    Alert.alert("Error", e.message || "Failed to read prescription");
+  } finally {
+    setIsReading(false);
+  }
+};
 
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "read-prescription",
-        {
-          body: { image: imageDataUrl },
-        }
-      );
+ const speakText = () => {
+  if (!prescriptionText) return;
 
-      if (error) throw error;
+  if (isSpeaking) {
+    Speech.stop();
+    setIsSpeaking(false);
+    return;
+  }
 
-      setPrescriptionText(data.prescriptionText);
-      Alert.alert("Success", "Prescription read successfully");
-    } catch (e: any) {
-      console.log("Read error:", e);
-      Alert.alert("Error", e.message || "Failed to read prescription");
-    } finally {
-      setIsReading(false);
-    }
-  };
-
-  const speakText = () => {
-    if (!prescriptionText) return;
-    Speech.speak(prescriptionText, {
-      language: "en",
-      pitch: 1,
-      rate: 0.9,
-    });
-  };
+  setIsSpeaking(true);
+  Speech.speak(prescriptionText.replace(/[#*|]/g, ""), {
+    language: "en",
+    pitch: 1,
+    rate: 0.9,
+    onDone: () => setIsSpeaking(false),
+    onStopped: () => setIsSpeaking(false),
+    onError: () => setIsSpeaking(false),
+  });
+};
 
   return (
     <View className="flex-1 bg-background">
@@ -97,31 +103,44 @@ export default function PrescriptionReader() {
 
         {/* Result */}
         {prescriptionText !== "" && (
-          <View className="mt-6 space-y-4">
-            <View className="p-5 rounded-2xl bg-primary">
-              <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-white text-lg font-semibold">
-                  Prescription Details
-                </Text>
+  <View className="mt-6 space-y-4">
+    <View className="p-5 rounded-2xl bg-card border border-border">
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-foreground text-lg font-semibold">
+          Prescription Details
+        </Text>
+        <Pressable onPress={speakText}>
+            {isSpeaking
+              ? <VolumeX size={22} color="#EF4444" />
+              : <Volume2 size={22} color="#8B5CF6" />
+            }
+          </Pressable>
+      </View>
 
-                <Pressable onPress={speakText}>
-                  <Volume2 size={22} color="white" />
-                </Pressable>
-              </View>
+      <Markdown
+        style={{
+          body: { color: "#FFFFFF" },
+          heading2: { color: "#A78BFA", fontSize: 16, fontWeight: "bold" },
+          strong: { color: "#FFFFFF", fontWeight: "bold" },
+          table: { borderWidth: 1, borderColor: "#334155" },
+          th: { backgroundColor: "#1E293B", padding: 6 },
+          td: { padding: 6 },
+          tr: { borderBottomWidth: 1, borderColor: "#334155" },
+          bullet_list: { marginVertical: 4 },
+          list_item: { color: "#FFFFFF" },
+        }}
+      >
+        {prescriptionText}
+      </Markdown>
+    </View>
 
-              <Text className="text-white whitespace-pre-wrap">
-                {prescriptionText}
-              </Text>
-            </View>
-
-            <View className="p-4 rounded-xl bg-secondary border border-border">
-              <Text className="text-muted text-sm">
-                💡 Tap the speaker icon to hear the prescription read aloud.
-              </Text>
-            </View>
-          </View>
-        )}
-
+    <View className="p-4 rounded-xl bg-secondary border border-border">
+      <Text className="text-muted text-sm">
+        💡 Tap the speaker icon to hear the prescription read aloud.
+      </Text>
+    </View>
+  </View>
+)}
         {/* Instructions */}
         {!selectedImage && !isReading && (
           <View className="mt-6 p-5 rounded-2xl bg-secondary border border-border">
