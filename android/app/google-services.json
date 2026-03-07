@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "926203078040",
+    "project_id": "jansathi-eed44",
+    "storage_bucket": "jansathi-eed44.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926203078040:android:3003168ba6f3d78daf37ed",
+        "android_client_info": {
+          "package_name": "com.eshwar_1617.jansathiapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "926203078040-sj5debr8q4sqsh2pkg4rifbfb6rf3n0l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eshwar_1617.jansathiapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkCMRFWpZ6as6fX8gB5ZcshGDXXExzPe4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
