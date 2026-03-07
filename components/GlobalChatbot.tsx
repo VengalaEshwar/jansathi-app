@@ -11,46 +11,46 @@ import {
 } from "react-native";
 import { MessageCircle, Send, X } from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const GlobalChatbot = () => {
+  const { t, language } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<
-    Array<{ role: "user" | "assistant"; content: string }>
-  >([
-    {
-      role: "assistant",
-      content:
-        "Hello! I'm your GovAssist AI assistant. How can I help you today?",
-    },
-  ]);
+ const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
+  {
+    role: "assistant",
+    content: t.globalChat.welcome,
+  },
+]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-     const sendMessage = async () => {
+  const sendMessage = async () => {
     if (!input.trim() || loading) return;
-  
+
     const userMessage = input;
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setLoading(true);
-  
+
     try {
       const data = await apiRequest("/chat", "POST", {
         message: userMessage,
         conversationHistory: messages,
+        language,
       });
-  
-      setMessages((prev) => [
+
+      setMessages((prev : any ) => [
         ...prev,
         { role: "assistant", content: data.reply },
       ]);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Error sending message");
+      Alert.alert(t.common.error, error.message || t.globalChat.sendFailed);
     } finally {
       setLoading(false);
     }
   };
-
 
   if (!isOpen) {
     return (
@@ -67,15 +67,18 @@ export const GlobalChatbot = () => {
     <Modal visible={isOpen} animationType="slide" transparent>
       <View className="flex-1 bg-black/40 justify-end">
         <View className="bg-card rounded-t-2xl h-[75%]">
+
+          {/* Header */}
           <View className="flex-row justify-between items-center p-4 bg-primary rounded-t-2xl">
             <Text className="text-white font-semibold text-lg">
-              GovAssist AI
+              {t.globalChat.title}
             </Text>
             <Pressable onPress={() => setIsOpen(false)}>
               <X size={20} color="white" />
             </Pressable>
           </View>
 
+          {/* Messages */}
           <ScrollView className="flex-1 p-4">
             {messages.map((m, i) => (
               <View
@@ -90,9 +93,9 @@ export const GlobalChatbot = () => {
                   }`}
                 >
                   <Text
-                    className={`${
+                    className={
                       m.role === "user" ? "text-white" : "text-foreground"
-                    }`}
+                    }
                   >
                     {m.content}
                   </Text>
@@ -103,22 +106,29 @@ export const GlobalChatbot = () => {
             {loading && (
               <View className="items-start">
                 <View className="bg-secondary px-3 py-2 rounded-lg">
-                  <ActivityIndicator />
+                  <ActivityIndicator color="#8B5CF6" />
                 </View>
               </View>
             )}
           </ScrollView>
 
+          {/* Input */}
           <View className="p-3 border-t border-border flex-row gap-2">
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Ask me anything..."
-              className="flex-1 border border-border rounded-lg px-3 py-2"
+              placeholder={t.globalChat.placeholder}
+              placeholderTextColor="#94A3B8"
+              className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
+              onSubmitEditing={sendMessage}
+              returnKeyType="send"
+              editable={!loading}
             />
             <Pressable
               onPress={sendMessage}
-              className="bg-primary px-3 py-2 rounded-lg"
+              disabled={!input.trim() || loading}
+              className="bg-primary px-3 py-2 rounded-lg items-center justify-center"
+              style={{ opacity: !input.trim() || loading ? 0.5 : 1 }}
             >
               <Send size={18} color="white" />
             </Pressable>

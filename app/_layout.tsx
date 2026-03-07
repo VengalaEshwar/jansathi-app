@@ -6,7 +6,8 @@ import { StatusBar } from "expo-status-bar";
 import { NavBar } from "@/components/NavBar";
 import { GlobalChatbot } from "@/components/GlobalChatbot";
 import "./global.css";
-
+import { Provider } from "react-redux";
+import { store } from "@/store";
 const queryClient = new QueryClient();
 
 LogBox.ignoreAllLogs();
@@ -15,6 +16,7 @@ export default function RootLayout() {
   const pathname = usePathname();
 
   return (
+    <Provider store={store}>
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <SafeAreaView className="flex-1 bg-black">
@@ -34,5 +36,6 @@ export default function RootLayout() {
         </SafeAreaView>
       </SafeAreaProvider>
     </QueryClientProvider>
+    </Provider>
   );
 }

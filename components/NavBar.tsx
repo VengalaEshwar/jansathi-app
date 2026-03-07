@@ -1,25 +1,26 @@
 import { View, Text, Pressable } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { Home, Heart, Sparkles, User, Info } from "lucide-react-native";
-
-const navItems = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/health", label: "Health", icon: Heart },
-  { path: "/g-assist", label: "G-Assist", icon: Sparkles },
-  { path: "/profile", label: "Profile", icon: User },
-  { path: "/about", label: "About", icon: Info },
-];
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { path: "/", label: t.nav.home, icon: Home },
+    { path: "/health", label: t.nav.health, icon: Heart },
+    { path: "/g-assist", label: t.nav.assist, icon: Sparkles },
+    { path: "/profile", label: t.nav.profile, icon: User },
+    { path: "/about", label: t.nav.about, icon: Info },
+  ];
 
   return (
     <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border">
       <View className="flex-row justify-around py-2">
         {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = pathname === path;
-
           return (
             <Pressable
               key={path}

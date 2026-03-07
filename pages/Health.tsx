@@ -2,46 +2,50 @@ import { View, Text, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Scan, FileText, AlertTriangle, MapPin, Bell } from "lucide-react-native";
 import { Card } from "@/components/Card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Health = () => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const healthFeatures = [
     {
       icon: Scan,
-      title: "Medicine Scanner",
-      description: "Scan medicines and verify authenticity",
+      title: t.health.medicineScanner,
+      description: t.health.medicineScannerDesc,
       action: () => router.push("/health/medicine-scanner"),
     },
     {
       icon: FileText,
-      title: "Prescription Reader",
-      description: "Read handwritten prescriptions",
+      title: t.health.prescriptionReader,
+      description: t.health.prescriptionReaderDesc,
       action: () => router.push("/health/prescription-reader"),
     },
     {
       icon: AlertTriangle,
-      title: "Danger Alerts",
-      description: "Warnings for unsafe drug combinations",
-      action: () => Alert.alert("Coming Soon"),
+      title: t.health.dangerAlerts,
+      description: t.health.dangerAlertsDesc,
+      action: () => Alert.alert(t.profile.comingSoon),
     },
     {
       icon: MapPin,
-      title: "Nearby Clinics",
-      description: "Find healthcare centers near you",
+      title: t.health.nearbyClinics,
+      description: t.health.nearbyClinicsDesc,
       action: () => router.push("/health/nearby-clinics"),
     },
     {
       icon: Bell,
-      title: "Health Notifications",
-      description: "Medication reminders and alerts",
-      action: () => Alert.alert("Coming Soon"),
+      title: t.health.healthNotifications,
+      description: t.health.healthNotificationsDesc,
+      action: () => Alert.alert(t.profile.comingSoon),
     },
   ];
 
   return (
     <ScrollView className="flex-1 bg-background px-4 py-6">
-      <Text className="text-2xl font-bold mb-4">Health Services</Text>
+      <Text className="text-2xl font-bold mb-4 text-foreground">
+        {t.health.title}
+      </Text>
 
       {healthFeatures.map((f) => (
         <Card

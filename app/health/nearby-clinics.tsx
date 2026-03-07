@@ -21,8 +21,8 @@ import {
   ChevronUp,
   Map,
 } from "lucide-react-native";
+import { useTranslation } from "@/hooks/useTranslation";
 
-// Only import MapView on native
 let MapView: any, Marker: any, PROVIDER_GOOGLE: any;
 if (Platform.OS !== "web") {
   const Maps = require("react-native-maps");
@@ -42,8 +42,11 @@ interface Clinic {
   type: string;
 }
 
+const RADIUS_OPTIONS = [2000, 5000, 10000, 20000];
+
 export default function NearbyClinics() {
   const router = useRouter();
+  const { t } = useTranslation();
   const mapRef = useRef<any>(null);
 
   const [userLocation, setUserLocation] = useState<{
@@ -52,12 +55,11 @@ export default function NearbyClinics() {
   } | null>(null);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [radius, setRadius] = useState(5000);
-  const [view, setView] = useState<"map" | "list">(
-    Platform.OS === "web" ? "list" : "list"
-  );
+  const [view, setView] = useState<"map" | "list">("list");
 
   useEffect(() => {
     fetchLocationAndClinics();
@@ -69,10 +71,7 @@ export default function NearbyClinics() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permission Denied",
-          "Location access is needed to find nearby clinics."
-        );
+        Alert.alert(t.clinics.permissionDenied, t.clinics.permissionDesc);
         setIsLoading(false);
         return;
       }
@@ -86,70 +85,80 @@ export default function NearbyClinics() {
         longitude: loc.coords.longitude,
       };
       setUserLocation(coords);
-      await fetchClinics(coords.latitude, coords.longitude);
+      await fetchClinics(coords.latitude, coords.longitude, radius);
     } catch (e: any) {
-      Alert.alert("Error", e.message || "Failed to get location");
+      Alert.alert(t.common.error, e.message || t.clinics.locationFailed);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchClinics = async (lat: number, lon: number) => {
-    const query = `
-      [out:json][timeout:25];
-      (
-        node["amenity"="hospital"](around:${radius},${lat},${lon});
-        node["amenity"="clinic"](around:${radius},${lat},${lon});
-        node["amenity"="doctors"](around:${radius},${lat},${lon});
-        node["amenity"="pharmacy"](around:${radius},${lat},${lon});
-        node["healthcare"="clinic"](around:${radius},${lat},${lon});
-        node["healthcare"="hospital"](around:${radius},${lat},${lon});
-        node["healthcare"="doctor"](around:${radius},${lat},${lon});
-      );
-      out body;
-    `;
+  const fetchClinics = async (lat: number, lon: number, r: number) => {
+    setIsFetching(true);
+    try {
+      const query = `
+        [out:json][timeout:25];
+        (
+          node["amenity"="hospital"](around:${r},${lat},${lon});
+          node["amenity"="clinic"](around:${r},${lat},${lon});
+          node["amenity"="doctors"](around:${r},${lat},${lon});
+          node["amenity"="pharmacy"](around:${r},${lat},${lon});
+          node["healthcare"="clinic"](around:${r},${lat},${lon});
+          node["healthcare"="hospital"](around:${r},${lat},${lon});
+          node["healthcare"="doctor"](around:${r},${lat},${lon});
+        );
+        out body;
+      `;
 
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: query,
-    });
+      const response = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: query,
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    const results: Clinic[] = (data.elements || [])
-      .filter((el: any) => el.tags?.name)
-      .map((el: any) => ({
-        id: String(el.id),
-        name: el.tags.name,
-        address:
-          [
-            el.tags["addr:street"],
-            el.tags["addr:housenumber"],
-            el.tags["addr:city"],
-          ]
-            .filter(Boolean)
-            .join(", ") || "Address not available",
-        phone: el.tags.phone || el.tags["contact:phone"] || null,
-        website: el.tags.website || el.tags["contact:website"] || null,
-        openingHours: el.tags.opening_hours || null,
-        location: { latitude: el.lat, longitude: el.lon },
-        type: el.tags.amenity || el.tags.healthcare || "clinic",
-      }));
+      const results: Clinic[] = (data.elements || [])
+        .filter((el: any) => el.tags?.name)
+        .map((el: any) => ({
+          id: String(el.id),
+          name: el.tags.name,
+          address:
+            [
+              el.tags["addr:street"],
+              el.tags["addr:housenumber"],
+              el.tags["addr:city"],
+            ]
+              .filter(Boolean)
+              .join(", ") || t.clinics.addressNotAvailable,
+          phone: el.tags.phone || el.tags["contact:phone"] || null,
+          website: el.tags.website || el.tags["contact:website"] || null,
+          openingHours: el.tags.opening_hours || null,
+          location: { latitude: el.lat, longitude: el.lon },
+          type: el.tags.amenity || el.tags.healthcare || "clinic",
+        }));
 
-    const sorted = results.sort((a, b) => {
-      const distA = getDistanceValue(a, lat, lon);
-      const distB = getDistanceValue(b, lat, lon);
-      return distA - distB;
-    });
+      const sorted = results.sort((a, b) => {
+        const distA = getDistanceValue(a, lat, lon);
+        const distB = getDistanceValue(b, lat, lon);
+        return distA - distB;
+      });
 
-    setClinics(sorted);
+      setClinics(sorted);
+    } catch (e: any) {
+      Alert.alert(t.common.error, e.message || t.clinics.fetchFailed);
+    } finally {
+      setIsFetching(false);
+    }
   };
 
-  const getDistanceValue = (
-    clinic: Clinic,
-    lat: number,
-    lon: number
-  ): number => {
+  const handleRadiusChange = (r: number) => {
+    setRadius(r);
+    if (userLocation) {
+      fetchClinics(userLocation.latitude, userLocation.longitude, r);
+    }
+  };
+
+  const getDistanceValue = (clinic: Clinic, lat: number, lon: number): number => {
     const R = 6371;
     const dLat = ((clinic.location.latitude - lat) * Math.PI) / 180;
     const dLon = ((clinic.location.longitude - lon) * Math.PI) / 180;
@@ -175,9 +184,9 @@ export default function NearbyClinics() {
   };
 
   const handleCall = (phone: string) => {
-  const firstNumber = phone.split(";")[0].trim();
-  Linking.openURL(`tel:${firstNumber}`);
-};
+    const firstNumber = phone.split(";")[0].trim();
+    Linking.openURL(`tel:${firstNumber}`);
+  };
 
   const handleDirections = (clinic: Clinic) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${clinic.location.latitude},${clinic.location.longitude}&travelmode=driving`;
@@ -202,11 +211,7 @@ export default function NearbyClinics() {
     setView("map");
     setTimeout(() => {
       mapRef.current?.animateToRegion(
-        {
-          ...clinic.location,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
+        { ...clinic.location, latitudeDelta: 0.01, longitudeDelta: 0.01 },
         500
       );
     }, 300);
@@ -223,7 +228,7 @@ export default function NearbyClinics() {
     return (
       <View className="flex-1 bg-background items-center justify-center">
         <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text className="text-muted mt-3">Finding nearby clinics...</Text>
+        <Text className="text-muted mt-3">{t.clinics.finding}</Text>
       </View>
     );
   }
@@ -232,15 +237,14 @@ export default function NearbyClinics() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
-        <Pressable
-          onPress={() => router.back()}
-          className="flex-row items-center"
-        >
+        <Pressable onPress={() => router.back()} className="flex-row items-center">
           <ArrowLeft size={20} color="#6b7280" />
-          <Text className="ml-2 text-muted">Back</Text>
+          <Text className="ml-2 text-muted">{t.common.back}</Text>
         </Pressable>
-        <Text className="text-foreground font-bold text-lg">Nearby Clinics</Text>
-        <Text className="text-muted text-sm">{clinics.length} found</Text>
+        <Text className="text-foreground font-bold text-lg">{t.clinics.title}</Text>
+        <Text className="text-muted text-sm">
+          {isFetching ? "..." : `${clinics.length} ${t.common.found}`}
+        </Text>
       </View>
 
       {/* Map / List Toggle */}
@@ -248,53 +252,49 @@ export default function NearbyClinics() {
         {Platform.OS !== "web" && (
           <Pressable
             onPress={() => setView("map")}
-            className={`flex-1 py-2 rounded-lg items-center ${
-              view === "map" ? "bg-primary" : ""
-            }`}
+            className={`flex-1 py-2 rounded-lg items-center ${view === "map" ? "bg-primary" : ""}`}
           >
-            <Text
-              className={
-                view === "map" ? "text-white font-semibold" : "text-muted"
-              }
-            >
-              🗺 Map
+            <Text className={view === "map" ? "text-white font-semibold" : "text-muted"}>
+              🗺 {t.clinics.mapView}
             </Text>
           </Pressable>
         )}
         <Pressable
           onPress={() => setView("list")}
-          className={`flex-1 py-2 rounded-lg items-center ${
-            view === "list" ? "bg-primary" : ""
-          }`}
+          className={`flex-1 py-2 rounded-lg items-center ${view === "list" ? "bg-primary" : ""}`}
         >
-          <Text
-            className={
-              view === "list" ? "text-white font-semibold" : "text-muted"
-            }
-          >
-            📋 List ({clinics.length})
+          <Text className={view === "list" ? "text-white font-semibold" : "text-muted"}>
+            📋 {t.clinics.listView} ({clinics.length})
           </Text>
         </Pressable>
+      </View>
+
+      {/* Radius Selector */}
+      <View className="flex-row mx-4 mb-2 gap-2">
+        {RADIUS_OPTIONS.map((r) => (
+          <Pressable
+            key={r}
+            onPress={() => handleRadiusChange(r)}
+            className={`flex-1 py-2 rounded-xl items-center border ${
+              radius === r ? "bg-primary border-primary" : "bg-secondary border-border"
+            }`}
+          >
+            <Text className={`text-xs font-semibold ${radius === r ? "text-white" : "text-muted"}`}>
+              {r >= 1000 ? `${r / 1000}km` : `${r}m`}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Fetching indicator */}
+      {isFetching && (
+        <View className="flex-row items-center justify-center py-2">
+          <ActivityIndicator size="small" color="#8B5CF6" />
+          <Text className="text-muted text-xs ml-2">{t.clinics.searching}</Text>
         </View>
-              <View className="flex-row mx-4 mb-2 gap-2">
-    {[2000, 5000, 10000, 20000].map((r) => (
-      <Pressable
-        key={r}
-        onPress={() => {
-          setRadius(r);
-          if (userLocation) fetchClinics(userLocation.latitude, userLocation.longitude);
-        }}
-        className={`flex-1 py-2 rounded-xl items-center border ${
-          radius === r ? "bg-primary border-primary" : "bg-secondary border-border"
-        }`}
-      >
-        <Text className={`text-xs font-semibold ${radius === r ? "text-white" : "text-muted"}`}>
-          {r >= 1000 ? `${r / 1000}km` : `${r}m`}
-        </Text>
-      </Pressable>
-    ))}
-  </View>
-      {/* Map View - Native only */}
+      )}
+
+      {/* Map View */}
       {view === "map" && userLocation && Platform.OS !== "web" && (
         <View className="flex-1">
           <MapView
@@ -307,20 +307,19 @@ export default function NearbyClinics() {
               longitudeDelta: 0.05,
             }}
           >
-            <Marker coordinate={userLocation} title="You" pinColor="red" />
+            <Marker coordinate={userLocation} title={t.clinics.you} pinColor="blue" />
             {clinics.map((clinic) => (
               <Marker
                 key={clinic.id}
                 coordinate={clinic.location}
                 title={clinic.name}
                 description={clinic.address}
-                pinColor="#8B5CF6"
+                pinColor="red"
                 onPress={() => setSelectedClinic(clinic)}
               />
             ))}
           </MapView>
 
-          {/* Selected clinic bottom card */}
           {selectedClinic && (
             <View className="absolute bottom-4 left-4 right-4 bg-card border border-border rounded-2xl p-4">
               <View className="flex-row justify-between items-start mb-1">
@@ -331,9 +330,7 @@ export default function NearbyClinics() {
                   {getDistanceLabel(selectedClinic)}
                 </Text>
               </View>
-              <Text className="text-muted text-sm mb-3">
-                {selectedClinic.address}
-              </Text>
+              <Text className="text-muted text-sm mb-3">{selectedClinic.address}</Text>
               <View className="flex-row gap-2">
                 {selectedClinic.phone && (
                   <Pressable
@@ -341,7 +338,7 @@ export default function NearbyClinics() {
                     className="flex-1 bg-green-600 py-2 rounded-xl flex-row items-center justify-center"
                   >
                     <Phone size={14} color="white" />
-                    <Text className="text-white text-sm ml-1">Call</Text>
+                    <Text className="text-white text-sm ml-1">{t.clinics.call}</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -349,14 +346,14 @@ export default function NearbyClinics() {
                   className="flex-1 bg-primary py-2 rounded-xl flex-row items-center justify-center"
                 >
                   <Navigation size={14} color="white" />
-                  <Text className="text-white text-sm ml-1">Directions</Text>
+                  <Text className="text-white text-sm ml-1">{t.clinics.directions}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => openGoogleMaps(selectedClinic)}
                   className="flex-1 bg-blue-600 py-2 rounded-xl flex-row items-center justify-center"
                 >
                   <Map size={14} color="white" />
-                  <Text className="text-white text-sm ml-1">Maps</Text>
+                  <Text className="text-white text-sm ml-1">{t.clinics.maps}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => setSelectedClinic(null)}
@@ -379,20 +376,14 @@ export default function NearbyClinics() {
           ListEmptyComponent={
             <View className="items-center mt-20">
               <Text className="text-4xl mb-3">🏥</Text>
-              <Text className="text-foreground font-semibold">
-                No clinics found
-              </Text>
-              <Text className="text-muted text-sm mt-1">
-                Try refreshing or expanding search
-              </Text>
+              <Text className="text-foreground font-semibold">{t.clinics.noResults}</Text>
+              <Text className="text-muted text-sm mt-1">{t.clinics.tryRefresh}</Text>
             </View>
           }
           renderItem={({ item: clinic }) => (
             <View className="mb-3 bg-card border border-border rounded-2xl overflow-hidden">
               <Pressable
-                onPress={() =>
-                  setExpandedId(expandedId === clinic.id ? null : clinic.id)
-                }
+                onPress={() => setExpandedId(expandedId === clinic.id ? null : clinic.id)}
                 className="p-4"
               >
                 <View className="flex-row justify-between items-start">
@@ -402,10 +393,7 @@ export default function NearbyClinics() {
                     </Text>
                     <View className="flex-row items-center mt-1">
                       <MapPin size={11} color="#6b7280" />
-                      <Text
-                        className="text-muted text-xs ml-1 flex-1"
-                        numberOfLines={2}
-                      >
+                      <Text className="text-muted text-xs ml-1 flex-1" numberOfLines={2}>
                         {clinic.address}
                       </Text>
                     </View>
@@ -421,7 +409,6 @@ export default function NearbyClinics() {
                     )}
                   </View>
                 </View>
-
                 {clinic.openingHours && (
                   <View className="flex-row items-center mt-2">
                     <Clock size={11} color="#6b7280" />
@@ -432,30 +419,21 @@ export default function NearbyClinics() {
                 )}
               </Pressable>
 
-              {/* Expanded */}
               {expandedId === clinic.id && (
                 <View className="px-4 pb-4 border-t border-border pt-3 gap-2">
                   {clinic.openingHours && (
                     <View className="flex-row items-center">
                       <Clock size={13} color="#8B5CF6" />
-                      <Text className="text-muted text-xs ml-2">
-                        {clinic.openingHours}
-                      </Text>
+                      <Text className="text-muted text-xs ml-2">{clinic.openingHours}</Text>
                     </View>
                   )}
                   {clinic.website && (
-                    <Pressable
-                      onPress={() => Linking.openURL(clinic.website!)}
-                    >
-                      <Text
-                        className="text-primary text-xs underline"
-                        numberOfLines={1}
-                      >
+                    <Pressable onPress={() => Linking.openURL(clinic.website!)}>
+                      <Text className="text-primary text-xs underline" numberOfLines={1}>
                         🌐 {clinic.website}
                       </Text>
                     </Pressable>
                   )}
-
                   <View className="flex-row gap-2 mt-1">
                     {clinic.phone && (
                       <Pressable
@@ -463,7 +441,7 @@ export default function NearbyClinics() {
                         className="flex-1 bg-green-600 py-2 rounded-xl flex-row items-center justify-center"
                       >
                         <Phone size={14} color="white" />
-                        <Text className="text-white text-sm ml-1">Call</Text>
+                        <Text className="text-white text-sm ml-1">{t.clinics.call}</Text>
                       </Pressable>
                     )}
                     <Pressable
@@ -471,7 +449,7 @@ export default function NearbyClinics() {
                       className="flex-1 bg-primary py-2 rounded-xl flex-row items-center justify-center"
                     >
                       <Navigation size={14} color="white" />
-                      <Text className="text-white text-sm ml-1">Directions</Text>
+                      <Text className="text-white text-sm ml-1">{t.clinics.directions}</Text>
                     </Pressable>
                     {Platform.OS !== "web" && (
                       <>
@@ -480,13 +458,13 @@ export default function NearbyClinics() {
                           className="flex-1 bg-blue-600 py-2 rounded-xl flex-row items-center justify-center"
                         >
                           <Map size={14} color="white" />
-                          <Text className="text-white text-sm ml-1">Maps</Text>
+                          <Text className="text-white text-sm ml-1">{t.clinics.maps}</Text>
                         </Pressable>
                         <Pressable
                           onPress={() => focusMap(clinic)}
                           className="flex-1 bg-secondary py-2 rounded-xl items-center justify-center"
                         >
-                          <Text className="text-foreground text-sm">📍 Pin</Text>
+                          <Text className="text-foreground text-sm">📍 {t.clinics.pin}</Text>
                         </Pressable>
                       </>
                     )}
@@ -503,7 +481,7 @@ export default function NearbyClinics() {
         onPress={fetchLocationAndClinics}
         className="absolute bottom-4 right-4 bg-primary px-4 py-3 rounded-full"
       >
-        <Text className="text-white font-semibold">🔄 Refresh</Text>
+        <Text className="text-white font-semibold">🔄 {t.common.refresh}</Text>
       </Pressable>
     </View>
   );

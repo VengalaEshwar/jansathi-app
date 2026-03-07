@@ -21,6 +21,10 @@ import {
 } from "lucide-react-native";
 import * as Speech from "expo-speech";
 import { apiRequest } from "@/integrations/api/client";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addMessage, setThinking } from "@/store/slices/chatSlice";
+import { useTranslation } from "@/hooks/useTranslation";
+import type { Language } from "@/translations";
 
 // Native speech recognition
 let ExpoSpeechRecognitionModule: any;
@@ -43,7 +47,6 @@ if (!useSpeechRecognitionEvent) {
 const isNativeVoiceAvailable =
   !!ExpoSpeechRecognitionModule && Platform.OS !== "web";
 
-// Check web speech API availability
 const isWebVoiceAvailable = () => {
   if (Platform.OS !== "web") return false;
   return (
@@ -55,31 +58,26 @@ const isWebVoiceAvailable = () => {
   );
 };
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+// Map app language to speech recognition locale
+const getLangCode = (lang: Language) => {
+  if (lang === "hi") return "hi-IN";
+  if (lang === "te") return "te-IN";
+  return "en-IN";
+};
 
 export default function VoiceChatbot() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { messages, isThinking } = useAppSelector((s) => s.chat);
+  const { t, language } = useTranslation();
+
   const scrollRef = useRef<ScrollView>(null);
   const webRecognitionRef = useRef<any>(null);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "नमस्ते! Hello! I am JanSathi AI. How can I help you today? आप हिंदी या English में बात कर सकते हैं।",
-      timestamp: new Date(),
-    },
-  ]);
   const [isListening, setIsListening] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [textInput, setTextInput] = useState("");
-  const [language, setLanguage] = useState<"en" | "hi">("en");
   const [hasPermission, setHasPermission] = useState(false);
   const [webVoiceSupported] = useState(isWebVoiceAvailable);
 
@@ -107,7 +105,6 @@ export default function VoiceChatbot() {
     if (isNativeVoiceAvailable) {
       requestNativePermission();
     } else {
-      // On web or Expo Go, no permission needed
       setHasPermission(true);
     }
     return () => {
@@ -118,10 +115,7 @@ export default function VoiceChatbot() {
   }, []);
 
   useEffect(() => {
-    setTimeout(
-      () => scrollRef.current?.scrollToEnd({ animated: true }),
-      100
-    );
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }, [messages]);
 
   const requestNativePermission = async () => {
@@ -134,8 +128,8 @@ export default function VoiceChatbot() {
         setTimeout(() => startListening(), 500);
       } else {
         Alert.alert(
-          "Microphone Permission",
-          "Please allow microphone access to use voice chat."
+          t.chat.micPermissionTitle,
+          t.chat.micPermissionDesc
         );
       }
     } catch (e) {
@@ -146,13 +140,12 @@ export default function VoiceChatbot() {
   // ─── Web Speech API ───────────────────────────────────────────
   const startWebListening = () => {
     if (!webVoiceSupported) return;
-
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
     const recognition = new SpeechRecognition();
-    recognition.lang = language === "hi" ? "hi-IN" : "en-IN";
+    recognition.lang = getLangCode(language);
     recognition.interimResults = true;
     recognition.continuous = false;
 
@@ -195,7 +188,7 @@ export default function VoiceChatbot() {
       startWebListening();
     } else if (isNativeVoiceAvailable) {
       ExpoSpeechRecognitionModule.start({
-        lang: language === "hi" ? "hi-IN" : "en-IN",
+        lang: getLangCode(language),
         interimResults: true,
         continuous: false,
       }).catch((e: any) => console.log("Start error:", e));
@@ -217,15 +210,6 @@ export default function VoiceChatbot() {
     else startListening();
   };
 
-  const toggleLanguage = () => {
-    const newLang = language === "en" ? "hi" : "en";
-    setLanguage(newLang);
-    if (isListening) {
-      stopListening();
-      setTimeout(() => startListening(), 300);
-    }
-  };
-
   // ─── Handle message input ─────────────────────────────────────
   const handleInput = async (text: string) => {
     if (!text.trim()) return;
@@ -233,17 +217,23 @@ export default function VoiceChatbot() {
     setTranscript("");
     setTextInput("");
 
+    // Auto-detect language from text
     const isHindi = /[\u0900-\u097F]/.test(text);
-    const detectedLang = isHindi ? "hi" : language;
+    const isTelugu = /[\u0C00-\u0C7F]/.test(text);
+    const detectedLang: Language = isHindi
+      ? "hi"
+      : isTelugu
+      ? "te"
+      : language;
 
-    const userMessage: Message = {
-      role: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsThinking(true);
+    dispatch(
+      addMessage({
+        role: "user",
+        content: text,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    dispatch(setThinking(true));
 
     try {
       const history = messages.map((m) => ({
@@ -257,27 +247,30 @@ export default function VoiceChatbot() {
         language: detectedLang,
       });
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.reply,
-        timestamp: new Date(),
-      };
+      dispatch(
+        addMessage({
+          role: "assistant",
+          content: data.reply,
+          timestamp: new Date().toISOString(),
+        })
+      );
 
-      setMessages((prev) => [...prev, assistantMessage]);
       speakResponse(data.reply, detectedLang);
     } catch (e: any) {
-      Alert.alert("Error", e.message || "Failed to get response");
+      Alert.alert(t.common.error, e.message || t.chat.responseFailed);
+      if (isNativeVoiceAvailable) setTimeout(() => startListening(), 500);
     } finally {
-      setIsThinking(false);
+      dispatch(setThinking(false));
     }
   };
 
-  const speakResponse = (text: string, lang: "en" | "hi") => {
-    // Web TTS using browser API
+  const speakResponse = (text: string, lang: Language) => {
+    const langCode = getLangCode(lang);
+
     if (Platform.OS === "web") {
       if (typeof window !== "undefined" && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === "hi" ? "hi-IN" : "en-IN";
+        utterance.lang = langCode;
         utterance.rate = 0.9;
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
@@ -288,10 +281,9 @@ export default function VoiceChatbot() {
       return;
     }
 
-    // Native TTS
     setIsSpeaking(true);
     Speech.speak(text, {
-      language: lang === "hi" ? "hi-IN" : "en-IN",
+      language: langCode,
       pitch: 1.0,
       rate: 0.9,
       onDone: () => {
@@ -314,12 +306,12 @@ export default function VoiceChatbot() {
 
   // ─── UI helpers ───────────────────────────────────────────────
   const getStatusText = () => {
-    if (isThinking) return "Thinking...";
-    if (isSpeaking) return "Speaking...";
-    if (isListening) return transcript || "Listening...";
-    if (!voiceAvailable) return "Type your message below";
-    if (Platform.OS === "web") return "Click mic to speak";
-    return "Tap mic to speak";
+    if (isThinking) return t.chat.thinking;
+    if (isSpeaking) return t.chat.speaking;
+    if (isListening) return transcript || t.chat.listening;
+    if (!voiceAvailable) return t.chat.typeMessage;
+    if (Platform.OS === "web") return t.chat.clickMic;
+    return t.chat.tapMic;
   };
 
   const getStatusColor = () => {
@@ -341,21 +333,19 @@ export default function VoiceChatbot() {
           className="flex-row items-center"
         >
           <ArrowLeft size={20} color="#6b7280" />
-          <Text className="ml-2 text-muted">Back</Text>
+          <Text className="ml-2 text-muted">{t.common.back}</Text>
         </Pressable>
 
         <Text className="text-foreground font-bold text-lg">
-          AI Assistant
+          {t.chat.title}
         </Text>
 
-        <Pressable
-          onPress={toggleLanguage}
-          className="px-3 py-1 rounded-full bg-primary"
-        >
-          <Text className="text-white text-sm font-semibold">
-            {language === "en" ? "EN" : "HI"}
+        {/* Language indicator — read only, controlled by app language */}
+        <View className="px-3 py-1 rounded-full bg-secondary border border-border">
+          <Text className="text-foreground text-sm font-semibold">
+            {language?.toUpperCase()}
           </Text>
-        </Pressable>
+        </View>
       </View>
 
       {/* Chat Messages */}
@@ -374,7 +364,9 @@ export default function VoiceChatbot() {
             {msg.role === "assistant" && (
               <View className="flex-row items-center mb-1">
                 <Volume2 size={12} color="#8B5CF6" />
-                <Text className="text-xs text-primary ml-1">JanSathi AI</Text>
+                <Text className="text-xs text-primary ml-1">
+                  {t.chat.botName}
+                </Text>
               </View>
             )}
             <View
@@ -393,7 +385,7 @@ export default function VoiceChatbot() {
               </Text>
             </View>
             <Text className="text-xs text-muted mt-1 px-1">
-              {msg.timestamp.toLocaleTimeString([], {
+              {new Date(msg.timestamp).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
@@ -405,7 +397,7 @@ export default function VoiceChatbot() {
           <View className="self-start mb-3">
             <View className="px-4 py-3 rounded-2xl bg-card border border-border rounded-tl-sm flex-row items-center">
               <ActivityIndicator size="small" color="#8B5CF6" />
-              <Text className="text-muted text-sm ml-2">Thinking...</Text>
+              <Text className="text-muted text-sm ml-2">{t.chat.thinking}</Text>
             </View>
           </View>
         )}
@@ -421,7 +413,7 @@ export default function VoiceChatbot() {
           {getStatusText()}
         </Text>
 
-        {/* Mic button — shown when voice available */}
+        {/* Mic button */}
         {voiceAvailable && (
           <View className="items-center mb-4">
             <View className="flex-row items-center gap-4">
@@ -456,21 +448,17 @@ export default function VoiceChatbot() {
               </Pressable>
             </View>
             <Text className="text-muted text-xs mt-2 text-center">
-              {language === "en"
-                ? "Speak in English or Hindi"
-                : "हिंदी या English में बोलें"}
+              {t.chat.speakHint}
             </Text>
           </View>
         )}
 
-        {/* Text Input — always visible */}
+        {/* Text Input */}
         <View className="flex-row items-center gap-2">
           <TextInput
             value={textInput}
             onChangeText={setTextInput}
-            placeholder={
-              language === "hi" ? "अपना सवाल लिखें..." : "Type your message..."
-            }
+            placeholder={t.chat.typeMessage}
             placeholderTextColor="#94A3B8"
             className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-foreground text-sm"
             multiline={false}

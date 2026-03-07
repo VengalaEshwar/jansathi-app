@@ -2,24 +2,24 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Heart, Sparkles, User, Info, ArrowRight } from "lucide-react-native";
 import { Card } from "@/components/Card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Home = () => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const quickLinks = [
     {
       icon: Heart,
-      title: "Health Services",
-      description:
-        "Scan medicines, read prescriptions, and find nearby clinics",
+      title: t.home.healthServices,
+      description: t.home.healthDesc,
       path: "/health",
       gradient: true,
     },
     {
       icon: Sparkles,
-      title: "Government Assist",
-      description:
-        "AI-powered help with forms, schemes, and services",
+      title: t.home.govAssist,
+      description: t.home.govDesc,
       path: "/g-assist",
       gradient: false,
     },
@@ -33,18 +33,18 @@ const Home = () => {
         </View>
 
         <Text className="text-3xl font-bold mb-3 text-center text-foreground">
-          Welcome to JanSathi
+          {t.home.welcome}
         </Text>
 
         <Text className="text-muted text-center mb-6">
-          Your AI-powered co-pilot for healthcare and government services.
+          {t.home.subtitle}
         </Text>
 
         <Pressable
           onPress={() => router.push("/health")}
           className="flex-row items-center bg-primary px-6 py-3 rounded-xl"
         >
-          <Text className="text-white text-lg mr-2">Get Started</Text>
+          <Text className="text-white text-lg mr-2">{t.home.getStarted}</Text>
           <ArrowRight size={20} color="white" />
         </Pressable>
       </View>
@@ -62,15 +62,15 @@ const Home = () => {
 
       <Card
         icon={User}
-        title="Your Profile"
-        description="Manage preferences and accessibility"
+        title={t.home.yourProfile}
+        description={t.home.profileDesc}
         onPress={() => router.push("/profile")}
       />
 
       <Card
         icon={Info}
-        title="About JanSathi"
-        description="Learn about our mission"
+        title={t.home.about}
+        description={t.home.aboutDesc}
         onPress={() => router.push("/about")}
       />
     </ScrollView>

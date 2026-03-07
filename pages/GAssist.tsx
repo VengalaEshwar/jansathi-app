@@ -2,46 +2,50 @@ import { View, Text, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Camera, Mic, Sparkles, BookOpen, Users } from "lucide-react-native";
 import { Card } from "@/components/Card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const GAssist = () => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const gAssistFeatures = [
     {
       icon: Camera,
-      title: "Photo-to-Form AI",
-      description: "Upload documents and auto-fill forms",
+      title: t.gAssist.photoForm,
+      description: t.gAssist.photoFormDesc,
       action: () => router.push("/g-assist/photo-to-form"),
     },
     {
       icon: Mic,
-      title: "Voice Chatbot",
-      description: "Talk to AI in Indian languages",
+      title: t.gAssist.voiceChat,
+      description: t.gAssist.voiceChatDesc,
       action: () => router.push("/g-assist/voice-chatbot"),
     },
     {
       icon: Sparkles,
-      title: "Scheme Finder",
-      description: "Find schemes you’re eligible for",
+      title: t.gAssist.schemeFinder,
+      description: t.gAssist.schemeFinderDesc,
       action: () => router.push("/g-assist/scheme-finder"),
     },
     {
       icon: BookOpen,
-      title: "Step Guides",
-      description: "Guides to complete government procedures",
-      action: () => Alert.alert("Coming Soon"),
+      title: t.gAssist.stepGuides,
+      description: t.gAssist.stepGuidesDesc,
+      action: () => Alert.alert(t.profile.comingSoon),
     },
     {
       icon: Users,
-      title: "Volunteer Network",
-      description: "Get help from NGOs and volunteers",
-      action: () => Alert.alert("Coming Soon"),
+      title: t.gAssist.volunteer,
+      description: t.gAssist.volunteerDesc,
+      action: () => Alert.alert(t.profile.comingSoon),
     },
   ];
 
   return (
     <ScrollView className="flex-1 bg-background px-4 py-6">
-      <Text className="text-2xl font-bold mb-4">Government Assist</Text>
+      <Text className="text-2xl font-bold mb-4 text-foreground">
+        {t.gAssist.title}
+      </Text>
 
       {gAssistFeatures.map((f) => (
         <Card
