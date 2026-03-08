@@ -33,7 +33,7 @@ const LANGUAGES: { code: Language; label: string }[] = [
 // ─── Replace these with your actual OAuth client IDs ───────────────────────
 // Get from: https://console.firebase.google.com → your project → Authentication → Sign-in method → Google → Web SDK configuration
 const GOOGLE_WEB_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
-const GOOGLE_ANDROID_CLIENT_ID = "926203078040-sj5debr8q4sqsh2pkg4rifbfb6rf3n0l.apps.googleusercontent.com";
+const GOOGLE_ANDROID_CLIENT_ID = "926203078040-p656752edigfjdk21gn0fshaij52av7i.apps.googleusercontent.com";
 const GOOGLE_IOS_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
 // ───────────────────────────────────────────────────────────────────────────
 

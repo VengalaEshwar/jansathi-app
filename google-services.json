@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "926203078040-p656752edigfjdk21gn0fshaij52av7i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eshwar_1617.jansathiapp",
+            "certificate_hash": "2f6c852989e8c327a8a95b2f9b69dec0ff62118f"
+          }
+        },
+        {
           "client_id": "926203078040-sj5debr8q4sqsh2pkg4rifbfb6rf3n0l.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

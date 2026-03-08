@@ -1,10 +1,12 @@
 import { auth } from "@/integrations/firebase/client";
 
 import { Platform } from "react-native";
+const PRODUCTION_URL = "https://jansathi-backend.onrender.com/api"; // ← replace with your actual Render URL
+const DEV_URL = Platform.OS === "web" ? "http://localhost:5000/api" : "http://10.100.67.143:5000/api";
 
 const getBaseUrl = () => {
-  if (Platform.OS === "web") return "http://localhost:5000/api";
-  return "http://10.100.67.143:5000/api"; // your PC's IP for mobile
+  if (__DEV__) return DEV_URL;
+  return PRODUCTION_URL;
 };
 
 export const BASE_URL = getBaseUrl();
