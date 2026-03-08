@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 
 const PRODUCTION_URL = "https://jansathi-server.vercel.app/api";
 const DEV_URL = Platform.OS === "web"
-  ? "http://localhost:8081/api"
+  ? "http://localhost:5000/api"
   : "http://10.100.67.143:5000/api";
 
 export const BASE_URL = __DEV__ ? DEV_URL : PRODUCTION_URL;
