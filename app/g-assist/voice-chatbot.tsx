@@ -58,7 +58,6 @@ const isWebVoiceAvailable = () => {
   );
 };
 
-// Map app language to speech recognition locale
 const getLangCode = (lang: Language) => {
   if (lang === "hi") return "hi-IN";
   if (lang === "te") return "te-IN";
@@ -96,9 +95,7 @@ export default function VoiceChatbot() {
   useSpeechRecognitionEvent("error", (event: any) => {
     console.log("Speech error:", event.error);
     setIsListening(false);
-    if (event.error !== "aborted") {
-      setTimeout(() => startListening(), 1000);
-    }
+    // Don't auto-restart on error — causes crash in production
   });
 
   useEffect(() => {
@@ -125,7 +122,7 @@ export default function VoiceChatbot() {
         await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (result.granted) {
         setHasPermission(true);
-        setTimeout(() => startListening(), 500);
+        // Don't auto-start listening — causes crash in production APK
       } else {
         Alert.alert(
           t.chat.micPermissionTitle,
@@ -187,11 +184,15 @@ export default function VoiceChatbot() {
     if (Platform.OS === "web") {
       startWebListening();
     } else if (isNativeVoiceAvailable) {
-      ExpoSpeechRecognitionModule.start({
-        lang: getLangCode(language),
-        interimResults: true,
-        continuous: false,
-      }).catch((e: any) => console.log("Start error:", e));
+      try {
+        ExpoSpeechRecognitionModule.start({
+          lang: getLangCode(language),
+          interimResults: true,
+          continuous: false,
+        });
+      } catch (e: any) {
+        console.log("Start error:", e);
+      }
     }
   };
 
@@ -199,7 +200,11 @@ export default function VoiceChatbot() {
     if (Platform.OS === "web") {
       stopWebListening();
     } else if (isNativeVoiceAvailable) {
-      ExpoSpeechRecognitionModule.stop();
+      try {
+        ExpoSpeechRecognitionModule.stop();
+      } catch (e: any) {
+        console.log("Stop error:", e);
+      }
       setIsListening(false);
       setTranscript("");
     }
@@ -217,7 +222,6 @@ export default function VoiceChatbot() {
     setTranscript("");
     setTextInput("");
 
-    // Auto-detect language from text
     const isHindi = /[\u0900-\u097F]/.test(text);
     const isTelugu = /[\u0C00-\u0C7F]/.test(text);
     const detectedLang: Language = isHindi
@@ -258,7 +262,7 @@ export default function VoiceChatbot() {
       speakResponse(data.reply, detectedLang);
     } catch (e: any) {
       Alert.alert(t.common.error, e.message || t.chat.responseFailed);
-      if (isNativeVoiceAvailable) setTimeout(() => startListening(), 500);
+      // Don't auto-restart listening on error
     } finally {
       dispatch(setThinking(false));
     }
@@ -288,7 +292,7 @@ export default function VoiceChatbot() {
       rate: 0.9,
       onDone: () => {
         setIsSpeaking(false);
-        if (isNativeVoiceAvailable) setTimeout(() => startListening(), 500);
+        // Don't auto-restart listening — causes crash in production APK
       },
       onStopped: () => setIsSpeaking(false),
       onError: () => setIsSpeaking(false),
@@ -340,7 +344,6 @@ export default function VoiceChatbot() {
           {t.chat.title}
         </Text>
 
-        {/* Language indicator — read only, controlled by app language */}
         <View className="px-3 py-1 rounded-full bg-secondary border border-border">
           <Text className="text-foreground text-sm font-semibold">
             {language?.toUpperCase()}
@@ -437,7 +440,7 @@ export default function VoiceChatbot() {
                   justifyContent: "center",
                   borderWidth: 3,
                   borderColor: isListening ? "#A78BFA" : "#334155",
-                  opacity: isThinking || isSpeaking ? 0.5 : 1,
+                  opacity: isThinking || isSpeaking || !hasPermission ? 0.5 : 1,
                 }}
               >
                 {isListening ? (
