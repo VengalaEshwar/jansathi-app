@@ -156,3 +156,17 @@ eas build:configure
 # Build shareable APK
 eas build --platform android --profile preview
 Share the APK download link with your testers. No Play Store account needed yet.
+
+Enable Developer Options on your phone → Settings → About Phone → tap Build Number 7 times
+Enable USB Debugging → Settings → Developer Options → USB Debugging → ON
+Connect phone via USB → allow the connection prompt on phone
+
+Then run:
+bashnpx expo run:android --variant release
+```
+
+Use `--variant release` to get the production build (same as EAS preview). Without it you get a debug build.
+
+The APK will also be saved at:
+```
+android/app/build/outputs/apk/release/app-release.apk

@@ -51,11 +51,16 @@ export default function Auth() {
   const [lastName, setLastName] = useState("");
 
   // expo-auth-session Google provider (works on Expo Go + native builds)
+  // const [request, response, promptAsync] = Google.useAuthRequest({
+  //   webClientId: GOOGLE_WEB_CLIENT_ID,
+  //   androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+  //   iosClientId: GOOGLE_IOS_CLIENT_ID,
+  // });
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
-  });
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  androidClientId: GOOGLE_WEB_CLIENT_ID, // ← use web client ID for android too
+  iosClientId: GOOGLE_WEB_CLIENT_ID,
+});
 
   // Handle Google sign-in response
   const handleGoogleSignIn = async () => {
