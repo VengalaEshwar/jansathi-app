@@ -1,27 +1,44 @@
 import { auth } from "@/integrations/firebase/client";
-
 import { Platform } from "react-native";
-const PRODUCTION_URL = "https://jansathi-server.vercel.app/api"; // ← replace with your actual Render URL
-const DEV_URL = Platform.OS === "web" ? "http://localhost:5000/api" : "http://10.100.67.143:5000/api";
 
-const getBaseUrl = () => {
-  if (__DEV__) return DEV_URL;
-  return PRODUCTION_URL;
+const PRODUCTION_URL = "https://jansathi-server.vercel.app/api";
+const DEV_URL = Platform.OS === "web"
+  ? "http://localhost:8081/api"
+  : "http://10.100.67.143:5000/api";
+
+export const BASE_URL = __DEV__ ? DEV_URL : PRODUCTION_URL;
+
+// Helper to wait for Firebase auth to be ready
+const getToken = (): Promise<string | null> => {
+  return new Promise((resolve) => {
+    // If already logged in, get token immediately
+    if (auth.currentUser) {
+      auth.currentUser.getIdToken().then(resolve).catch(() => resolve(null));
+      return;
+    }
+    // Otherwise wait for auth state to load
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      unsubscribe();
+      if (user) {
+        const token = await user.getIdToken();
+        resolve(token);
+      } else {
+        resolve(null);
+      }
+    });
+  });
 };
 
-export const BASE_URL = getBaseUrl();
 export const apiRequest = async (
   endpoint: string,
   method: string = "GET",
   body?: object
 ) => {
-  const currentUser = auth.currentUser;
+  const token = await getToken();
 
-  if (!currentUser) {
+  if (!token) {
     throw new Error("Not authenticated");
   }
-
-  const token = await currentUser.getIdToken();
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method,
@@ -39,21 +56,19 @@ export const apiRequest = async (
 
   return response.json();
 };
-export const apiUploadImage = async (endpoint: string, imageUri: string) => {
-  const currentUser = auth.currentUser;
-  if (!currentUser) throw new Error("Not authenticated");
 
-  const token = await currentUser.getIdToken();
+export const apiUploadImage = async (endpoint: string, imageUri: string) => {
+  const token = await getToken();
+
+  if (!token) throw new Error("Not authenticated");
 
   const formData = new FormData();
 
   if (imageUri.startsWith("data:") || imageUri.startsWith("http") || imageUri.startsWith("blob:")) {
-    // Web: fetch the image and convert to blob
     const imageResponse = await fetch(imageUri);
     const blob = await imageResponse.blob();
     formData.append("image", blob, "image.jpg");
   } else {
-    // Mobile: use URI directly
     formData.append("image", {
       uri: imageUri,
       type: "image/jpeg",
