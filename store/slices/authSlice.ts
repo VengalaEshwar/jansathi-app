@@ -25,6 +25,7 @@ interface DbUser {
   language: "en" | "hi" | "te";
   notifications: Notifications;
   personalInfo: PersonalInfo;
+  
 }
 
 interface AuthState {

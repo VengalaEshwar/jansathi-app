@@ -41,7 +41,8 @@ export const t = {
       search: "Search",
       refresh: "Refresh",
       found: "found",
-       success: "Success"
+       success: "Success",
+       delete: "Delete" 
     },
     clinics: {
       title: "Nearby Clinics",
@@ -143,6 +144,10 @@ export const t = {
       scans: "Scans",
       forms: "Forms",
       schemes: "Schemes",
+      changePhoto: "Change Photo", 
+      photoUpdated: "Photo updated successfully",
+      deletePhoto: "Remove Photo",
+       deletePhotoConfirm: "Remove your profile photo?"
 
     },
     auth: {
@@ -392,7 +397,8 @@ personalInfo: {
       search: "खोजें",
       refresh: "रीफ्रेश",
       found: "मिले",
-       success: "सफलता"
+       success: "सफलता",
+      delete: "हटाएं"
     },
     clinics: {
       title: "नजदीकी क्लीनिक",
@@ -522,6 +528,10 @@ personalInfo: {
       scans: "स्कैन",
       forms: "फॉर्म",
       schemes: "योजनाएं",
+      changePhoto: "फ़ोटो बदलें",
+      photoUpdated: "फ़ोटो सफलतापूर्वक अपडेट की गई",
+      deletePhoto: "फ़ोटो हटाएं",
+       deletePhotoConfirm: "अपनी प्रोफ़ाइल फ़ोटो हटाएं?"
     },
     auth: {
     subtitle: "सरकारी सेवाओं और स्वास्थ्य के लिए आपका AI सहायक",
@@ -745,7 +755,8 @@ personalInfo: {
       search: "వెతకండి",
       refresh: "రిఫ్రెష్",
       found: "కనుగొనబడ్డాయి",
-      success: "విజయం"
+      success: "విజయం",
+      delete: "తొలగించు"
     },
     clinics: {
       title: "దగ్గరలోని క్లినిక్‌లు",
@@ -875,6 +886,10 @@ personalInfo: {
       scans: "స్కాన్‌లు",
       forms: "ఫారాలు",
       schemes: "పథకాలు",
+      changePhoto: "ఫోటో మార్చు",
+      photoUpdated: "ఫోటో విజయవంతంగా అప్‌డేట్ చేయబడింది",
+      deletePhoto: "ఫోటో తొలగించు",
+       deletePhotoConfirm: "మీ ప్రొఫైల్ ఫోటో తొలగించాలా?"
     },
     auth: {
     subtitle: "ప్రభుత్వ సేవలు మరియు ఆరోగ్యం కోసం మీ AI సహాయకుడు",
