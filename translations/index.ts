@@ -96,6 +96,8 @@ export const t = {
       readFailed: "Failed to read prescription",
       howToUse: "How to use:",
       instructions: "• Take a clear photo of your prescription\n• Ensure handwriting is legible and well-lit\n• Upload the image for OCR processing\n• Listen to audio instructions",
+      history: "Recent Scans",
+       noHistory: "No previous scans"
 
     },
     medicine: {
@@ -112,6 +114,8 @@ export const t = {
       analyzeFailed: "Failed to analyze medicine",
       howToUse: "How to use:",
       instructions: "• Take a clear photo of the medicine strip or bottle\n• Ensure barcode, expiry date, and batch number are visible\n• Upload the image for instant analysis\n• Get authenticity, expiry, and safety warnings",
+       history: "Recent Scans",
+        noHistory: "No previous scans" 
 },
     profile: {
       name: "Name",
@@ -453,6 +457,8 @@ personalInfo: {
       readFailed: "पर्ची पढ़ने में विफल",
       howToUse: "कैसे उपयोग करें:",
       instructions: "• अपनी पर्ची की साफ फोटो लें\n• सुनिश्चित करें कि लिखावट स्पष्ट हो\n• OCR प्रोसेसिंग के लिए फोटो अपलोड करें\n• ऑडियो निर्देश सुनें",
+      history: "हाल के स्कैन",
+       noHistory: "कोई पिछला स्कैन नहीं"
 
     },
     medicine: {
@@ -469,6 +475,8 @@ personalInfo: {
       analyzeFailed: "दवाई की जांच विफल",
       howToUse: "कैसे उपयोग करें:",
       instructions: "• दवाई की स्ट्रिप या बोतल की साफ फोटो लें\n• बारकोड, एक्सपायरी डेट और बैच नंबर दिखें\n• तुरंत जांच के लिए फोटो अपलोड करें\n• प्रामाणिकता, एक्सपायरी और सुरक्षा जानकारी पाएं",
+      history: "हाल के स्कैन", 
+      noHistory: "कोई पिछला स्कैन नहीं"
     },
     photoForm: {
   title: "फोटो से फॉर्म AI",
@@ -810,7 +818,8 @@ personalInfo: {
     readFailed: "ప్రిస్క్రిప్షన్ చదవడం విఫలమైంది",
     howToUse: "ఎలా వాడాలి:",
     instructions: "• మీ ప్రిస్క్రిప్షన్ యొక్క స్పష్టమైన ఫోటో తీయండి\n• రాత స్పష్టంగా మరియు బాగా వెలుతురులో ఉండేలా చూసుకోండి\n• OCR ప్రాసెసింగ్ కోసం ఫోటో అప్‌లోడ్ చేయండి\n• ఆడియో సూచనలు వినండి",
-
+history: "ఇటీవలి స్కాన్లు", 
+noHistory: "మునుపటి స్కాన్లు లేవు"
 
     },
     medicine: {
@@ -827,6 +836,8 @@ personalInfo: {
       instructions: "• మందుల స్ట్రిప్ లేదా బాటిల్ యొక్క స్పష్టమైన ఫోటో తీయండి\n• బార్‌కోడ్, గడువు తేదీ మరియు బ్యాచ్ నంబర్ కనిపించేలా చూసుకోండి\n• తక్షణ విశ్లేషణ కోసం ఫోటో అప్‌లోడ్ చేయండి\n• ప్రామాణికత, గడువు మరియు భద్రత హెచ్చరికలు తెలుసుకోండి",
       upload: "మందుల ఫోటో అప్‌లోడ్ చేయండి",
       placeholder: "విశ్లేషణ కోసం మందుల ఫోటో అప్‌లోడ్ చేయండి",
+      history: "ఇటీవలి స్కాన్లు", 
+      noHistory: "మునుపటి స్కాన్లు లేవు"
     },
     photoForm: {
   title: "ఫోటో నుండి ఫారం AI",
