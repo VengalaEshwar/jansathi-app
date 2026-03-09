@@ -19,23 +19,29 @@ import { useAppDispatch } from "@/store/hooks";
 import { setAppLanguage } from "@/store/slices/appSlice";
 import type { Language } from "@/translations";
 import { Platform } from "react-native";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
 
-WebBrowser.maybeCompleteAuthSession();
+// Native Google Sign-In (Android/iOS only)
+let GoogleSignin: any;
+let statusCodes: any;
+if (Platform.OS !== "web") {
+  try {
+    const RNGoogleSignin = require("@react-native-google-signin/google-signin");
+    GoogleSignin = RNGoogleSignin.GoogleSignin;
+    statusCodes = RNGoogleSignin.statusCodes;
+
+    GoogleSignin.configure({
+      webClientId: "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com",
+    });
+  } catch (e) {
+    console.log("Google Sign-In not available:", e);
+  }
+}
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "hi", label: "हि" },
   { code: "te", label: "తె" },
 ];
-
-// ─── Replace these with your actual OAuth client IDs ───────────────────────
-// Get from: https://console.firebase.google.com → your project → Authentication → Sign-in method → Google → Web SDK configuration
-const GOOGLE_WEB_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
-const GOOGLE_ANDROID_CLIENT_ID = "926203078040-p656752edigfjdk21gn0fshaij52av7i.apps.googleusercontent.com";
-const GOOGLE_IOS_CLIENT_ID = "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com";
-// ───────────────────────────────────────────────────────────────────────────
 
 export default function Auth() {
   const router = useRouter();
@@ -50,51 +56,41 @@ export default function Auth() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  // expo-auth-session Google provider (works on Expo Go + native builds)
-  // const [request, response, promptAsync] = Google.useAuthRequest({
-  //   webClientId: GOOGLE_WEB_CLIENT_ID,
-  //   androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-  //   iosClientId: GOOGLE_IOS_CLIENT_ID,
-  // });
-  const [request, response, promptAsync] = Google.useAuthRequest({
-  webClientId: GOOGLE_WEB_CLIENT_ID,
-  androidClientId: GOOGLE_WEB_CLIENT_ID, // ← use web client ID for android too
-  iosClientId: GOOGLE_WEB_CLIENT_ID,
-});
-
-  // Handle Google sign-in response
   const handleGoogleSignIn = async () => {
-    if (Platform.OS === "web") {
-      // Web: use Firebase popup directly
-      setGoogleLoading(true);
-      try {
+    setGoogleLoading(true);
+    try {
+      if (Platform.OS === "web") {
+        // Web: use Firebase popup
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         router.replace("/");
-      } catch (e: any) {
-        Alert.alert(t.common.error, e.message || t.auth.googleFailed);
-      } finally {
-        setGoogleLoading(false);
+        return;
       }
-      return;
-    }
 
-    // Native: use expo-auth-session
-    setGoogleLoading(true);
-    try {
-      const result = await promptAsync();
-      if (result?.type === "success") {
-        const { id_token } = result.params;
-        const credential = GoogleAuthProvider.credential(id_token);
-        await signInWithCredential(auth, credential);
-        router.replace("/");
-      } else if (result?.type === "cancel" || result?.type === "dismiss") {
-        // User cancelled, do nothing
-      } else {
-        Alert.alert(t.common.error, t.auth.googleFailed);
+      // Native Android/iOS: use native Google Sign-In SDK
+      if (!GoogleSignin) {
+        Alert.alert(t.common.error, "Google Sign-In not available");
+        return;
       }
+
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken;
+
+      if (!idToken) throw new Error("No ID token received");
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      router.replace("/");
+
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.auth.googleFailed);
+      if (statusCodes && e.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled — do nothing
+      } else if (statusCodes && e.code === statusCodes.IN_PROGRESS) {
+        // Sign in already in progress — do nothing
+      } else {
+        Alert.alert(t.common.error, e.message || t.auth.googleFailed);
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -262,7 +258,7 @@ export default function Auth() {
         {/* Google Sign-In Button */}
         <Pressable
           onPress={handleGoogleSignIn}
-          disabled={googleLoading || (!request && Platform.OS !== "web")}
+          disabled={googleLoading}
           className="border border-border bg-card py-3 rounded-lg items-center flex-row justify-center gap-2"
           style={{ opacity: googleLoading ? 0.7 : 1 }}
         >
@@ -270,7 +266,6 @@ export default function Auth() {
             <ActivityIndicator color="#8B5CF6" />
           ) : (
             <>
-              {/* Google "G" logo */}
               <Text style={{ fontSize: 16, fontWeight: "bold", color: "#4285F4" }}>G</Text>
               <Text className="text-foreground font-semibold ml-1">
                 {t.auth.continueWithGoogle}
