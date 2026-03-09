@@ -7,14 +7,15 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { MessageCircle, Send, X } from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 export const ProfileChatbot = () => {
   const { t, language } = useTranslation();
+  const toast = useToast();
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
@@ -46,7 +47,7 @@ export const ProfileChatbot = () => {
         { role: "assistant", content: data.reply },
       ]);
     } catch (error: any) {
-      Alert.alert(t.common.error, error.message || t.profileChat.sendFailed);
+      toast.error(error.message || t.profileChat.sendFailed);
     } finally {
       setLoading(false);
     }

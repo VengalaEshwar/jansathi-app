@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
-  View, Text, Modal, Pressable, ActivityIndicator, Alert,
+  View, Text, Modal, Pressable, ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { apiRequest } from "@/integrations/api/client";
+import { useToast } from "@/hooks/useToast";
 
 interface LanguageDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ const languages = [
 export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState("en");
+  const toast = useToast();
 
   useEffect(() => {
     if (open && userId) loadLanguage();
@@ -37,7 +39,7 @@ export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogPro
       const data = await apiRequest("/auth/profile");
       if (data.user?.language) setLanguage(data.user.language);
     } catch {
-      Alert.alert("Error", "Error loading language preference");
+      toast.error("Error loading language preference");
     }
   };
 
@@ -45,10 +47,10 @@ export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogPro
     setLoading(true);
     try {
       await apiRequest("/auth/profile", "PUT", { language });
-      Alert.alert("Success", "Language preference updated");
+      toast.success("Language preference updated");
       onOpenChange(false);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Error updating language");
+      toast.error(error.message || "Error updating language");
     } finally {
       setLoading(false);
     }

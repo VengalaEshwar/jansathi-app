@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   Platform,
   TextInput,
   KeyboardAvoidingView,
@@ -24,6 +23,7 @@ import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addMessage, setThinking } from "@/store/slices/chatSlice";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 import type { Language } from "@/translations";
 
 // Native speech recognition
@@ -69,6 +69,7 @@ export default function VoiceChatbot() {
   const dispatch = useAppDispatch();
   const { messages, isThinking } = useAppSelector((s) => s.chat);
   const { t, language } = useTranslation();
+  const toast = useToast();
 
   const scrollRef = useRef<ScrollView>(null);
   const webRecognitionRef = useRef<any>(null);
@@ -124,10 +125,7 @@ export default function VoiceChatbot() {
         setHasPermission(true);
         // Don't auto-start listening — causes crash in production APK
       } else {
-        Alert.alert(
-          t.chat.micPermissionTitle,
-          t.chat.micPermissionDesc
-        );
+        toast.error(`${t.chat.micPermissionTitle}: ${t.chat.micPermissionDesc}`);
       }
     } catch (e) {
       console.log("Permission error:", e);
@@ -261,7 +259,7 @@ export default function VoiceChatbot() {
 
       speakResponse(data.reply, detectedLang);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.chat.responseFailed);
+      toast.error(e.message || t.chat.responseFailed);
       // Don't auto-restart listening on error
     } finally {
       dispatch(setThinking(false));

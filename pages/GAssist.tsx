@@ -1,12 +1,14 @@
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Camera, Mic, Sparkles, BookOpen, Users } from "lucide-react-native";
 import { Card } from "@/components/Card";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 const GAssist = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const toast = useToast();
 
   const gAssistFeatures = [
     {
@@ -31,13 +33,13 @@ const GAssist = () => {
       icon: BookOpen,
       title: t.gAssist.stepGuides,
       description: t.gAssist.stepGuidesDesc,
-      action: () => Alert.alert(t.profile.comingSoon),
+      action: () => toast.success(t.profile.comingSoon),
     },
     {
       icon: Users,
       title: t.gAssist.volunteer,
       description: t.gAssist.volunteerDesc,
-      action: () => Alert.alert(t.profile.comingSoon),
+      action: () => toast.success(t.profile.comingSoon),
     },
   ];
 

@@ -43,6 +43,7 @@ export const t = {
       found: "found",
       success: "Success",
       delete: "Delete",
+      confirm: "Confirm"
     },
     clinics: {
       title: "Nearby Clinics",
@@ -409,6 +410,7 @@ export const t = {
       found: "मिले",
       success: "सफलता",
       delete: "हटाएं",
+      confirm: "पुष्टि करें" 
     },
     clinics: {
       title: "नजदीकी क्लीनिक",
@@ -775,6 +777,7 @@ export const t = {
       found: "కనుగొనబడ్డాయి",
       success: "విజయం",
       delete: "తొలగించు",
+      confirm: "నిర్ధారించు"
     },
     clinics: {
       title: "దగ్గరలోని క్లినిక్‌లు",

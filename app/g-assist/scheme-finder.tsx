@@ -7,7 +7,6 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Alert,
   Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -25,6 +24,7 @@ import {
 } from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Scheme {
@@ -96,6 +96,7 @@ export default function SchemeFinder() {
   const router = useRouter();
   const { t, language } = useTranslation();
   const ts = t.scheme;
+  const toast = useToast();
 
   // Browse state
   const [schemes, setSchemes] = useState<Scheme[]>([]);
@@ -157,7 +158,7 @@ export default function SchemeFinder() {
       setPage(p);
       setShowCategories(false);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || ts.loadFailed);
+      toast.error(e.message || ts.loadFailed);
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +167,7 @@ export default function SchemeFinder() {
   /* ── Eligibility check ── */
   const checkEligibility = async () => {
     if (!form.age || !form.gender || !form.state) {
-      Alert.alert(ts.required, ts.requiredDesc);
+      toast.error(ts.requiredDesc);
       return;
     }
     setIsCheckingEligibility(true);
@@ -180,7 +181,7 @@ export default function SchemeFinder() {
       setEligibleSchemes(data.schemes);
       setEligibilityDone(true);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || ts.eligibilityFailed);
+      toast.error(e.message || ts.eligibilityFailed);
     } finally {
       setIsCheckingEligibility(false);
     }

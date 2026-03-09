@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   View, Text, TextInput, Pressable,
-  ActivityIndicator, Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -19,6 +19,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { setAppLanguage } from "@/store/slices/appSlice";
 import type { Language } from "@/translations";
 import { Platform } from "react-native";
+import { useToast } from "@/hooks/useToast";
 
 // Native Google Sign-In (Android/iOS only)
 let GoogleSignin: any;
@@ -55,6 +56,8 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  
+  const toast = useToast();
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -69,7 +72,7 @@ export default function Auth() {
 
       // Native Android/iOS: use native Google Sign-In SDK
       if (!GoogleSignin) {
-        Alert.alert(t.common.error, "Google Sign-In not available");
+        toast.error("Google Sign-In not available");
         return;
       }
 
@@ -89,7 +92,7 @@ export default function Auth() {
       } else if (statusCodes && e.code === statusCodes.IN_PROGRESS) {
         // Sign in already in progress — do nothing
       } else {
-        Alert.alert(t.common.error, e.message || t.auth.googleFailed);
+        toast.error(e.message || t.auth.googleFailed);
       }
     } finally {
       setGoogleLoading(false);
@@ -98,17 +101,17 @@ export default function Auth() {
 
   const handleSignUp = async () => {
     if (!email || !password || !firstName || !lastName) {
-      Alert.alert(t.common.error, t.auth.fillAllFields);
+      toast.error(t.auth.fillAllFields);
       return;
     }
     setLoading(true);
     try {
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(user, { displayName: `${firstName} ${lastName}` });
-      Alert.alert(t.auth.success, t.auth.accountCreated);
+      toast.success(t.auth.accountCreated);
       router.replace("/");
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.auth.signupFailed);
+      toast.error(e.message || t.auth.signupFailed);
     } finally {
       setLoading(false);
     }
@@ -116,7 +119,7 @@ export default function Auth() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert(t.common.error, t.auth.enterCredentials);
+      toast.error(t.auth.enterCredentials);
       return;
     }
     setLoading(true);
@@ -124,12 +127,12 @@ export default function Auth() {
       await signInWithEmailAndPassword(auth, email, password);
       router.replace("/");
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.auth.signinFailed);
+      toast.error(e.message || t.auth.signinFailed);
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <View className="flex-1 bg-background items-center justify-center px-5">
 

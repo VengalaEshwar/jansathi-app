@@ -6,7 +6,6 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Alert,
   Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -16,6 +15,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { updateDbUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Platform } from "react-native";
+import { useToast } from "@/hooks/useToast";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ExtraField {
   label: string;
@@ -27,6 +28,8 @@ export default function PersonalInfo() {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const pi = t.personalInfo;
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,7 +76,7 @@ export default function PersonalInfo() {
         setExtraFields(data.user.personalInfo?.extra || []);
       }
     } catch {
-      Alert.alert(t.common.error, t.common.error);
+      toast.error(t.common.error);
     } finally {
       setLoading(false);
     }
@@ -99,7 +102,7 @@ export default function PersonalInfo() {
         router.back();
       }
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.common.error);
+      toast.error(e.message || t.common.error);
     } finally {
       setSaving(false);
     }
@@ -126,19 +129,12 @@ export default function PersonalInfo() {
   };
 
   const confirmDelete = (index: number) => {
-    if (Platform.OS === "web") {
-      setDeleteIndex(index);
-      setDeleteModalOpen(true);
-    } else {
-      Alert.alert(pi.deleteField, pi.deleteConfirm, [
-        { text: t.common.cancel, style: "cancel" },
-        {
-          text: pi.deleteField,
-          style: "destructive",
-          onPress: () => setExtraFields(extraFields.filter((_, i) => i !== index)),
-        },
-      ]);
-    }
+    confirm({
+      title: pi.deleteField,
+      message: pi.deleteConfirm,
+      variant: "danger",
+      onConfirm: () => setExtraFields(extraFields.filter((_, i) => i !== index)),
+    });
   };
 
   const executeDelete = () => {

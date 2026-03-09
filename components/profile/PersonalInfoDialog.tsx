@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  View, Text, Modal, Pressable, TextInput, ActivityIndicator, Alert,
+  View, Text, Modal, Pressable, TextInput, ActivityIndicator,
 } from "react-native";
 import { apiRequest } from "@/integrations/api/client";
+import { useToast } from "@/hooks/useToast";
 
 interface PersonalInfoDialogProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface PersonalInfoDialogProps {
 
 export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -38,7 +40,7 @@ export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoD
         });
       }
     } catch {
-      Alert.alert("Error", "Error loading profile");
+      toast.error("Error loading profile");
     }
   };
 
@@ -51,10 +53,10 @@ export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoD
         location: formData.location,
         phone: formData.phone,
       });
-      Alert.alert("Success", "Profile updated successfully");
+      toast.success("Profile updated successfully");
       onOpenChange(false);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Error updating profile");
+      toast.error(error.message || "Error updating profile");
     } finally {
       setLoading(false);
     }
@@ -69,12 +71,14 @@ export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoD
           <View className="flex-row gap-3 mb-3">
             <TextInput
               placeholder="First Name"
+              placeholderTextColor="#94A3B8"
               value={formData.first_name}
               onChangeText={(v) => setFormData({ ...formData, first_name: v })}
               className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
             />
             <TextInput
               placeholder="Last Name"
+              placeholderTextColor="#94A3B8"
               value={formData.last_name}
               onChangeText={(v) => setFormData({ ...formData, last_name: v })}
               className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
@@ -83,6 +87,7 @@ export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoD
 
           <TextInput
             placeholder="Age"
+            placeholderTextColor="#94A3B8"
             keyboardType="numeric"
             value={formData.age}
             onChangeText={(v) => setFormData({ ...formData, age: v })}
@@ -90,12 +95,14 @@ export const PersonalInfoDialog = ({ open, onOpenChange, userId }: PersonalInfoD
           />
           <TextInput
             placeholder="City, State"
+            placeholderTextColor="#94A3B8"
             value={formData.location}
             onChangeText={(v) => setFormData({ ...formData, location: v })}
             className="border border-border rounded-lg px-3 py-2 mb-3 text-foreground"
           />
           <TextInput
             placeholder="+91 XXXXXXXXXX"
+            placeholderTextColor="#94A3B8"
             keyboardType="phone-pad"
             value={formData.phone}
             onChangeText={(v) => setFormData({ ...formData, phone: v })}

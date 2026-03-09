@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
 } from "react-native";
@@ -16,6 +15,7 @@ import Markdown from "react-native-markdown-display";
 import { apiUploadImage, apiRequest } from "@/integrations/api/client";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 interface HistoryItem {
   _id: string;
@@ -27,6 +27,7 @@ interface HistoryItem {
 export default function MedicineScanner() {
   const router = useRouter();
   const { t, language } = useTranslation();
+  const toast = useToast();
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState("");
@@ -63,7 +64,7 @@ export default function MedicineScanner() {
       setAnalysis(data.analysis);
       loadHistory();
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.medicine.analyzeFailed);
+      toast.error(e.message || t.medicine.analyzeFailed);
     } finally {
       setIsAnalyzing(false);
     }

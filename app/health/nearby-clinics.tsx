@@ -5,7 +5,6 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
-  Alert,
   FlatList,
   Platform,
 } from "react-native";
@@ -22,6 +21,7 @@ import {
   Map,
 } from "lucide-react-native";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 let MapView: any, Marker: any, PROVIDER_GOOGLE: any;
 if (Platform.OS !== "web") {
@@ -48,6 +48,7 @@ export default function NearbyClinics() {
   const router = useRouter();
   const { t } = useTranslation();
   const mapRef = useRef<any>(null);
+  const toast = useToast();
 
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
@@ -71,7 +72,7 @@ export default function NearbyClinics() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(t.clinics.permissionDenied, t.clinics.permissionDesc);
+        toast.error(`${t.clinics.permissionDenied}: ${t.clinics.permissionDesc}`);
         setIsLoading(false);
         return;
       }
@@ -87,7 +88,7 @@ export default function NearbyClinics() {
       setUserLocation(coords);
       await fetchClinics(coords.latitude, coords.longitude, radius);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.clinics.locationFailed);
+      toast.error(e.message || t.clinics.locationFailed);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +146,7 @@ export default function NearbyClinics() {
 
       setClinics(sorted);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.clinics.fetchFailed);
+      toast.error(e.message || t.clinics.fetchFailed);
     } finally {
       setIsFetching(false);
     }

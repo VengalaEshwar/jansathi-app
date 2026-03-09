@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  View, Text, Modal, Pressable, Switch, ActivityIndicator, Alert,
+  View, Text, Modal, Pressable, Switch, ActivityIndicator,
 } from "react-native";
 import { apiRequest } from "@/integrations/api/client";
+import { useToast } from "@/hooks/useToast";
 
 interface NotificationsDialogProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface NotificationsDialogProps {
 
 export const NotificationsDialog = ({ open, onOpenChange, userId }: NotificationsDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const [settings, setSettings] = useState({
     enabled: true,
     medicationReminders: true,
@@ -28,7 +30,7 @@ export const NotificationsDialog = ({ open, onOpenChange, userId }: Notification
       const data = await apiRequest("/auth/profile");
       if (data.user?.notifications) setSettings(data.user.notifications);
     } catch {
-      Alert.alert("Error", "Error loading notification settings");
+      toast.error("Error loading notification settings");
     }
   };
 
@@ -36,10 +38,10 @@ export const NotificationsDialog = ({ open, onOpenChange, userId }: Notification
     setLoading(true);
     try {
       await apiRequest("/auth/profile", "PUT", { notifications: settings });
-      Alert.alert("Success", "Notification settings updated");
+      toast.success("Notification settings updated");
       onOpenChange(false);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Error updating settings");
+      toast.error(error.message || "Error updating settings");
     } finally {
       setLoading(false);
     }

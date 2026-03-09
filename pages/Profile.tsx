@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   Modal,
   Image,
   Platform 
@@ -36,6 +35,8 @@ import { updateDbUser } from "@/store/slices/authSlice";
 import { apiRequest, BASE_URL } from "@/integrations/api/client";
 import type { Language } from "@/translations";
 import * as ImagePicker from "expo-image-picker";
+import { useToast } from "@/hooks/useToast";
+
 const LANGUAGES: { code: Language; native: string; label: string }[] = [
   { code: "en", native: "English", label: "EN" },
   { code: "hi", native: "हिंदी", label: "HI" },
@@ -48,6 +49,7 @@ export default function Profile() {
   const { t, language } = useTranslation();
   const dispatch = useAppDispatch();
   const dbUser = useAppSelector((s) => s.auth.dbUser);
+  const toast = useToast();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [helpSupportOpen, setHelpSupportOpen] = useState(false);
@@ -63,7 +65,7 @@ export default function Profile() {
   }, [user, loading]);
 
   const closeAvatarModal = () => {
-    setAvatarModalOpen(false); // ← fixed: was calling itself recursively
+    setAvatarModalOpen(false); 
     setConfirmDelete(false);
   };
 
@@ -72,7 +74,7 @@ export default function Profile() {
       await signOut(auth);
       router.replace("/auth");
     } catch {
-      Alert.alert(t.common.error, t.profile.signOutFailed);
+      toast.error(t.profile.signOutFailed);
     }
   };
 
@@ -85,63 +87,63 @@ export default function Profile() {
   };
 
   const pickAndUploadAvatar = async () => {
-  closeAvatarModal();
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    Alert.alert(t.common.error, "Permission to access photos is required");
-    return;
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.8,
-  });
-
-  if (!result.canceled && result.assets[0]) {
-    setAvatarLoading(true);
-    try {
-      const currentUser = auth.currentUser;
-      const token = currentUser ? await currentUser.getIdToken() : null;
-      const asset = result.assets[0];
-
-      const formData = new FormData();
-
-      if (Platform.OS === "web") {
-        // On web, fetch the uri as blob and append as File
-        const response = await fetch(asset.uri);
-        const blob = await response.blob();
-        const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-        formData.append("avatar", file);
-      } else {
-        // On native, use the uri object directly
-        formData.append("avatar", {
-          uri: asset.uri,
-          type: "image/jpeg",
-          name: "avatar.jpg",
-        } as any);
-      }
-
-      const response = await fetch(`${BASE_URL}/auth/upload-avatar`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        dispatch(updateDbUser({ avatar: data.avatarUrl }));
-      } else {
-        Alert.alert(t.common.error, data.message || "Upload failed");
-      }
-    } catch (e: any) {
-      Alert.alert(t.common.error, e.message || "Failed to upload photo");
-    } finally {
-      setAvatarLoading(false);
+    closeAvatarModal();
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast.error("Permission to access photos is required");
+      return;
     }
-  }
-};
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setAvatarLoading(true);
+      try {
+        const currentUser = auth.currentUser;
+        const token = currentUser ? await currentUser.getIdToken() : null;
+        const asset = result.assets[0];
+
+        const formData = new FormData();
+
+        if (Platform.OS === "web") {
+          // On web, fetch the uri as blob and append as File
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+          formData.append("avatar", file);
+        } else {
+          // On native, use the uri object directly
+          formData.append("avatar", {
+            uri: asset.uri,
+            type: "image/jpeg",
+            name: "avatar.jpg",
+          } as any);
+        }
+
+        const response = await fetch(`${BASE_URL}/auth/upload-avatar`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          dispatch(updateDbUser({ avatar: data.avatarUrl }));
+        } else {
+          toast.error(data.message || "Upload failed");
+        }
+      } catch (e: any) {
+        toast.error(e.message || "Failed to upload photo");
+      } finally {
+        setAvatarLoading(false);
+      }
+    }
+  };
 
   const deleteAvatar = async () => {
     closeAvatarModal();
@@ -152,7 +154,7 @@ export default function Profile() {
         dispatch(updateDbUser({ avatar: "", avatarPublicId: "" }));
       }
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || "Failed to delete photo");
+      toast.error(e.message || "Failed to delete photo");
     } finally {
       setAvatarLoading(false);
     }
@@ -197,7 +199,7 @@ export default function Profile() {
       icon: Shield,
       title: t.profile.privacy,
       desc: t.profile.comingSoon,
-      action: () => Alert.alert(t.profile.comingSoon),
+      action: () => toast.success(t.profile.comingSoon),
     },
     {
       icon: HelpCircle,

@@ -1,12 +1,14 @@
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Scan, FileText, AlertTriangle, MapPin, Bell } from "lucide-react-native";
 import { Card } from "@/components/Card";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 const Health = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const toast = useToast();
 
   const healthFeatures = [
     {
@@ -25,7 +27,7 @@ const Health = () => {
       icon: AlertTriangle,
       title: t.health.dangerAlerts,
       description: t.health.dangerAlertsDesc,
-      action: () => Alert.alert(t.profile.comingSoon),
+      action: () => toast.success(t.profile.comingSoon),
     },
     {
       icon: MapPin,
@@ -37,7 +39,7 @@ const Health = () => {
       icon: Bell,
       title: t.health.healthNotifications,
       description: t.health.healthNotificationsDesc,
-      action: () => Alert.alert(t.profile.comingSoon),
+      action: () => toast.success(t.profile.comingSoon),
     },
   ];
 

@@ -15,7 +15,8 @@ import { setUser, setDbUser, clearUser } from "@/store/slices/authSlice";
 import { setAppLanguage } from "@/store/slices/appSlice";
 import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch } from "@/store/hooks";
-
+import { ToastContainer } from "@/components/Toast";
+import { ConfirmModal } from "@/components/ConfirmModal";
 const queryClient = new QueryClient();
 LogBox.ignoreAllLogs();
 
@@ -79,6 +80,9 @@ function AppContent() {
             pathname !== "/g-assist/voice-chatbot" && <GlobalChatbot />}
         </View>
       </SafeAreaView>
+       {/* Global overlays — outside SafeAreaView so they cover everything */}
+    <ToastContainer />
+    <ConfirmModal />
     </SafeAreaProvider>
   );
 }

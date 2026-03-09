@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  View, Text, Modal, Pressable, Switch, ActivityIndicator, Alert,
+  View, Text, Modal, Pressable, Switch, ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { apiRequest } from "@/integrations/api/client";
+import { useToast } from "@/hooks/useToast";
 
 interface AccessibilityDialogProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface AccessibilityDialogProps {
 
 export const AccessibilityDialog = ({ open, onOpenChange, userId }: AccessibilityDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const [settings, setSettings] = useState({
     text_size: "medium",
     high_contrast: false,
@@ -36,7 +38,7 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
         });
       }
     } catch {
-      Alert.alert("Error", "Error loading accessibility settings");
+      toast.error("Error loading accessibility settings");
     }
   };
 
@@ -51,10 +53,10 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
           voiceNavigation: settings.voice_navigation,
         },
       });
-      Alert.alert("Success", "Accessibility settings updated");
+      toast.success("Accessibility settings updated");
       onOpenChange(false);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Error updating settings");
+      toast.error(error.message || "Error updating settings");
     } finally {
       setLoading(false);
     }

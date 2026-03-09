@@ -5,7 +5,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
 } from "react-native";
@@ -16,6 +15,7 @@ import { apiUploadImage, apiRequest } from "@/integrations/api/client";
 import { ImageUpload } from "@/components/ImageUpload";
 import Markdown from "react-native-markdown-display";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/hooks/useToast";
 
 interface HistoryItem {
   _id: string;
@@ -27,6 +27,7 @@ interface HistoryItem {
 export default function PrescriptionReader() {
   const router = useRouter();
   const { t, language } = useTranslation();
+  const toast = useToast();
 
   const [isReading, setIsReading] = useState(false);
   const [prescriptionText, setPrescriptionText] = useState("");
@@ -63,7 +64,7 @@ export default function PrescriptionReader() {
       setPrescriptionText(data.prescriptionText);
       loadHistory(); // refresh history after new scan
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.prescription.readFailed);
+      toast.error(e.message || t.prescription.readFailed);
     } finally {
       setIsReading(false);
     }

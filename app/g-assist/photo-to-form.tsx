@@ -6,7 +6,6 @@ import {
   Pressable,
   ActivityIndicator,
   TextInput,
-  Alert,
   Linking,
   Modal,
 } from "react-native";
@@ -20,6 +19,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateDbUser } from "@/store/slices/authSlice";
+import { useToast } from "@/hooks/useToast";
 
 interface FormField {
   id: string;
@@ -43,6 +43,7 @@ export default function PhotoToForm() {
   const { t } = useTranslation();
   const dbUser = useAppSelector((s) => s.auth.dbUser);
   const dispatch = useAppDispatch();
+  const toast = useToast();
 
   const [step, setStep] = useState<"upload" | "fill" | "done">("upload");
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +91,7 @@ export default function PhotoToForm() {
       setFormData(initialData);
       setStep("fill");
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.photoForm.extractFailed);
+      toast.error(e.message || t.photoForm.extractFailed);
     } finally {
       setIsLoading(false);
     }
@@ -101,8 +102,7 @@ export default function PhotoToForm() {
       (f) => f.required && !formData[f.label]?.trim()
     );
     if (missingRequired.length > 0) {
-      Alert.alert(
-        t.photoForm.requiredFields,
+      toast.error(
         `${t.photoForm.pleaseFill}: ${missingRequired.map((f) => f.label).join(", ")}`
       );
       return;
@@ -158,7 +158,7 @@ export default function PhotoToForm() {
         }
       }
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.photoForm.fillFailed);
+      toast.error(e.message || t.photoForm.fillFailed);
     } finally {
       setIsLoading(false);
     }
