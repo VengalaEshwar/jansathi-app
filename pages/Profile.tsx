@@ -377,7 +377,7 @@ export default function Profile() {
         <View className="flex-row gap-3 mt-6 p-4">
           {[
             { label: t.profile.scans, count: dbUser?.prescriptionHistory?.length ?? 0 },
-            { label: t.profile.forms, count: 0 },
+            { label: t.profile.forms, count: dbUser?.formHistory?.length ?? 0 },
             { label: t.profile.schemes, count: 0 },
           ].map((stat, i) => (
             <View key={i} className="flex-1 bg-secondary p-3 rounded-xl items-center">

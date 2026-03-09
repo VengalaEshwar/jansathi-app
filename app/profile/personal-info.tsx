@@ -7,13 +7,15 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Plus, Pencil, Trash2, Check, X } from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { updateDbUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Platform } from "react-native";
 
 interface ExtraField {
   label: string;
@@ -24,7 +26,7 @@ export default function PersonalInfo() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  const pi = t.personalInfo; // shorthand
+  const pi = t.personalInfo;
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,6 +47,10 @@ export default function PersonalInfo() {
   const [addingNew, setAddingNew] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
+
+  // Delete confirmation
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -90,7 +96,6 @@ export default function PersonalInfo() {
       });
       if (data.success) {
         dispatch(updateDbUser(data.user));
-        Alert.alert(t.common.success, pi.updateSuccess);
         router.back();
       }
     } catch (e: any) {
@@ -120,15 +125,28 @@ export default function PersonalInfo() {
     setEditValue("");
   };
 
-  const deleteField = (index: number) => {
-    Alert.alert(pi.deleteField, pi.deleteConfirm, [
-      { text: t.common.cancel, style: "cancel" },
-      {
-        text: pi.deleteField,
-        style: "destructive",
-        onPress: () => setExtraFields(extraFields.filter((_, i) => i !== index)),
-      },
-    ]);
+  const confirmDelete = (index: number) => {
+    if (Platform.OS === "web") {
+      setDeleteIndex(index);
+      setDeleteModalOpen(true);
+    } else {
+      Alert.alert(pi.deleteField, pi.deleteConfirm, [
+        { text: t.common.cancel, style: "cancel" },
+        {
+          text: pi.deleteField,
+          style: "destructive",
+          onPress: () => setExtraFields(extraFields.filter((_, i) => i !== index)),
+        },
+      ]);
+    }
+  };
+
+  const executeDelete = () => {
+    if (deleteIndex !== null) {
+      setExtraFields(extraFields.filter((_, i) => i !== deleteIndex));
+    }
+    setDeleteModalOpen(false);
+    setDeleteIndex(null);
   };
 
   const saveNewField = () => {
@@ -156,14 +174,8 @@ export default function PersonalInfo() {
         <Pressable onPress={() => router.back()} className="mr-3">
           <ArrowLeft size={20} color="#6b7280" />
         </Pressable>
-        <Text className="text-xl font-bold text-foreground flex-1">
-          {pi.title}
-        </Text>
-        <Pressable
-          onPress={handleSave}
-          disabled={saving}
-          className="bg-primary px-4 py-2 rounded-lg"
-        >
+        <Text className="text-xl font-bold text-foreground flex-1">{pi.title}</Text>
+        <Pressable onPress={handleSave} disabled={saving} className="bg-primary px-4 py-2 rounded-lg">
           {saving
             ? <ActivityIndicator color="white" size="small" />
             : <Text className="text-white font-semibold">{t.common.save}</Text>
@@ -173,28 +185,25 @@ export default function PersonalInfo() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
 
-        {/* Basic Info */}
-        <Text className="text-foreground font-bold mb-3 text-base">
-          {pi.basicInfo}
-        </Text>
+        <Text className="text-foreground font-bold mb-3 text-base">{pi.basicInfo}</Text>
 
-       <View style={{ flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-        <TextInput
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <TextInput
             placeholder={pi.firstName}
             placeholderTextColor="#94A3B8"
             value={firstName}
             onChangeText={setFirstName}
             style={{ flex: 1, minWidth: 120 }}
             className="border border-border rounded-lg px-3 py-3 text-foreground bg-card"
-        />
-        <TextInput
+          />
+          <TextInput
             placeholder={pi.lastName}
             placeholderTextColor="#94A3B8"
             value={lastName}
             onChangeText={setLastName}
             style={{ flex: 1, minWidth: 120 }}
             className="border border-border rounded-lg px-3 py-3 text-foreground bg-card"
-        />
+          />
         </View>
 
         <TextInput
@@ -205,7 +214,6 @@ export default function PersonalInfo() {
           onChangeText={setPhone}
           className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
         />
-
         <TextInput
           placeholder={pi.age}
           placeholderTextColor="#94A3B8"
@@ -214,7 +222,6 @@ export default function PersonalInfo() {
           onChangeText={setAge}
           className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
         />
-
         <TextInput
           placeholder={pi.dob}
           placeholderTextColor="#94A3B8"
@@ -222,7 +229,6 @@ export default function PersonalInfo() {
           onChangeText={setDob}
           className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
         />
-
         <TextInput
           placeholder={pi.gender}
           placeholderTextColor="#94A3B8"
@@ -230,7 +236,6 @@ export default function PersonalInfo() {
           onChangeText={setGender}
           className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
         />
-
         <TextInput
           placeholder={pi.address}
           placeholderTextColor="#94A3B8"
@@ -240,7 +245,6 @@ export default function PersonalInfo() {
           numberOfLines={2}
           className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
         />
-
         <TextInput
           placeholder={pi.location}
           placeholderTextColor="#94A3B8"
@@ -251,9 +255,7 @@ export default function PersonalInfo() {
 
         {/* Extra Fields */}
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-foreground font-bold text-base">
-            {pi.additionalDetails}
-          </Text>
+          <Text className="text-foreground font-bold text-base">{pi.additionalDetails}</Text>
           <Pressable
             onPress={() => setAddingNew(true)}
             className="flex-row items-center gap-1 bg-primary px-3 py-2 rounded-lg"
@@ -263,7 +265,6 @@ export default function PersonalInfo() {
           </Pressable>
         </View>
 
-        {/* Existing extra fields */}
         {extraFields.map((field, index) => (
           <View key={index} className="bg-card border border-border rounded-xl p-3 mb-3">
             {editingIndex === index ? (
@@ -301,7 +302,7 @@ export default function PersonalInfo() {
                   <Pressable onPress={() => startEdit(index)} className="p-2 rounded-lg bg-secondary">
                     <Pencil size={14} color="#8B5CF6" />
                   </Pressable>
-                  <Pressable onPress={() => deleteField(index)} className="p-2 rounded-lg bg-secondary">
+                  <Pressable onPress={() => confirmDelete(index)} className="p-2 rounded-lg bg-secondary">
                     <Trash2 size={14} color="#EF4444" />
                   </Pressable>
                 </View>
@@ -310,7 +311,6 @@ export default function PersonalInfo() {
           </View>
         ))}
 
-        {/* Add new field */}
         {addingNew && (
           <View className="bg-card border border-primary rounded-xl p-3 mb-3">
             <Text className="text-foreground font-semibold mb-2">{pi.newField}</Text>
@@ -343,12 +343,51 @@ export default function PersonalInfo() {
         )}
 
         {extraFields.length === 0 && !addingNew && (
-          <Text className="text-muted text-sm text-center py-4">
-            {pi.noExtra}
-          </Text>
+          <Text className="text-muted text-sm text-center py-4">{pi.noExtra}</Text>
         )}
 
       </ScrollView>
+
+      {/* Delete Confirmation Modal (web only) */}
+      <Modal
+        visible={deleteModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModalOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" }}>
+          <View style={{
+            backgroundColor: "#1E293B",
+            borderRadius: 16,
+            padding: 24,
+            width: 300,
+            borderWidth: 1,
+            borderColor: "#EF4444",
+          }}>
+            <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginBottom: 8 }}>
+              {pi.deleteField}
+            </Text>
+            <Text style={{ color: "#94A3B8", marginBottom: 20 }}>
+              {pi.deleteConfirm}
+            </Text>
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <Pressable
+                onPress={() => { setDeleteModalOpen(false); setDeleteIndex(null); }}
+                style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "#334155", alignItems: "center" }}
+              >
+                <Text style={{ color: "#94A3B8" }}>{t.common.cancel}</Text>
+              </Pressable>
+              <Pressable
+                onPress={executeDelete}
+                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: "#EF4444", alignItems: "center" }}
+              >
+                <Text style={{ color: "white", fontWeight: "600" }}>{t.common.delete}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
