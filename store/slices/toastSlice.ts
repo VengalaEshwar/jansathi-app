@@ -14,6 +14,8 @@ interface ToastState {
     message: string;
     onConfirm: null | string; // store action key
     variant: "danger" | "info";
+    confirmText: string;
+    cancelText: string;
   };
 }
 
@@ -25,6 +27,8 @@ const initialState: ToastState = {
     message: "",
     onConfirm: null,
     variant: "danger",
+    confirmText: "",
+    cancelText: "",
   },
 };
 
@@ -41,14 +45,31 @@ const toastSlice = createSlice({
     removeToast(state, action: PayloadAction<string>) {
       state.toasts = state.toasts.filter((t) => t.id !== action.payload);
     },
-    showConfirm(state, action: PayloadAction<Omit<ToastState["confirm"], "open" | "onConfirm"> & { onConfirm: string }>) {
-      state.confirm = { ...action.payload, open: true, onConfirm: action.payload.onConfirm };
+
+    showConfirm(
+      state,
+      action: PayloadAction<{
+        title: string;
+        message: string;
+        variant?: "danger" | "info";
+        onConfirm: string;
+        confirmText: string;
+        cancelText: string;
+      }>,
+    ) {
+      state.confirm = {
+        ...action.payload,
+        open: true,
+        variant: action.payload.variant ?? "danger",
+      };
     },
+
     hideConfirm(state) {
       state.confirm = initialState.confirm;
     },
   },
 });
 
-export const { addToast, removeToast, showConfirm, hideConfirm } = toastSlice.actions;
+export const { addToast, removeToast, showConfirm, hideConfirm } =
+  toastSlice.actions;
 export default toastSlice.reducer;

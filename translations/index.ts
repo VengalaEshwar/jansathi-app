@@ -43,7 +43,7 @@ export const t = {
       found: "found",
       success: "Success",
       delete: "Delete",
-      confirm: "Confirm"
+      confirm: "Confirm",
     },
     clinics: {
       title: "Nearby Clinics",
@@ -155,6 +155,8 @@ export const t = {
       photoUpdated: "Photo updated successfully",
       deletePhoto: "Remove Photo",
       deletePhotoConfirm: "Remove your profile photo?",
+      photoPermissionDenied: "Permission to access photos is required",
+      photoDeleted: "Photo removed successfully",
     },
     auth: {
       subtitle: "Your AI co-pilot for government access & health literacy",
@@ -174,6 +176,7 @@ export const t = {
       orContinueWith: "or continue with",
       continueWithGoogle: "Continue with Google",
       googleFailed: "Google sign-in failed",
+      googleNotAvailable: "Google Sign-In not available",
     },
     health: {
       title: "Health Services",
@@ -410,7 +413,7 @@ export const t = {
       found: "मिले",
       success: "सफलता",
       delete: "हटाएं",
-      confirm: "पुष्टि करें" 
+      confirm: "पुष्टि करें",
     },
     clinics: {
       title: "नजदीकी क्लीनिक",
@@ -557,6 +560,8 @@ export const t = {
       photoUpdated: "फ़ोटो सफलतापूर्वक अपडेट की गई",
       deletePhoto: "फ़ोटो हटाएं",
       deletePhotoConfirm: "अपनी प्रोफ़ाइल फ़ोटो हटाएं?",
+      photoPermissionDenied: "फ़ोटो एक्सेस करने की अनुमति आवश्यक है",
+      photoDeleted: "फ़ोटो सफलतापूर्वक हटाई गई",
     },
     auth: {
       subtitle: "सरकारी सेवाओं और स्वास्थ्य के लिए आपका AI सहायक",
@@ -576,6 +581,7 @@ export const t = {
       orContinueWith: "या जारी रखें",
       continueWithGoogle: "Google से जारी रखें",
       googleFailed: "Google साइन-इन विफल",
+      googleNotAvailable: "Google साइन-इन उपलब्ध नहीं है",
     },
     health: {
       title: "स्वास्थ्य सेवाएं",
@@ -777,7 +783,7 @@ export const t = {
       found: "కనుగొనబడ్డాయి",
       success: "విజయం",
       delete: "తొలగించు",
-      confirm: "నిర్ధారించు"
+      confirm: "నిర్ధారించు",
     },
     clinics: {
       title: "దగ్గరలోని క్లినిక్‌లు",
@@ -928,6 +934,8 @@ export const t = {
       photoUpdated: "ఫోటో విజయవంతంగా అప్‌డేట్ చేయబడింది",
       deletePhoto: "ఫోటో తొలగించు",
       deletePhotoConfirm: "మీ ప్రొఫైల్ ఫోటో తొలగించాలా?",
+      photoPermissionDenied: "ఫోటోలు యాక్సెస్ చేయడానికి అనుమతి అవసరం",
+      photoDeleted: "ఫోటో విజయవంతంగా తొలగించబడింది",
     },
     auth: {
       subtitle: "ప్రభుత్వ సేవలు మరియు ఆరోగ్యం కోసం మీ AI సహాయకుడు",
@@ -947,6 +955,7 @@ export const t = {
       orContinueWith: "లేదా కొనసాగించండి",
       continueWithGoogle: "Google తో కొనసాగించండి",
       googleFailed: "Google సైన్-ఇన్ విఫలమైంది",
+      googleNotAvailable: "Google సైన్-ఇన్ అందుబాటులో లేదు",
     },
     health: {
       title: "ఆరోగ్య సేవలు",

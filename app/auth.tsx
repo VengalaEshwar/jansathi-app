@@ -72,7 +72,7 @@ export default function Auth() {
 
       // Native Android/iOS: use native Google Sign-In SDK
       if (!GoogleSignin) {
-        toast.error("Google Sign-In not available");
+        toast.error(t.auth.googleNotAvailable);
         return;
       }
 

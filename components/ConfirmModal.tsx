@@ -3,11 +3,9 @@ import { AlertTriangle, Info } from "lucide-react-native";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hideConfirm } from "@/store/slices/toastSlice";
 import { executeConfirmCallback } from "@/hooks/useConfirm";
-import { useTranslation } from "@/hooks/useTranslation";
 
 export function ConfirmModal() {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation();
   const confirm = useAppSelector((s) => s.toast.confirm);
 
   const handleConfirm = () => {
@@ -79,7 +77,9 @@ export function ConfirmModal() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "#94A3B8", fontWeight: "600" }}>{t.common.cancel}</Text>
+              <Text style={{ color: "#94A3B8", fontWeight: "600" }}>
+                {confirm.cancelText}
+              </Text>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
@@ -92,7 +92,7 @@ export function ConfirmModal() {
               }}
             >
               <Text style={{ color: "white", fontWeight: "600" }}>
-                {isDanger ? t.common.delete : t.common.confirm ?? "Confirm"}
+                {confirm.confirmText}
               </Text>
             </Pressable>
           </View>

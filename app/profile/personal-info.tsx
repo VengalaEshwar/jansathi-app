@@ -6,7 +6,6 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Plus, Pencil, Trash2, Check, X } from "lucide-react-native";
@@ -14,7 +13,6 @@ import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch } from "@/store/hooks";
 import { updateDbUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Platform } from "react-native";
 import { useToast } from "@/hooks/useToast";
 import { useConfirm } from "@/hooks/useConfirm";
 
@@ -50,10 +48,6 @@ export default function PersonalInfo() {
   const [addingNew, setAddingNew] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
-
-  // Delete confirmation
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -99,6 +93,7 @@ export default function PersonalInfo() {
       });
       if (data.success) {
         dispatch(updateDbUser(data.user));
+        toast.success(pi.updateSuccess);
         router.back();
       }
     } catch (e: any) {
@@ -128,21 +123,15 @@ export default function PersonalInfo() {
     setEditValue("");
   };
 
-  const confirmDelete = (index: number) => {
+  const handleDelete = (index: number) => {
     confirm({
       title: pi.deleteField,
       message: pi.deleteConfirm,
       variant: "danger",
+      confirmText: t.common.delete,
+      cancelText: t.common.cancel,
       onConfirm: () => setExtraFields(extraFields.filter((_, i) => i !== index)),
     });
-  };
-
-  const executeDelete = () => {
-    if (deleteIndex !== null) {
-      setExtraFields(extraFields.filter((_, i) => i !== deleteIndex));
-    }
-    setDeleteModalOpen(false);
-    setDeleteIndex(null);
   };
 
   const saveNewField = () => {
@@ -298,7 +287,7 @@ export default function PersonalInfo() {
                   <Pressable onPress={() => startEdit(index)} className="p-2 rounded-lg bg-secondary">
                     <Pencil size={14} color="#8B5CF6" />
                   </Pressable>
-                  <Pressable onPress={() => confirmDelete(index)} className="p-2 rounded-lg bg-secondary">
+                  <Pressable onPress={() => handleDelete(index)} className="p-2 rounded-lg bg-secondary">
                     <Trash2 size={14} color="#EF4444" />
                   </Pressable>
                 </View>
@@ -343,47 +332,6 @@ export default function PersonalInfo() {
         )}
 
       </ScrollView>
-
-      {/* Delete Confirmation Modal (web only) */}
-      <Modal
-        visible={deleteModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDeleteModalOpen(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" }}>
-          <View style={{
-            backgroundColor: "#1E293B",
-            borderRadius: 16,
-            padding: 24,
-            width: 300,
-            borderWidth: 1,
-            borderColor: "#EF4444",
-          }}>
-            <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginBottom: 8 }}>
-              {pi.deleteField}
-            </Text>
-            <Text style={{ color: "#94A3B8", marginBottom: 20 }}>
-              {pi.deleteConfirm}
-            </Text>
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              <Pressable
-                onPress={() => { setDeleteModalOpen(false); setDeleteIndex(null); }}
-                style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "#334155", alignItems: "center" }}
-              >
-                <Text style={{ color: "#94A3B8" }}>{t.common.cancel}</Text>
-              </Pressable>
-              <Pressable
-                onPress={executeDelete}
-                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: "#EF4444", alignItems: "center" }}
-              >
-                <Text style={{ color: "white", fontWeight: "600" }}>{t.common.delete}</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
     </View>
   );
 }
