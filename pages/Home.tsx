@@ -26,7 +26,7 @@ const Home = () => {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-background px-4 py-6">
+    <ScrollView className="flex-1 bg-background px-4 py-6 pb-16">
       <View className="items-center mb-10">
         <View className="w-20 h-20 rounded-2xl bg-primary items-center justify-center mb-5">
           <Sparkles size={36} color="white" />

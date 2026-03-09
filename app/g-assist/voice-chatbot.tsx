@@ -327,7 +327,7 @@ export default function VoiceChatbot() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-background pb-14"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Header */}

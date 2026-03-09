@@ -93,7 +93,7 @@ export default function PhotoToForm() {
   const stepKeys = ["upload", "fill", "done"];
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-background pb-14">
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Back */}
         <Pressable
