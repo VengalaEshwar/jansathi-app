@@ -12,23 +12,22 @@ import {
   User,
   Globe,
   Bell,
-  Eye,
   Shield,
   HelpCircle,
   LogOut,
+  ChevronRight,
 } from "lucide-react-native";
 import { signOut } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/integrations/firebase/client";
-import { PersonalInfoDialog } from "@/components/profile/PersonalInfoDialog";
-import { LanguageDialog } from "@/components/profile/LanguageDialog";
 import { NotificationsDialog } from "@/components/profile/NotificationsDialog";
-import { AccessibilityDialog } from "@/components/profile/AccessibilityDialog";
 import { HelpSupportDialog } from "@/components/profile/HelpSupportDialog";
 import { ProfileChatbot } from "@/components/profile/ProfileChatbot";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setAppLanguage } from "@/store/slices/appSlice";
+import { updateDbUser } from "@/store/slices/authSlice";
+import { apiRequest } from "@/integrations/api/client";
 import type { Language } from "@/translations";
 
 const LANGUAGES: { code: Language; native: string; label: string }[] = [
@@ -42,12 +41,11 @@ export default function Profile() {
   const { user, loading } = useAuth();
   const { t, language } = useTranslation();
   const dispatch = useAppDispatch();
+  const dbUser = useAppSelector((s) => s.auth.dbUser);
 
-  const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [helpSupportOpen, setHelpSupportOpen] = useState(false);
+  const [savingLang, setSavingLang] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -64,6 +62,21 @@ export default function Profile() {
     }
   };
 
+  const handleLanguageChange = async (lang: Language) => {
+    dispatch(setAppLanguage(lang)); // update UI immediately
+    setSavingLang(true);
+    try {
+      const data = await apiRequest("/auth/preferences", "PATCH", { language: lang });
+      if (data.success) {
+        dispatch(updateDbUser({ language: lang }));
+      }
+    } catch (e) {
+      console.log("Failed to save language:", e);
+    } finally {
+      setSavingLang(false);
+    }
+  };
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
@@ -75,30 +88,20 @@ export default function Profile() {
 
   if (!user) return null;
 
+  const displayName = dbUser?.name || user.displayName || t.profile.welcomeBack;
+
   const sections = [
-    {
-      icon: User,
-      title: t.profile.personalInfo,
-      desc: t.profile.personalInfoDesc,
-      action: () => setPersonalInfoOpen(true),
-    },
     {
       icon: Globe,
       title: t.profile.language,
       desc: t.profile.languageDesc,
-      action: () => setLanguageOpen(true),
+      action: null, // handled inline below
     },
     {
       icon: Bell,
       title: t.profile.notifications,
       desc: t.profile.notificationsDesc,
       action: () => setNotificationsOpen(true),
-    },
-    {
-      icon: Eye,
-      title: t.profile.accessibility,
-      desc: t.profile.accessibilityDesc,
-      action: () => setAccessibilityOpen(true),
     },
     {
       icon: Shield,
@@ -113,8 +116,6 @@ export default function Profile() {
       action: () => setHelpSupportOpen(true),
     },
   ];
-
-  const displayName = user.displayName ?? t.profile.welcomeBack;
 
   return (
     <View className="flex-1 bg-background">
@@ -144,13 +145,16 @@ export default function Profile() {
                 {displayName}
               </Text>
               <Text className="text-white/80">{user.email}</Text>
+              {dbUser?.phone ? (
+                <Text className="text-white/60 text-sm mt-1">{dbUser.phone}</Text>
+              ) : null}
             </View>
           </View>
 
           <View className="flex-row gap-3 mt-4">
             <Pressable
-              onPress={() => setPersonalInfoOpen(true)}
-              className="bg-white px-4 py-2 rounded-lg"
+              onPress={() => router.push("/profile/personal-info")}
+              className="bg-white/20 px-4 py-2 rounded-lg"
             >
               <Text className="text-white font-bold">
                 {t.profile.editProfile}
@@ -168,14 +172,17 @@ export default function Profile() {
 
         {/* Language Selector */}
         <View className="bg-card border border-border rounded-2xl p-4 mb-4">
-          <Text className="text-foreground font-semibold mb-3">
-            {t.profile.chooseLanguage}
-          </Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-foreground font-semibold">
+              {t.profile.chooseLanguage}
+            </Text>
+            {savingLang && <ActivityIndicator size="small" color="#8B5CF6" />}
+          </View>
           <View className="flex-row gap-2">
             {LANGUAGES.map((lang) => (
               <Pressable
                 key={lang.code}
-                onPress={() => dispatch(setAppLanguage(lang.code))}
+                onPress={() => handleLanguageChange(lang.code)}
                 className={`flex-1 py-3 rounded-xl items-center border ${
                   language === lang.code
                     ? "bg-primary border-primary"
@@ -191,9 +198,7 @@ export default function Profile() {
                 </Text>
                 <Text
                   className={`text-xs mt-1 ${
-                    language === lang.code
-                      ? "text-white opacity-80"
-                      : "text-muted"
+                    language === lang.code ? "text-white opacity-80" : "text-muted"
                   }`}
                 >
                   {lang.label}
@@ -203,14 +208,31 @@ export default function Profile() {
           </View>
         </View>
 
+        {/* Personal Info Card */}
+        <Pressable
+          onPress={() => router.push("/profile/personal-info")}
+          className="p-4 mb-3 rounded-xl bg-card border border-border"
+        >
+          <View className="flex-row gap-3 items-center">
+            <View className="rounded-lg bg-primary items-center justify-center p-4">
+              <User size={18} color="white" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-semibold text-foreground">{t.profile.personalInfo}</Text>
+              <Text className="text-muted text-sm">{t.profile.personalInfoDesc}</Text>
+            </View>
+            <ChevronRight size={18} color="#64748B" />
+          </View>
+        </Pressable>
+
         {/* Settings Sections */}
         {sections.map((s, i) => (
           <Pressable
             key={i}
-            onPress={s.action}
+            onPress={s.action ?? undefined}
             className="p-4 mb-3 rounded-xl bg-card border border-border"
           >
-            <View className="flex-row gap-3 justify-center items-center">
+            <View className="flex-row gap-3 items-center">
               <View className="rounded-lg bg-primary items-center justify-center p-4">
                 <s.icon size={18} color="white" />
               </View>
@@ -218,6 +240,7 @@ export default function Profile() {
                 <Text className="font-semibold text-foreground">{s.title}</Text>
                 <Text className="text-muted text-sm">{s.desc}</Text>
               </View>
+              <ChevronRight size={18} color="#64748B" />
             </View>
           </Pressable>
         ))}
@@ -225,7 +248,7 @@ export default function Profile() {
         {/* Stats */}
         <View className="flex-row gap-3 mt-6 p-4">
           {[
-            { label: t.profile.scans, count: 0 },
+            { label: t.profile.scans, count: dbUser?.prescriptionHistory?.length ?? 0 },
             { label: t.profile.forms, count: 0 },
             { label: t.profile.schemes, count: 0 },
           ].map((stat, i) => (
@@ -240,27 +263,13 @@ export default function Profile() {
             </View>
           ))}
         </View>
+
       </ScrollView>
 
       {/* Dialogs */}
-      <PersonalInfoDialog
-        open={personalInfoOpen}
-        onOpenChange={setPersonalInfoOpen}
-        userId={user.uid}
-      />
-      <LanguageDialog
-        open={languageOpen}
-        onOpenChange={setLanguageOpen}
-        userId={user.uid}
-      />
       <NotificationsDialog
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
-        userId={user.uid}
-      />
-      <AccessibilityDialog
-        open={accessibilityOpen}
-        onOpenChange={setAccessibilityOpen}
         userId={user.uid}
       />
       <HelpSupportDialog
