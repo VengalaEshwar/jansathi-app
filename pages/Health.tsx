@@ -39,7 +39,7 @@ const Health = () => {
       icon: Bell,
       title: t.health.healthNotifications,
       description: t.health.healthNotificationsDesc,
-      action: () => toast.success(t.profile.comingSoon),
+      action: () => router.push("/health/health-notifications"),
     },
   ];
 
