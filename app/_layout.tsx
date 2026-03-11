@@ -51,12 +51,14 @@ function AppContent() {
   const toast = useToast();
   const notifListenerRef = useRef<any>(null);
 
+  // ── Theme sync ──────────────────────────────────────────────────
   const theme = useAppSelector((state) => state.app.theme);
   const { setColorScheme } = useColorScheme();
 
-  useEffect(() => {
-    setColorScheme(theme);
-  }, [theme]);
+  // Call synchronously during render (not in useEffect) so the very first
+  // render already has the correct color scheme applied — fixes the flash on native
+  setColorScheme(theme);
+  // ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (Platform.OS !== "web") {
@@ -93,6 +95,7 @@ function AppContent() {
             if (data.user.language) {
               dispatch(setAppLanguage(data.user.language));
             }
+            // Restore theme from DB — works across devices and fresh installs
             if (data.user.theme === "dark" || data.user.theme === "light") {
               dispatch(setAppTheme(data.user.theme));
             }
@@ -124,10 +127,10 @@ function AppContent() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView className="flex-1 bg-light-background dark:bg-background">
+      <SafeAreaView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]">
         <StatusBar
           style={theme === "dark" ? "light" : "dark"}
-          backgroundColor={theme === "dark" ? "#000" : "#F8FAFC"}
+          backgroundColor={theme === "dark" ? "#0F172A" : "#F8FAFC"}
         />
         <View className="flex-1">
           <View className="w-full h-full">
