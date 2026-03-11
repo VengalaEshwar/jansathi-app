@@ -57,7 +57,7 @@ export function ToastContainer() {
       top: 60,
       left: 16,
       right: 16,
-      zIndex: 9999,
+      zIndex : 100000,
     }}>
       {toasts.map((toast) => (
         <ToastItem key={toast.id} {...toast} />
