@@ -17,7 +17,7 @@ export const NavBar = () => {
   ];
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border">
+    <View className="absolute bottom-0 left-0 right-0 bg-light-card dark:bg-card border-t border-light-border dark:border-border">
       <View className="flex-row justify-around py-2">
         {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = pathname === path;

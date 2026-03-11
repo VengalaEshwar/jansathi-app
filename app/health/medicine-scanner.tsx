@@ -101,7 +101,7 @@ export default function MedicineScanner() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-light-background dark:bg-background">
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
         {/* Back */}
@@ -112,7 +112,7 @@ export default function MedicineScanner() {
 
         {/* Header */}
         <View className="mb-6">
-          <Text className="text-2xl font-bold text-foreground mb-1">{t.medicine.title}</Text>
+          <Text className="text-2xl font-bold text-light-foreground dark:text-foreground mb-1">{t.medicine.title}</Text>
           <Text className="text-muted">{t.medicine.subtitle}</Text>
         </View>
 
@@ -125,25 +125,25 @@ export default function MedicineScanner() {
 
         {/* Loading */}
         {isAnalyzing && (
-          <View className="mt-6 p-6 rounded-2xl bg-secondary border border-border items-center">
+          <View className="mt-6 p-6 rounded-2xl bg-secondary border border-light-border dark:border-border items-center">
             <ActivityIndicator size="large" color="#8B5CF6" />
-            <Text className="mt-2 text-lg text-foreground">{t.medicine.analyzing}</Text>
+            <Text className="mt-2 text-lg text-light-foreground dark:text-foreground">{t.medicine.analyzing}</Text>
           </View>
         )}
 
         {/* Current Result */}
         {analysis !== "" && (
           <View className="mt-6">
-            <View className="p-5 rounded-2xl bg-card border border-border">
+            <View className="p-5 rounded-2xl bg-light-card dark:bg-card border border-light-border dark:border-border">
               <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-foreground text-lg font-semibold">{t.medicine.analysisReport}</Text>
+                <Text className="text-light-foreground dark:text-foreground text-lg font-semibold">{t.medicine.analysisReport}</Text>
                 <Pressable onPress={() => speakText(analysis)}>
                   {isSpeaking ? <VolumeX size={22} color="#EF4444" /> : <Volume2 size={22} color="#8B5CF6" />}
                 </Pressable>
               </View>
               <Markdown style={markdownStyle}>{analysis}</Markdown>
             </View>
-            <View className="mt-3 p-4 rounded-xl bg-secondary border border-border">
+            <View className="mt-3 p-4 rounded-xl bg-secondary border border-light-border dark:border-border">
               <Text className="text-muted text-sm">{t.medicine.speakHint}</Text>
             </View>
             <Pressable
@@ -157,8 +157,8 @@ export default function MedicineScanner() {
 
         {/* Instructions */}
         {!selectedImage && !isAnalyzing && (
-          <View className="mt-6 p-5 rounded-2xl bg-secondary border border-border">
-            <Text className="font-semibold mb-2 text-foreground">{t.medicine.howToUse}</Text>
+          <View className="mt-6 p-5 rounded-2xl bg-secondary border border-light-border dark:border-border">
+            <Text className="font-semibold mb-2 text-light-foreground dark:text-foreground">{t.medicine.howToUse}</Text>
             <Text className="text-muted text-sm">{t.medicine.instructions}</Text>
           </View>
         )}
@@ -167,7 +167,7 @@ export default function MedicineScanner() {
         <View className="mt-6">
           <View className="flex-row items-center gap-2 mb-3">
             <History size={18} color="#8B5CF6" />
-            <Text className="text-foreground font-bold text-base">{t.medicine.history}</Text>
+            <Text className="text-light-foreground dark:text-foreground font-bold text-base">{t.medicine.history}</Text>
           </View>
 
           {historyLoading ? (
@@ -176,7 +176,7 @@ export default function MedicineScanner() {
             <Text className="text-muted text-sm">{t.medicine.noHistory}</Text>
           ) : (
             history.map((item) => (
-              <View key={item._id} className="bg-card border border-border rounded-xl mb-3 overflow-hidden">
+              <View key={item._id} className="bg-light-card dark:bg-card border border-light-border dark:border-border rounded-xl mb-3 overflow-hidden">
                 <Pressable
                   onPress={() => setExpandedId(expandedId === item._id ? null : item._id)}
                   className="flex-row items-center p-3 gap-3"
@@ -188,7 +188,7 @@ export default function MedicineScanner() {
                     />
                   </Pressable>
                   <View className="flex-1">
-                    <Text className="text-foreground font-medium text-sm">
+                    <Text className="text-light-foreground dark:text-foreground font-medium text-sm">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </Text>
                     <Text className="text-muted text-xs">
@@ -202,7 +202,7 @@ export default function MedicineScanner() {
                 </Pressable>
 
                 {expandedId === item._id && (
-                  <View className="px-4 pb-4 border-t border-border">
+                  <View className="px-4 pb-4 border-t border-light-border dark:border-border">
                     <View className="flex-row justify-end mt-2 mb-2">
                       <Pressable onPress={() => speakText(item.result)}>
                         {isSpeaking

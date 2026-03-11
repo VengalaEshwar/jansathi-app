@@ -66,62 +66,54 @@ const TimePicker = ({ value, onChange, onRemove, showRemove }: TimePickerProps) 
   const safeMinute = MINUTES.includes(minute) ? minute : "00";
 
   return (
-    <View style={{ marginBottom: 16, backgroundColor: "#0F172A", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#334155" }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View className="bg-light-background dark:bg-background rounded-xl p-3 mb-4 border border-light-border dark:border-border">
+      <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center gap-2">
           <Clock size={16} color="#8B5CF6" />
-          <Text style={{ color: "#A78BFA", fontSize: 16, fontWeight: "700" }}>
+          <Text className="text-primary text-base font-bold">
             {safeHour}:{safeMinute}
           </Text>
         </View>
         {showRemove && (
-          <Pressable onPress={onRemove} hitSlop={8} style={{ backgroundColor: "#2d0a0a", padding: 6, borderRadius: 8 }}>
+          <Pressable onPress={onRemove} hitSlop={8} className="bg-red-500/20 p-1.5 rounded-lg">
             <X size={14} color="#EF4444" />
           </Pressable>
         )}
       </View>
 
-      <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+      <View className="flex-row gap-3 items-center">
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          style={{ flex: 1, backgroundColor: "#1E293B", borderRadius: 8, padding: 4 }}
+          className="flex-1 bg-light-card dark:bg-card rounded-lg p-1"
         >
           {HOURS.map((h) => (
             <Pressable
               key={h}
               onPress={() => onChange(`${h}:${safeMinute}`)}
-              style={{
-                paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6,
-                backgroundColor: safeHour === h ? "#8B5CF6" : "transparent",
-                marginRight: 4,
-              }}
+              className={`py-2 px-3 rounded-md mr-1 ${safeHour === h ? "bg-primary" : "bg-transparent"}`}
             >
-              <Text style={{ color: safeHour === h ? "white" : "#94A3B8", fontWeight: safeHour === h ? "700" : "500", fontSize: 14 }}>
+              <Text className={`text-sm ${safeHour === h ? "text-white font-bold" : "text-muted font-medium"}`}>
                 {h}
               </Text>
             </Pressable>
           ))}
         </ScrollView>
 
-        <Text style={{ color: "#64748B", fontSize: 18, fontWeight: "700" }}>:</Text>
+        <Text className="text-muted text-lg font-bold">:</Text>
 
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
-          style={{ flex: 1, backgroundColor: "#1E293B", borderRadius: 8, padding: 4 }}
+          className="flex-1 bg-light-card dark:bg-card rounded-lg p-1"
         >
           {MINUTES.map((m) => (
             <Pressable
               key={m}
               onPress={() => onChange(`${safeHour}:${m}`)}
-              style={{
-                paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6,
-                backgroundColor: safeMinute === m ? "#8B5CF6" : "transparent",
-                marginRight: 4,
-              }}
+              className={`py-2 px-3 rounded-md mr-1 ${safeMinute === m ? "bg-primary" : "bg-transparent"}`}
             >
-              <Text style={{ color: safeMinute === m ? "white" : "#94A3B8", fontWeight: safeMinute === m ? "700" : "500", fontSize: 14 }}>
+              <Text className={`text-sm ${safeMinute === m ? "text-white font-bold" : "text-muted font-medium"}`}>
                 {m}
               </Text>
             </Pressable>
@@ -150,30 +142,23 @@ const NotifyToggle = ({
   verified, verifyLabel, onVerifyPress, color,
   disabled, disabledLabel,
 }: NotifyToggleProps) => (
-  <View style={{
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#0F172A", borderRadius: 12,
-    padding: 12, marginBottom: 8,
-    borderWidth: 1, borderColor: disabled ? "#1E293B" : value ? color : "#1E293B",
-    opacity: disabled ? 0.5 : 1,
-  }}>
-    <View style={{
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: `${color}22`,
-      alignItems: "center", justifyContent: "center", marginRight: 12,
-    }}>
+  <View 
+    className={`flex-row items-center bg-light-card dark:bg-card rounded-xl p-3 mb-2 border ${disabled ? "opacity-50 border-light-border dark:border-border" : value ? "border-[" + color + "]" : "border-light-border dark:border-border"}`}
+    style={{ borderColor: disabled ? undefined : value ? color : undefined }}
+  >
+    <View 
+      className="w-9 h-9 rounded-lg items-center justify-center mr-3"
+      style={{ backgroundColor: `${color}22` }}
+    >
       <Icon size={18} color={disabled ? "#64748B" : color} />
     </View>
-    <Text style={{ color: disabled ? "#64748B" : "#F8FAFC", flex: 1, fontSize: 14, fontWeight: "500" }}>
+    <Text className={`flex-1 text-sm font-medium ${disabled ? "text-muted" : "text-light-foreground dark:text-foreground"}`}>
       {label}
     </Text>
 
     {disabled ? (
-      <View style={{
-        backgroundColor: "#1E293B", paddingHorizontal: 10,
-        paddingVertical: 6, borderRadius: 8, marginRight: 8,
-      }}>
-        <Text style={{ color: "#64748B", fontSize: 11, fontWeight: "600" }}>
+      <View className="bg-light-background dark:bg-background px-2.5 py-1.5 rounded-lg mr-2">
+        <Text className="text-muted text-[11px] font-semibold">
           {disabledLabel || "Disabled"}
         </Text>
       </View>
@@ -183,25 +168,17 @@ const NotifyToggle = ({
           !verified && onVerifyPress ? (
             <Pressable
               onPress={onVerifyPress}
-              style={{
-                flexDirection: "row", alignItems: "center", gap: 4,
-                backgroundColor: "#1E293B", paddingHorizontal: 10,
-                paddingVertical: 6, borderRadius: 8, marginRight: 8,
-              }}
+              className="flex-row items-center gap-1 bg-light-background dark:bg-background px-2.5 py-1.5 rounded-lg mr-2"
             >
               <ShieldCheck size={13} color="#F59E0B" />
-              <Text style={{ color: "#F59E0B", fontSize: 12, fontWeight: "600" }}>
+              <Text className="text-yellow-500 text-xs font-semibold">
                 {verifyLabel}
               </Text>
             </Pressable>
           ) : verified ? (
-            <View style={{
-              flexDirection: "row", alignItems: "center", gap: 4,
-              backgroundColor: "#052e16", paddingHorizontal: 10,
-              paddingVertical: 6, borderRadius: 8, marginRight: 8,
-            }}>
+            <View className="flex-row items-center gap-1 bg-green-500/20 px-2.5 py-1.5 rounded-lg mr-2">
               <Check size={13} color="#22C55E" />
-              <Text style={{ color: "#22C55E", fontSize: 12, fontWeight: "600" }}>✓</Text>
+              <Text className="text-green-500 text-xs font-semibold">✓</Text>
             </View>
           ) : null
         )}
@@ -248,14 +225,11 @@ const OtpModal = ({
   checkingAvailability, smsAvailable,
 }: OtpModalProps) => (
   <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" }}>
-      <View style={{
-        backgroundColor: "#1E293B", borderTopLeftRadius: 24,
-        borderTopRightRadius: 24, padding: 24,
-      }}>
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+    <View className="flex-1 bg-black/70 justify-end">
+      <View className="bg-light-card dark:bg-card rounded-t-[24px] p-6">
+        <View className="flex-row items-center mb-5">
           <ShieldCheck size={22} color="#8B5CF6" />
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 18, marginLeft: 10, flex: 1 }}>
+          <Text className="text-light-foreground dark:text-foreground font-bold text-lg ml-2.5 flex-1">
             {title}
           </Text>
           <Pressable onPress={onClose}>
@@ -263,7 +237,7 @@ const OtpModal = ({
           </Pressable>
         </View>
 
-        <Text style={{ color: "#94A3B8", marginBottom: 16, fontSize: 14 }}>{subtitle}</Text>
+        <Text className="text-muted mb-4 text-sm">{subtitle}</Text>
 
         {showPhoneInput && (
           <>
@@ -274,36 +248,26 @@ const OtpModal = ({
               onChangeText={onPhoneChange}
               onBlur={onPhoneBlur}
               keyboardType="phone-pad"
-              style={{
-                backgroundColor: "#0F172A", borderRadius: 12,
-                borderWidth: 1, borderColor: "#334155",
-                color: "white", padding: 14, marginBottom: 8, fontSize: 15,
-              }}
+              className="bg-light-background dark:bg-background rounded-xl border border-light-border dark:border-border text-light-foreground dark:text-foreground p-3.5 mb-2 text-[15px]"
             />
             {checkingAvailability && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <View className="flex-row items-center gap-1.5 mb-3">
                 <ActivityIndicator size="small" color="#94A3B8" />
-                <Text style={{ color: "#94A3B8", fontSize: 12 }}>Checking SMS availability...</Text>
+                <Text className="text-muted text-xs">Checking SMS availability...</Text>
               </View>
             )}
             {!checkingAvailability && smsAvailable === false && (
-              <View style={{
-                flexDirection: "row", alignItems: "center", gap: 6,
-                backgroundColor: "#2d1e00", borderRadius: 8, padding: 10, marginBottom: 12,
-              }}>
+              <View className="flex-row items-center gap-1.5 bg-yellow-500/20 rounded-lg p-2.5 mb-3">
                 <AlertCircle size={14} color="#F59E0B" />
-                <Text style={{ color: "#F59E0B", fontSize: 12, flex: 1 }}>
+                <Text className="text-yellow-600 dark:text-yellow-500 text-xs flex-1">
                   SMS is disabled for this number. Use email notifications instead.
                 </Text>
               </View>
             )}
             {!checkingAvailability && smsAvailable === true && (
-              <View style={{
-                flexDirection: "row", alignItems: "center", gap: 6,
-                backgroundColor: "#052e16", borderRadius: 8, padding: 10, marginBottom: 12,
-              }}>
+              <View className="flex-row items-center gap-1.5 bg-green-500/20 rounded-lg p-2.5 mb-3">
                 <CheckCircle size={14} color="#22C55E" />
-                <Text style={{ color: "#22C55E", fontSize: 12 }}>SMS available ✓</Text>
+                <Text className="text-green-600 dark:text-green-500 text-xs">SMS available ✓</Text>
               </View>
             )}
           </>
@@ -313,15 +277,13 @@ const OtpModal = ({
           <Pressable
             onPress={onSendOtp}
             disabled={vLoading || (showPhoneInput && smsAvailable === false)}
-            style={{
-              backgroundColor: (showPhoneInput && smsAvailable === false) ? "#334155" : "#8B5CF6",
-              borderRadius: 12, padding: 14, alignItems: "center",
-              opacity: (showPhoneInput && smsAvailable === false) ? 0.5 : 1,
-            }}
+            className={`rounded-xl p-3.5 items-center ${
+              showPhoneInput && smsAvailable === false ? "bg-secondary opacity-50" : "bg-primary"
+            }`}
           >
             {vLoading
               ? <ActivityIndicator color="white" />
-              : <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>{sendOtpLabel}</Text>
+              : <Text className="text-white font-bold text-[15px]">{sendOtpLabel}</Text>
             }
           </Pressable>
         ) : (
@@ -333,21 +295,16 @@ const OtpModal = ({
               onChangeText={onOtpChange}
               keyboardType="number-pad"
               maxLength={6}
-              style={{
-                backgroundColor: "#0F172A", borderRadius: 12,
-                borderWidth: 1, borderColor: "#8B5CF6",
-                color: "white", padding: 14, marginBottom: 12,
-                fontSize: 22, letterSpacing: 8, textAlign: "center",
-              }}
+              className="bg-light-background dark:bg-background rounded-xl border border-primary text-light-foreground dark:text-foreground p-3.5 mb-3 text-[22px] tracking-[8px] text-center"
             />
             <Pressable
               onPress={onVerifyOtp}
               disabled={vLoading}
-              style={{ backgroundColor: "#22C55E", borderRadius: 12, padding: 14, alignItems: "center" }}
+              className="bg-green-500 rounded-xl p-3.5 items-center"
             >
               {vLoading
                 ? <ActivityIndicator color="white" />
-                : <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>{verifyLabel}</Text>
+                : <Text className="text-white font-bold text-[15px]">{verifyLabel}</Text>
               }
             </Pressable>
           </View>
@@ -619,91 +576,68 @@ export default function HealthNotifications() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0F172A" }}>
+    <View className="flex-1 bg-light-background dark:bg-background">
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
 
         <Pressable
           onPress={() => router.back()}
-          style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
+          className="flex-row items-center mb-5"
         >
           <ArrowLeft size={20} color="#6b7280" />
-          <Text style={{ color: "#6b7280", marginLeft: 8 }}>{hn.backToHealth}</Text>
+          <Text className="text-muted ml-2">{hn.backToHealth}</Text>
         </Pressable>
 
-        <View style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 6 }}>
-            <View style={{
-              width: 44, height: 44, borderRadius: 12,
-              backgroundColor: "#8B5CF6", alignItems: "center", justifyContent: "center",
-            }}>
+        <View className="mb-6">
+          <View className="flex-row items-center gap-3 mb-1.5">
+            <View className="w-11 h-11 rounded-xl bg-primary items-center justify-center">
               <Bell size={22} color="white" />
             </View>
-            <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>{hn.title}</Text>
+            <Text className="text-light-foreground dark:text-foreground text-[22px] font-extrabold">{hn.title}</Text>
           </View>
-          <Text style={{ color: "#64748B", fontSize: 14 }}>{hn.subtitle}</Text>
+          <Text className="text-muted text-sm">{hn.subtitle}</Text>
         </View>
 
         <Pressable
           onPress={openAddForm}
-          style={{
-            flexDirection: "row", alignItems: "center", justifyContent: "center",
-            gap: 8, backgroundColor: "#8B5CF6", borderRadius: 14,
-            padding: 14, marginBottom: 20,
-          }}
+          className="flex-row items-center justify-center gap-2 bg-primary rounded-[14px] p-3.5 mb-5"
         >
           <Plus size={18} color="white" />
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>{hn.addReminder}</Text>
+          <Text className="text-white font-bold text-[15px]">{hn.addReminder}</Text>
         </Pressable>
 
         {loading ? (
-          <ActivityIndicator color="#8B5CF6" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#8B5CF6" className="mt-5" />
         ) : reminders.length === 0 ? (
-          <View style={{
-            alignItems: "center", paddingVertical: 40,
-            backgroundColor: "#1E293B", borderRadius: 16,
-            borderWidth: 1, borderColor: "#334155",
-          }}>
-            <Bell size={40} color="#334155" />
-            <Text style={{ color: "#64748B", marginTop: 12, fontWeight: "600", fontSize: 15 }}>
+          <View className="items-center py-10 bg-light-card dark:bg-card rounded-2xl border border-light-border dark:border-border">
+            <Bell size={40} color="#64748B" />
+            <Text className="text-muted mt-3 font-semibold text-[15px]">
               {hn.noReminders}
             </Text>
-            <Text style={{ color: "#475569", marginTop: 6, fontSize: 13, textAlign: "center", paddingHorizontal: 24 }}>
+            <Text className="text-muted mt-1.5 text-[13px] text-center px-6">
               {hn.noRemindersDesc}
             </Text>
           </View>
         ) : (
           reminders.map((r) => (
-            <View key={r._id} style={{
-              backgroundColor: "#1E293B", borderRadius: 16,
-              borderWidth: 1, borderColor: r.isActive ? "#334155" : "#1E293B",
-              marginBottom: 12, overflow: "hidden",
-            }}>
+            <View key={r._id} className={`rounded-2xl border mb-3 overflow-hidden ${r.isActive ? "bg-light-card dark:bg-card border-light-border dark:border-border" : "bg-light-background dark:bg-background border-transparent"}`}>
               <Pressable
                 onPress={() => setExpandedId(expandedId === r._id ? null : r._id)}
-                style={{ padding: 16 }}
+                className="p-4"
               >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={{
-                    width: 42, height: 42, borderRadius: 10,
-                    backgroundColor: r.isActive ? "#4C1D95" : "#1E293B",
-                    alignItems: "center", justifyContent: "center", marginRight: 12,
-                    borderWidth: 1, borderColor: r.isActive ? "#8B5CF6" : "#334155",
-                  }}>
-                    <Bell size={18} color={r.isActive ? "#A78BFA" : "#475569"} />
+                <View className="flex-row items-center">
+                  <View className={`w-[42px] h-[42px] rounded-lg items-center justify-center mr-3 border ${r.isActive ? "bg-primary/20 border-primary" : "bg-light-card dark:bg-card border-light-border dark:border-border"}`}>
+                    <Bell size={18} color={r.isActive ? "#A78BFA" : "#64748B"} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                  <View className="flex-1">
+                    <Text className="text-light-foreground dark:text-foreground font-bold text-[15px]">
                       {r.medicineName}
                     </Text>
-                    <Text style={{ color: "#94A3B8", fontSize: 12, marginTop: 2 }}>
+                    <Text className="text-muted text-xs mt-0.5">
                       {r.dosage} • {r.times.join(", ")}
                     </Text>
                   </View>
-                  <View style={{
-                    backgroundColor: r.isActive ? "#052e16" : "#1E293B",
-                    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginRight: 8,
-                  }}>
-                    <Text style={{ color: r.isActive ? "#22C55E" : "#64748B", fontSize: 11, fontWeight: "600" }}>
+                  <View className={`px-2 py-1 rounded-md mr-2 ${r.isActive ? "bg-green-500/20" : "bg-light-background dark:bg-background"}`}>
+                    <Text className={`text-[11px] font-semibold ${r.isActive ? "text-green-500" : "text-muted"}`}>
                       {r.isActive ? hn.active : hn.inactive}
                     </Text>
                   </View>
@@ -715,53 +649,44 @@ export default function HealthNotifications() {
               </Pressable>
 
               {expandedId === r._id && (
-                <View style={{ paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: "#334155" }}>
-                  <View style={{ marginTop: 12, gap: 6 }}>
-                    <Text style={{ color: "#64748B", fontSize: 12 }}>
+                <View className="px-4 pb-4 border-t border-light-border dark:border-border">
+                  <View className="mt-3 gap-1.5">
+                    <Text className="text-muted text-xs">
                       📅 {formatDateForDisplay(r.startDate)}
                       {r.endDate ? ` → ${formatDateForDisplay(r.endDate)}` : ` (${hn.everyday})`}
                     </Text>
-                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                    <View className="flex-row gap-1.5 flex-wrap mt-1">
                       {r.notifyApp && (
-                        <View style={{ backgroundColor: "#0c1e2d", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                          <Text style={{ color: "#38BDF8", fontSize: 11 }}>📱 In-App</Text>
+                        <View className="bg-sky-500/20 px-2 py-1 rounded-md">
+                          <Text className="text-sky-400 text-[11px]">📱 In-App</Text>
                         </View>
                       )}
                       {r.notifySms && (
-                        <View style={{ backgroundColor: "#1c2e1c", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                          <Text style={{ color: "#4ADE80", fontSize: 11 }}>💬 {hn.smsNotification}</Text>
+                        <View className="bg-green-500/20 px-2 py-1 rounded-md">
+                          <Text className="text-green-400 text-[11px]">💬 {hn.smsNotification}</Text>
                         </View>
                       )}
                       {r.notifyEmail && (
-                        <View style={{ backgroundColor: "#2d1c3a", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                          <Text style={{ color: "#C084FC", fontSize: 11 }}>✉️ {hn.emailNotification}</Text>
+                        <View className="bg-purple-500/20 px-2 py-1 rounded-md">
+                          <Text className="text-purple-400 text-[11px]">✉️ {hn.emailNotification}</Text>
                         </View>
                       )}
                     </View>
                   </View>
-                  <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+                  <View className="flex-row gap-2.5 mt-3.5">
                     <Pressable
                       onPress={() => openEditForm(r)}
-                      style={{
-                        flex: 1, flexDirection: "row", alignItems: "center",
-                        justifyContent: "center", gap: 6,
-                        backgroundColor: "#334155", borderRadius: 10, padding: 10,
-                      }}
+                      className="flex-1 flex-row items-center justify-center gap-1.5 bg-secondary rounded-lg p-2.5"
                     >
                       <Pencil size={14} color="#8B5CF6" />
-                      <Text style={{ color: "#8B5CF6", fontWeight: "600", fontSize: 13 }}>{hn.editReminder}</Text>
+                      <Text className="text-primary font-semibold text-[13px]">{hn.editReminder}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => handleDelete(r._id)}
-                      style={{
-                        flex: 1, flexDirection: "row", alignItems: "center",
-                        justifyContent: "center", gap: 6,
-                        backgroundColor: "#2d0a0a", borderRadius: 10, padding: 10,
-                        borderWidth: 1, borderColor: "#EF444433",
-                      }}
+                      className="flex-1 flex-row items-center justify-center gap-1.5 bg-red-500/10 rounded-lg p-2.5 border border-red-500/20"
                     >
                       <Trash2 size={14} color="#EF4444" />
-                      <Text style={{ color: "#EF4444", fontWeight: "600", fontSize: 13 }}>{hn.deleteReminder}</Text>
+                      <Text className="text-red-500 font-semibold text-[13px]">{hn.deleteReminder}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -772,12 +697,12 @@ export default function HealthNotifications() {
       </ScrollView>
 
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" }}>
-          <View style={{ backgroundColor: "#1E293B", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "92%" }}>
+        <View className="flex-1 bg-black/70 justify-end">
+          <View className="bg-light-card dark:bg-card rounded-t-[24px] max-h-[92%]">
             <ScrollView contentContainerStyle={{ padding: 24 }}>
 
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
-                <Text style={{ color: "white", fontWeight: "800", fontSize: 18, flex: 1 }}>
+              <View className="flex-row items-center mb-6">
+                <Text className="text-light-foreground dark:text-foreground font-extrabold text-lg flex-1">
                   {editingId ? hn.editReminder : hn.addReminder}
                 </Text>
                 <Pressable onPress={() => { setShowForm(false); resetForm(); }}>
@@ -785,42 +710,34 @@ export default function HealthNotifications() {
                 </Pressable>
               </View>
 
-              <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 6, fontWeight: "600" }}>{hn.medicineName}</Text>
+              <Text className="text-muted text-[13px] mb-1.5 font-semibold">{hn.medicineName}</Text>
               <TextInput
                 placeholder={hn.medicineNamePlaceholder}
                 placeholderTextColor="#475569"
                 value={medicineName}
                 onChangeText={setMedicineName}
-                style={{
-                  backgroundColor: "#0F172A", borderRadius: 12,
-                  borderWidth: 1, borderColor: "#334155",
-                  color: "white", padding: 13, marginBottom: 16, fontSize: 15,
-                }}
+                className="bg-light-background dark:bg-background rounded-xl border border-light-border dark:border-border text-light-foreground dark:text-foreground p-3.5 mb-4 text-[15px]"
               />
 
-              <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 6, fontWeight: "600" }}>{hn.dosage}</Text>
+              <Text className="text-muted text-[13px] mb-1.5 font-semibold">{hn.dosage}</Text>
               <TextInput
                 placeholder={hn.dosagePlaceholder}
                 placeholderTextColor="#475569"
                 value={dosage}
                 onChangeText={setDosage}
-                style={{
-                  backgroundColor: "#0F172A", borderRadius: 12,
-                  borderWidth: 1, borderColor: "#334155",
-                  color: "white", padding: 13, marginBottom: 16, fontSize: 15,
-                }}
+                className="bg-light-background dark:bg-background rounded-xl border border-light-border dark:border-border text-light-foreground dark:text-foreground p-3.5 mb-4 text-[15px]"
               />
 
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Text style={{ color: "#94A3B8", fontSize: 13, fontWeight: "600" }}>{hn.times}</Text>
-                  <View style={{ backgroundColor: "#1E293B", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 }}>
-                    <Text style={{ color: "#64748B", fontSize: 11 }}>every 15 min slots</Text>
+              <View className="flex-row items-center justify-between mb-3">
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-muted text-[13px] font-semibold">{hn.times}</Text>
+                  <View className="bg-light-background dark:bg-background rounded-md px-2 py-0.5">
+                    <Text className="text-muted text-[11px]">every 15 min slots</Text>
                   </View>
                 </View>
-                <Pressable onPress={addTime} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Pressable onPress={addTime} className="flex-row items-center gap-1">
                   <Plus size={14} color="#8B5CF6" />
-                  <Text style={{ color: "#8B5CF6", fontSize: 13, fontWeight: "600" }}>{hn.addTime}</Text>
+                  <Text className="text-primary text-[13px] font-semibold">{hn.addTime}</Text>
                 </Pressable>
               </View>
 
@@ -834,26 +751,17 @@ export default function HealthNotifications() {
                 />
               ))}
 
-              <View style={{ marginTop: 8, marginBottom: 16 }}>
-                <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 8, fontWeight: "600" }}>{hn.startDate}</Text>
+              <View className="mt-2 mb-4">
+                <Text className="text-muted text-[13px] mb-2 font-semibold">{hn.startDate}</Text>
                 <TextInput
                   placeholder="DD/MM/YYYY"
                   placeholderTextColor="#475569"
                   value={startDate}
                   onChangeText={setStartDate}
-                  style={{
-                    backgroundColor: "#0F172A", borderRadius: 12,
-                    borderWidth: 1, borderColor: "#334155",
-                    color: "white", padding: 13, marginBottom: 12, fontSize: 15,
-                  }}
+                  className="bg-light-background dark:bg-background rounded-xl border border-light-border dark:border-border text-light-foreground dark:text-foreground p-3.5 mb-3 text-[15px]"
                 />
-                <View style={{
-                  flexDirection: "row", alignItems: "center",
-                  backgroundColor: "#0F172A", borderRadius: 12,
-                  padding: 12, marginBottom: 12,
-                  borderWidth: 1, borderColor: isEveryday ? "#8B5CF6" : "#1E293B",
-                }}>
-                  <Text style={{ color: "#F8FAFC", flex: 1, fontSize: 14 }}>{hn.everyday}</Text>
+                <View className={`flex-row items-center bg-light-background dark:bg-background rounded-xl p-3 mb-3 border ${isEveryday ? "border-primary" : "border-light-border dark:border-border"}`}>
+                  <Text className="text-light-foreground dark:text-foreground flex-1 text-sm">{hn.everyday}</Text>
                   <Switch
                     value={isEveryday}
                     onValueChange={setIsEveryday}
@@ -863,23 +771,19 @@ export default function HealthNotifications() {
                 </View>
                 {!isEveryday && (
                   <>
-                    <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 8, fontWeight: "600" }}>{hn.endDate}</Text>
+                    <Text className="text-muted text-[13px] mb-2 font-semibold">{hn.endDate}</Text>
                     <TextInput
                       placeholder="DD/MM/YYYY"
                       placeholderTextColor="#475569"
                       value={endDate}
                       onChangeText={setEndDate}
-                      style={{
-                        backgroundColor: "#0F172A", borderRadius: 12,
-                        borderWidth: 1, borderColor: "#334155",
-                        color: "white", padding: 13, fontSize: 15,
-                      }}
+                      className="bg-light-background dark:bg-background rounded-xl border border-light-border dark:border-border text-light-foreground dark:text-foreground p-3.5 text-[15px]"
                     />
                   </>
                 )}
               </View>
 
-              <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 10, fontWeight: "600" }}>{hn.notifyVia}</Text>
+              <Text className="text-muted text-[13px] mb-2.5 font-semibold">{hn.notifyVia}</Text>
 
               <NotifyToggle
                 icon={Smartphone}
@@ -917,14 +821,11 @@ export default function HealthNotifications() {
               <Pressable
                 onPress={handleSave}
                 disabled={saving}
-                style={{
-                  backgroundColor: "#8B5CF6", borderRadius: 14,
-                  padding: 16, alignItems: "center", marginTop: 20,
-                }}
+                className="bg-primary rounded-[14px] p-4 items-center mt-5"
               >
                 {saving
                   ? <ActivityIndicator color="white" />
-                  : <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>{hn.saveReminder}</Text>
+                  : <Text className="text-white font-bold text-[16px]">{hn.saveReminder}</Text>
                 }
               </Pressable>
 

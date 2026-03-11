@@ -26,72 +26,45 @@ export function ConfirmModal() {
       animationType="fade"
       onRequestClose={handleCancel}
     >
-      <View style={{
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.6)",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}>
-        <View style={{
-          backgroundColor: "#1E293B",
-          borderRadius: 16,
-          padding: 24,
-          width: "100%",
-          maxWidth: 340,
-          borderWidth: 1,
-          borderColor: isDanger ? "#EF4444" : "#3B82F6",
-        }}>
-          {/* Icon */}
-          <View style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            backgroundColor: isDanger ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 16,
-          }}>
+      <View className="flex-1 bg-black/60 items-center justify-center p-6">
+        <View 
+          className="bg-light-card dark:bg-card rounded-2xl p-6 w-full max-w-[340px] border"
+          style={{ borderColor: isDanger ? "#EF4444" : "#3B82F6" }}
+        >
+          <View 
+            className={`w-12 h-12 rounded-full items-center justify-center mb-4 ${
+              isDanger ? "bg-red-500/15" : "bg-blue-500/15"
+            }`}
+          >
             {isDanger
               ? <AlertTriangle size={24} color="#EF4444" />
               : <Info size={24} color="#3B82F6" />
             }
           </View>
 
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 18, marginBottom: 8 }}>
+          <Text className="text-light-foreground dark:text-foreground font-bold text-lg mb-2">
             {confirm.title}
           </Text>
-          <Text style={{ color: "#94A3B8", fontSize: 14, marginBottom: 24, lineHeight: 20 }}>
+          <Text className="text-muted text-sm mb-6 leading-5">
             {confirm.message}
           </Text>
 
-          <View style={{ flexDirection: "row", gap: 12 }}>
+          <View className="flex-row gap-3">
             <Pressable
               onPress={handleCancel}
-              style={{
-                flex: 1,
-                padding: 14,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: "#334155",
-                alignItems: "center",
-              }}
+              className="flex-1 p-3.5 rounded-xl border border-light-border dark:border-border items-center"
             >
-              <Text style={{ color: "#94A3B8", fontWeight: "600" }}>
+              <Text className="text-muted font-semibold">
                 {confirm.cancelText}
               </Text>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              style={{
-                flex: 1,
-                padding: 14,
-                borderRadius: 12,
-                backgroundColor: isDanger ? "#EF4444" : "#3B82F6",
-                alignItems: "center",
-              }}
+              className={`flex-1 p-3.5 rounded-xl items-center ${
+                isDanger ? "bg-red-500" : "bg-blue-500"
+              }`}
             >
-              <Text style={{ color: "white", fontWeight: "600" }}>
+              <Text className="text-white font-semibold">
                 {confirm.confirmText}
               </Text>
             </Pressable>

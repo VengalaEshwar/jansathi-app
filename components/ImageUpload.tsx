@@ -3,11 +3,10 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 
 interface ImageUploadProps {
-  onImageSelect: (imageUri: string) => void; // now returns URI not base64
+  onImageSelect: (imageUri: string) => void;
   onClear?: () => void;
   disabled?: boolean;
 }
-
 
 export const ImageUpload = ({
   onImageSelect,
@@ -52,12 +51,12 @@ export const ImageUpload = ({
   };
 
   const handleResult = (result: ImagePicker.ImagePickerResult) => {
-  if (!result.canceled && result.assets[0]) {
-    const uri = result.assets[0].uri;
-    setPreview(uri);
-    onImageSelect(uri); // send URI directly
-  }
-};
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setPreview(uri);
+      onImageSelect(uri);
+    }
+  };
 
   const handleClear = () => {
     setPreview(null);
@@ -84,7 +83,7 @@ export const ImageUpload = ({
           <Pressable
             onPress={takePhoto}
             disabled={disabled}
-            className="flex-1 border border-border rounded-xl p-4 items-center"
+            className="flex-1 border border-light-border dark:border-border bg-light-card dark:bg-card rounded-xl p-4 items-center"
           >
             <Text className="text-primary font-semibold">Take Photo</Text>
           </Pressable>
@@ -92,7 +91,7 @@ export const ImageUpload = ({
           <Pressable
             onPress={pickFromGallery}
             disabled={disabled}
-            className="flex-1 border border-border rounded-xl p-4 items-center"
+            className="flex-1 border border-light-border dark:border-border bg-light-card dark:bg-card rounded-xl p-4 items-center"
           >
             <Text className="text-primary font-semibold">Upload Image</Text>
           </Pressable>

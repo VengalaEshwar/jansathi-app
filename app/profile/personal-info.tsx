@@ -144,7 +144,7 @@ export default function PersonalInfo() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View className="flex-1 items-center justify-center bg-light-background dark:bg-background">
         <ActivityIndicator size="large" color="#8B5CF6" />
         <Text className="text-muted mt-2">{t.common.loading}</Text>
       </View>
@@ -152,14 +152,13 @@ export default function PersonalInfo() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-light-background dark:bg-background">
 
-      {/* Header */}
-      <View className="flex-row items-center px-4 pt-4 pb-3 border-b border-border">
+      <View className="flex-row items-center px-4 pt-4 pb-3 border-b border-light-border dark:border-border">
         <Pressable onPress={() => router.back()} className="mr-3">
           <ArrowLeft size={20} color="#6b7280" />
         </Pressable>
-        <Text className="text-xl font-bold text-foreground flex-1">{pi.title}</Text>
+        <Text className="text-xl font-bold text-light-foreground dark:text-foreground flex-1">{pi.title}</Text>
         <Pressable onPress={handleSave} disabled={saving} className="bg-primary px-4 py-2 rounded-lg">
           {saving
             ? <ActivityIndicator color="white" size="small" />
@@ -170,7 +169,7 @@ export default function PersonalInfo() {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
 
-        <Text className="text-foreground font-bold mb-3 text-base">{pi.basicInfo}</Text>
+        <Text className="text-light-foreground dark:text-foreground font-bold mb-3 text-base">{pi.basicInfo}</Text>
 
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           <TextInput
@@ -179,7 +178,7 @@ export default function PersonalInfo() {
             value={firstName}
             onChangeText={setFirstName}
             style={{ flex: 1, minWidth: 120 }}
-            className="border border-border rounded-lg px-3 py-3 text-foreground bg-card"
+            className="border border-light-border dark:border-border rounded-lg px-3 py-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
           />
           <TextInput
             placeholder={pi.lastName}
@@ -187,7 +186,7 @@ export default function PersonalInfo() {
             value={lastName}
             onChangeText={setLastName}
             style={{ flex: 1, minWidth: 120 }}
-            className="border border-border rounded-lg px-3 py-3 text-foreground bg-card"
+            className="border border-light-border dark:border-border rounded-lg px-3 py-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
           />
         </View>
 
@@ -197,7 +196,7 @@ export default function PersonalInfo() {
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
-          className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
         <TextInput
           placeholder={pi.age}
@@ -205,21 +204,21 @@ export default function PersonalInfo() {
           keyboardType="numeric"
           value={age}
           onChangeText={setAge}
-          className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
         <TextInput
           placeholder={pi.dob}
           placeholderTextColor="#94A3B8"
           value={dob}
           onChangeText={setDob}
-          className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
         <TextInput
           placeholder={pi.gender}
           placeholderTextColor="#94A3B8"
           value={gender}
           onChangeText={setGender}
-          className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
         <TextInput
           placeholder={pi.address}
@@ -228,19 +227,18 @@ export default function PersonalInfo() {
           onChangeText={setAddress}
           multiline
           numberOfLines={2}
-          className="border border-border rounded-lg px-3 py-3 mb-3 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
         <TextInput
           placeholder={pi.location}
           placeholderTextColor="#94A3B8"
           value={location}
           onChangeText={setLocation}
-          className="border border-border rounded-lg px-3 py-3 mb-6 text-foreground bg-card"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-3 mb-6 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
         />
 
-        {/* Extra Fields */}
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-foreground font-bold text-base">{pi.additionalDetails}</Text>
+          <Text className="text-light-foreground dark:text-foreground font-bold text-base">{pi.additionalDetails}</Text>
           <Pressable
             onPress={() => setAddingNew(true)}
             className="flex-row items-center gap-1 bg-primary px-3 py-2 rounded-lg"
@@ -251,7 +249,7 @@ export default function PersonalInfo() {
         </View>
 
         {extraFields.map((field, index) => (
-          <View key={index} className="bg-card border border-border rounded-xl p-3 mb-3">
+          <View key={index} className="bg-light-card dark:bg-card border border-light-border dark:border-border rounded-xl p-3 mb-3">
             {editingIndex === index ? (
               <View>
                 <TextInput
@@ -259,17 +257,17 @@ export default function PersonalInfo() {
                   placeholderTextColor="#94A3B8"
                   value={editLabel}
                   onChangeText={setEditLabel}
-                  className="border border-border rounded-lg px-3 py-2 mb-2 text-foreground"
+                  className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-2 text-light-foreground dark:text-foreground"
                 />
                 <TextInput
                   placeholder={pi.valuePlaceholder}
                   placeholderTextColor="#94A3B8"
                   value={editValue}
                   onChangeText={setEditValue}
-                  className="border border-border rounded-lg px-3 py-2 mb-2 text-foreground"
+                  className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-2 text-light-foreground dark:text-foreground"
                 />
                 <View className="flex-row gap-2 justify-end">
-                  <Pressable onPress={cancelEdit} className="p-2 rounded-lg border border-border">
+                  <Pressable onPress={cancelEdit} className="p-2 rounded-lg border border-light-border dark:border-border">
                     <X size={16} color="#64748B" />
                   </Pressable>
                   <Pressable onPress={saveEdit} className="p-2 rounded-lg bg-primary">
@@ -281,7 +279,7 @@ export default function PersonalInfo() {
               <View className="flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text className="text-muted text-xs mb-1">{field.label}</Text>
-                  <Text className="text-foreground font-medium">{field.value}</Text>
+                  <Text className="text-light-foreground dark:text-foreground font-medium">{field.value}</Text>
                 </View>
                 <View className="flex-row gap-2">
                   <Pressable onPress={() => startEdit(index)} className="p-2 rounded-lg bg-secondary">
@@ -297,28 +295,28 @@ export default function PersonalInfo() {
         ))}
 
         {addingNew && (
-          <View className="bg-card border border-primary rounded-xl p-3 mb-3">
-            <Text className="text-foreground font-semibold mb-2">{pi.newField}</Text>
+          <View className="bg-light-card dark:bg-card border border-primary rounded-xl p-3 mb-3">
+            <Text className="text-light-foreground dark:text-foreground font-semibold mb-2">{pi.newField}</Text>
             <TextInput
               placeholder={pi.labelPlaceholder}
               placeholderTextColor="#94A3B8"
               value={newLabel}
               onChangeText={setNewLabel}
-              className="border border-border rounded-lg px-3 py-2 mb-2 text-foreground"
+              className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-2 text-light-foreground dark:text-foreground"
             />
             <TextInput
               placeholder={pi.valuePlaceholder}
               placeholderTextColor="#94A3B8"
               value={newValue}
               onChangeText={setNewValue}
-              className="border border-border rounded-lg px-3 py-2 mb-2 text-foreground"
+              className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-2 text-light-foreground dark:text-foreground"
             />
             <View className="flex-row gap-2 justify-end">
               <Pressable
                 onPress={() => { setAddingNew(false); setNewLabel(""); setNewValue(""); }}
-                className="px-4 py-2 rounded-lg border border-border"
+                className="px-4 py-2 rounded-lg border border-light-border dark:border-border"
               >
-                <Text className="text-foreground">{t.common.cancel}</Text>
+                <Text className="text-light-foreground dark:text-foreground">{t.common.cancel}</Text>
               </Pressable>
               <Pressable onPress={saveNewField} className="px-4 py-2 rounded-lg bg-primary">
                 <Text className="text-white font-semibold">{t.common.save}</Text>

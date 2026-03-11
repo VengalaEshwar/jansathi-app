@@ -64,33 +64,31 @@ export const HelpSupportDialog = ({
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 bg-black/50 justify-center items-center">
-        <View className="bg-card w-[90%] max-h-[85%] rounded-2xl p-4">
+        <View className="bg-light-card dark:bg-card w-[90%] max-h-[85%] rounded-2xl p-4">
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className="text-2xl font-bold mb-4 text-foreground">Help & Support</Text>
+            <Text className="text-2xl font-bold mb-4 text-light-foreground dark:text-foreground">Help & Support</Text>
 
-            {/* Contact Methods */}
             <View className="flex-row justify-between mb-6">
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-border">
+              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
                 <Mail size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-foreground">Email</Text>
+                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Email</Text>
                 <Text className="text-xs text-muted text-center">support@app.com</Text>
               </View>
 
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-border">
+              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
                 <Phone size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-foreground">Phone</Text>
+                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Phone</Text>
                 <Text className="text-xs text-muted text-center">1800-123-4567</Text>
               </View>
 
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-border">
+              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
                 <MessageSquare size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-foreground">Live Chat</Text>
+                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Live Chat</Text>
                 <Text className="text-xs text-muted text-center">9 AM - 6 PM IST</Text>
               </View>
             </View>
 
-            {/* FAQs */}
-            <Text className="text-lg font-semibold mb-3 text-foreground">
+            <Text className="text-lg font-semibold mb-3 text-light-foreground dark:text-foreground">
               Frequently Asked Questions
             </Text>
 
@@ -99,7 +97,7 @@ export const HelpSupportDialog = ({
               return (
                 <View
                   key={index}
-                  className="border border-border rounded-lg mb-2 bg-card"
+                  className="border border-light-border dark:border-border rounded-lg mb-2 bg-light-card dark:bg-card"
                 >
                   <Pressable
                     onPress={() =>
@@ -107,7 +105,7 @@ export const HelpSupportDialog = ({
                     }
                     className="flex-row justify-between items-center p-3"
                   >
-                    <Text className="font-medium flex-1 text-foreground">
+                    <Text className="font-medium flex-1 text-light-foreground dark:text-foreground">
                       {faq.question}
                     </Text>
                     <ChevronDown
@@ -132,8 +130,7 @@ export const HelpSupportDialog = ({
               );
             })}
 
-            {/* Contact Form */}
-            <Text className="text-lg font-semibold mt-6 mb-3 text-foreground">
+            <Text className="text-lg font-semibold mt-6 mb-3 text-light-foreground dark:text-foreground">
               Contact Support
             </Text>
 
@@ -142,7 +139,7 @@ export const HelpSupportDialog = ({
               placeholderTextColor="#94A3B8"
               value={name}
               onChangeText={setName}
-              className="border border-border bg-background rounded-lg px-3 py-3 mb-3 text-foreground"
+              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground"
             />
 
             <TextInput
@@ -151,7 +148,7 @@ export const HelpSupportDialog = ({
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              className="border border-border bg-background rounded-lg px-3 py-3 mb-3 text-foreground"
+              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground"
             />
 
             <TextInput
@@ -161,7 +158,7 @@ export const HelpSupportDialog = ({
               onChangeText={setMessage}
               multiline
               numberOfLines={4}
-              className="border border-border bg-background rounded-lg px-3 py-3 mb-4 text-foreground min-h-[100px]"
+              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-4 text-light-foreground dark:text-foreground min-h-[100px]"
               style={{ textAlignVertical: "top" }}
             />
 

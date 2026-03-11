@@ -49,7 +49,7 @@ export const NotificationsDialog = ({ open, onOpenChange, userId }: Notification
 
   const Row = ({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) => (
     <View className="flex-row justify-between items-center py-2">
-      <Text className="text-foreground">{label}</Text>
+      <Text className="text-light-foreground dark:text-foreground">{label}</Text>
       <Switch value={value} onValueChange={onChange} />
     </View>
   );
@@ -57,8 +57,8 @@ export const NotificationsDialog = ({ open, onOpenChange, userId }: Notification
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 bg-black/50 items-center justify-center">
-        <View className="bg-card w-[90%] rounded-2xl p-4">
-          <Text className="text-xl font-bold mb-4 text-foreground">Notification Settings</Text>
+        <View className="bg-light-card dark:bg-card w-[90%] rounded-2xl p-4">
+          <Text className="text-xl font-bold mb-4 text-light-foreground dark:text-foreground">Notification Settings</Text>
 
           <Row label="Enable Notifications" value={settings.enabled}
             onChange={(v) => setSettings({ ...settings, enabled: v })} />
@@ -70,8 +70,8 @@ export const NotificationsDialog = ({ open, onOpenChange, userId }: Notification
             onChange={(v) => setSettings({ ...settings, governmentUpdates: v })} />
 
           <View className="flex-row justify-end gap-3 mt-4">
-            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-border">
-              <Text className="text-foreground">Cancel</Text>
+            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-light-border dark:border-border">
+              <Text className="text-light-foreground dark:text-foreground">Cancel</Text>
             </Pressable>
             <Pressable onPress={handleSubmit} disabled={loading} className="px-4 py-2 rounded-lg bg-primary">
               {loading ? <ActivityIndicator color="white" /> : <Text className="text-white">Save</Text>}

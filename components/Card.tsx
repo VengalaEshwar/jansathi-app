@@ -24,7 +24,7 @@ export const Card = ({
       onPress={onPress}
       disabled={!onPress}
       className={`mb-4 rounded-2xl p-4 ${
-        gradient ? "bg-primary" : "bg-card border border-border"
+        gradient ? "bg-primary" : "bg-light-card dark:bg-card border border-light-border dark:border-border"
       }`}
       style={({ pressed }) => [
         {
@@ -45,7 +45,7 @@ export const Card = ({
         <View className="flex-1">
           <Text
             className={`text-lg font-semibold mb-1 ${
-              gradient ? "text-white" : "text-foreground"
+              gradient ? "text-white" : "text-light-foreground dark:text-foreground"
             }`}
           >
             {title}

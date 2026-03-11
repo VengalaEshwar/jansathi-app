@@ -4,8 +4,6 @@ import { Heart, Sparkles, User, Info, ArrowRight } from "lucide-react-native";
 import { Card } from "@/components/Card";
 import { useTranslation } from "@/hooks/useTranslation";
 import React from "react";
-
-
 import * as Notifications from "expo-notifications";
 import { useToast } from "@/hooks/useToast";
 
@@ -38,8 +36,11 @@ const TestNotificationButton = () => {
     <Pressable
       onPress={handleTest}
       style={{
-        backgroundColor: "#8B5CF6", borderRadius: 12,
-        padding: 14, alignItems: "center", margin: 16,
+        backgroundColor: "#8B5CF6",
+        borderRadius: 12,
+        padding: 14,
+        alignItems: "center",
+        margin: 16,
       }}
     >
       <Text style={{ color: "white", fontWeight: "700" }}>
@@ -48,7 +49,6 @@ const TestNotificationButton = () => {
     </Pressable>
   );
 };
-
 
 const Home = () => {
   const router = useRouter();
@@ -72,17 +72,17 @@ const Home = () => {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-background px-4 py-6 pb-16">
+    <ScrollView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A] px-4 py-6 pb-16">
       <View className="items-center mb-10">
         <View className="w-20 h-20 rounded-2xl bg-primary items-center justify-center mb-5">
           <Sparkles size={36} color="white" />
         </View>
 
-        <Text className="text-3xl font-bold mb-3 text-center text-foreground">
+        <Text className="text-3xl font-bold mb-3 text-center text-[#0F172A] dark:text-white">
           {t.home.welcome}
         </Text>
 
-        <Text className="text-muted text-center mb-6">
+        <Text className="text-[#64748B] dark:text-[#94A3B8] text-center mb-6">
           {t.home.subtitle}
         </Text>
 
@@ -119,7 +119,7 @@ const Home = () => {
         description={t.home.aboutDesc}
         onPress={() => router.push("/about")}
       />
-     { __DEV__ && <TestNotificationButton />}
+      {__DEV__ && <TestNotificationButton />}
     </ScrollView>
   );
 };

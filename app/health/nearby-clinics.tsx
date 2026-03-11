@@ -227,7 +227,7 @@ export default function NearbyClinics() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <View className="flex-1 bg-light-background dark:bg-background items-center justify-center">
         <ActivityIndicator size="large" color="#8B5CF6" />
         <Text className="text-muted mt-3">{t.clinics.finding}</Text>
       </View>
@@ -235,14 +235,14 @@ export default function NearbyClinics() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-light-background dark:bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
         <Pressable onPress={() => router.back()} className="flex-row items-center">
           <ArrowLeft size={20} color="#6b7280" />
           <Text className="ml-2 text-muted">{t.common.back}</Text>
         </Pressable>
-        <Text className="text-foreground font-bold text-lg">{t.clinics.title}</Text>
+        <Text className="text-light-foreground dark:text-foreground font-bold text-lg">{t.clinics.title}</Text>
         <Text className="text-muted text-sm">
           {isFetching ? "..." : `${clinics.length} ${t.common.found}`}
         </Text>
@@ -277,7 +277,7 @@ export default function NearbyClinics() {
             key={r}
             onPress={() => handleRadiusChange(r)}
             className={`flex-1 py-2 rounded-xl items-center border ${
-              radius === r ? "bg-primary border-primary" : "bg-secondary border-border"
+              radius === r ? "bg-primary border-primary" : "bg-secondary border-light-border dark:border-border"
             }`}
           >
             <Text className={`text-xs font-semibold ${radius === r ? "text-white" : "text-muted"}`}>
@@ -322,9 +322,9 @@ export default function NearbyClinics() {
           </MapView>
 
           {selectedClinic && (
-            <View className="absolute bottom-4 left-4 right-4 bg-card border border-border rounded-2xl p-4">
+            <View className="absolute bottom-4 left-4 right-4 bg-light-card dark:bg-card border border-light-border dark:border-border rounded-2xl p-4">
               <View className="flex-row justify-between items-start mb-1">
-                <Text className="text-foreground font-bold text-base flex-1 mr-2">
+                <Text className="text-light-foreground dark:text-foreground font-bold text-base flex-1 mr-2">
                   {getTypeEmoji(selectedClinic.type)} {selectedClinic.name}
                 </Text>
                 <Text className="text-primary font-semibold text-sm">
@@ -377,19 +377,19 @@ export default function NearbyClinics() {
           ListEmptyComponent={
             <View className="items-center mt-20">
               <Text className="text-4xl mb-3">🏥</Text>
-              <Text className="text-foreground font-semibold">{t.clinics.noResults}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold">{t.clinics.noResults}</Text>
               <Text className="text-muted text-sm mt-1">{t.clinics.tryRefresh}</Text>
             </View>
           }
           renderItem={({ item: clinic }) => (
-            <View className="mb-3 bg-card border border-border rounded-2xl overflow-hidden">
+            <View className="mb-3 bg-light-card dark:bg-card border border-light-border dark:border-border rounded-2xl overflow-hidden">
               <Pressable
                 onPress={() => setExpandedId(expandedId === clinic.id ? null : clinic.id)}
                 className="p-4"
               >
                 <View className="flex-row justify-between items-start">
                   <View className="flex-1 mr-3">
-                    <Text className="text-foreground font-bold text-base">
+                    <Text className="text-light-foreground dark:text-foreground font-bold text-base">
                       {getTypeEmoji(clinic.type)} {clinic.name}
                     </Text>
                     <View className="flex-row items-center mt-1">
@@ -421,7 +421,7 @@ export default function NearbyClinics() {
               </Pressable>
 
               {expandedId === clinic.id && (
-                <View className="px-4 pb-4 border-t border-border pt-3 gap-2">
+                <View className="px-4 pb-4 border-t border-light-border dark:border-border pt-3 gap-2">
                   {clinic.openingHours && (
                     <View className="flex-row items-center">
                       <Clock size={13} color="#8B5CF6" />
@@ -465,7 +465,7 @@ export default function NearbyClinics() {
                           onPress={() => focusMap(clinic)}
                           className="flex-1 bg-secondary py-2 rounded-xl items-center justify-center"
                         >
-                          <Text className="text-foreground text-sm">📍 {t.clinics.pin}</Text>
+                          <Text className="text-light-foreground dark:text-foreground text-sm">📍 {t.clinics.pin}</Text>
                         </Pressable>
                       </>
                     )}

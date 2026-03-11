@@ -29,7 +29,7 @@ interface DraggableChatbotProps {
   onSendMessage: (
     message: string,
     history: Message[]
-  ) => Promise<string>; // returns assistant reply
+  ) => Promise<string>;
 }
 
 export const DraggableChatbot = ({
@@ -49,7 +49,6 @@ export const DraggableChatbot = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Draggable position — starts bottom-right
   const position = useRef(
     new Animated.ValueXY({
       x: screenWidth - BUTTON_SIZE - 16,
@@ -62,7 +61,6 @@ export const DraggableChatbot = ({
     y: screenHeight - BUTTON_SIZE - 96,
   });
 
-  // Re-clamp + snap on window resize / orientation change
   useEffect(() => {
     const maxX = screenWidth - BUTTON_SIZE - EDGE_PADDING;
     const maxY = screenHeight - BUTTON_SIZE - EDGE_PADDING;
@@ -85,7 +83,6 @@ export const DraggableChatbot = ({
     currentPos.current = { x: snapX, y: clampedY };
   }, [screenWidth, screenHeight]);
 
-  // Keep dims ref in sync for panResponder (created once, can't read state)
   const dimsRef = useRef({ width: screenWidth, height: screenHeight });
   useEffect(() => {
     dimsRef.current = { width: screenWidth, height: screenHeight };
@@ -131,7 +128,6 @@ export const DraggableChatbot = ({
 
       onPanResponderRelease: (_, g) => {
         position.flattenOffset();
-        // Delay reset so onPress fires first and correctly sees isDragging=true
         setTimeout(() => {
           isDragging.current = false;
         }, 50);
@@ -196,7 +192,6 @@ export const DraggableChatbot = ({
 
   return (
     <>
-      {/* Draggable FAB */}
       <Animated.View
         style={[
           {
@@ -218,11 +213,9 @@ export const DraggableChatbot = ({
         </Pressable>
       </Animated.View>
 
-      {/* Chat Modal */}
       <Modal visible={isOpen} animationType="slide" transparent>
         <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-card rounded-t-2xl h-[75%]">
-            {/* Header */}
+          <View className="bg-light-card dark:bg-card rounded-t-2xl h-[75%]">
             <View className="flex-row justify-between items-center p-4 bg-primary rounded-t-2xl">
               <Text className="text-white font-semibold text-lg">{title}</Text>
               <Pressable onPress={() => setIsOpen(false)}>
@@ -230,7 +223,6 @@ export const DraggableChatbot = ({
               </Pressable>
             </View>
 
-            {/* Messages */}
             <ScrollView className="flex-1 p-4">
               {messages.map((m, i) => (
                 <View
@@ -246,7 +238,7 @@ export const DraggableChatbot = ({
                   >
                     <Text
                       className={
-                        m.role === "user" ? "text-white" : "text-foreground"
+                        m.role === "user" ? "text-white" : "text-light-foreground dark:text-foreground"
                       }
                     >
                       {m.content}
@@ -270,14 +262,13 @@ export const DraggableChatbot = ({
               )}
             </ScrollView>
 
-            {/* Input */}
-            <View className="p-3 border-t border-border flex-row gap-2">
+            <View className="p-3 border-t border-light-border dark:border-border flex-row gap-2">
               <TextInput
                 value={input}
                 onChangeText={setInput}
                 placeholder={placeholder}
                 placeholderTextColor="#94A3B8"
-                className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
+                className="flex-1 border border-light-border dark:border-border rounded-lg px-3 py-2 text-light-foreground dark:text-foreground"
                 onSubmitEditing={sendMessage}
                 returnKeyType="send"
                 editable={!loading}

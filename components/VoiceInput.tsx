@@ -47,8 +47,6 @@ export const VoiceInput = ({ onTranscript, disabled }: VoiceInputProps) => {
 
     console.log("Audio recorded at:", uri);
 
-    // ⚠️ Here you normally send audio to a Speech-to-Text API
-    // For now we simulate transcription
     onTranscript("This is a simulated voice input text.");
   };
 
@@ -56,23 +54,20 @@ export const VoiceInput = ({ onTranscript, disabled }: VoiceInputProps) => {
     <Pressable
       onPress={isRecording ? stopRecording : startRecording}
       disabled={disabled}
-      style={{
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: isRecording ? "#ef4444" : "#e5e7eb",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className={`w-12 h-12 rounded-full items-center justify-center ${
+        isRecording
+          ? "bg-red-500"
+          : "bg-light-card dark:bg-card border border-light-border dark:border-border"
+      }`}
     >
-      {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+      {isRecording ? (
+        <MicOff size={20} color="white" />
+      ) : (
+        <Mic size={20} color="#8B5CF6" />
+      )}
     </Pressable>
   );
 };
-
-
-
-
 
 export const TextToSpeech = ({ text }: { text: string }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -92,22 +87,13 @@ export const TextToSpeech = ({ text }: { text: string }) => {
     <Pressable
       onPress={speak}
       disabled={isSpeaking}
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "#ddd",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className="w-10 h-10 rounded-full items-center justify-center border border-light-border dark:border-border bg-light-card dark:bg-card"
     >
       {isSpeaking ? (
-        <ActivityIndicator size="small" />
+        <ActivityIndicator size="small" color="#8B5CF6" />
       ) : (
-        <Volume2 size={18} />
+        <Volume2 size={18} color="#8B5CF6" />
       )}
     </Pressable>
   );
 };
-

@@ -192,12 +192,12 @@ export default function SchemeFinder() {
     <Pressable
       key={scheme._id || scheme.slug}
       onPress={() => setSelectedScheme(scheme)}
-      className="mb-3 bg-card border border-border rounded-2xl p-4"
+      className="mb-3 bg-light-card dark:bg-card border border-light-border dark:border-border rounded-2xl p-4"
     >
       {/* Header */}
       <View className="flex-row justify-between items-start mb-2">
         <View className="flex-1 mr-2">
-          <Text className="text-foreground font-bold text-sm" numberOfLines={2}>
+          <Text className="text-light-foreground dark:text-foreground font-bold text-sm" numberOfLines={2}>
             {scheme.name}
           </Text>
           <Text className="text-primary text-xs mt-0.5">{scheme.short_title}</Text>
@@ -259,7 +259,7 @@ export default function SchemeFinder() {
     onChange: (v: string) => void;
   }) => (
     <View className="mb-4">
-      <Text className="text-foreground text-sm font-semibold mb-2">{label}</Text>
+      <Text className="text-light-foreground dark:text-foreground text-sm font-semibold mb-2">{label}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-2">
           {options.map((opt) => (
@@ -269,7 +269,7 @@ export default function SchemeFinder() {
               className={`px-3 py-2 rounded-xl border ${
                 value === opt.value
                   ? "bg-primary border-primary"
-                  : "bg-secondary border-border"
+                  : "bg-secondary border-light-border dark:border-border"
               }`}
             >
               <Text
@@ -298,13 +298,13 @@ export default function SchemeFinder() {
     <Pressable
       onPress={() => onChange(!value)}
       className={`flex-row items-center justify-between p-3 rounded-xl border mb-2 ${
-        value ? "bg-primary/10 border-primary" : "bg-secondary border-border"
+        value ? "bg-primary/10 border-primary" : "bg-secondary border-light-border dark:border-border"
       }`}
     >
-      <Text className="text-foreground text-sm">{label}</Text>
+      <Text className="text-light-foreground dark:text-foreground text-sm">{label}</Text>
       <View
         className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
-          value ? "bg-primary border-primary" : "border-border"
+          value ? "bg-primary border-primary" : "border-light-border dark:border-border"
         }`}
       >
         {value && <CheckCircle size={12} color="white" />}
@@ -314,7 +314,7 @@ export default function SchemeFinder() {
 
   /* ─── Render ─────────────────────────────────────────────── */
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-light-background dark:bg-background">
 
       {/* Header */}
       <View className="px-4 pt-4 pb-2">
@@ -322,7 +322,7 @@ export default function SchemeFinder() {
           <ArrowLeft size={20} color="#6b7280" />
           <Text className="ml-2 text-muted">{t.common.back}</Text>
         </Pressable>
-        <Text className="text-2xl font-bold text-foreground">{ts.title}</Text>
+        <Text className="text-2xl font-bold text-light-foreground dark:text-foreground">{ts.title}</Text>
         <Text className="text-muted text-sm mt-1">
           {total > 0 ? `${total} ${ts.schemesAvailable}` : ts.subtitle}
         </Text>
@@ -353,14 +353,14 @@ export default function SchemeFinder() {
         <View className="flex-1">
           {/* Search Bar */}
           <View className="flex-row mx-4 mb-2 gap-2">
-            <View className="flex-1 flex-row items-center bg-card border border-border rounded-xl px-3">
+            <View className="flex-1 flex-row items-center bg-light-card dark:bg-card border border-light-border dark:border-border rounded-xl px-3">
               <Search size={16} color="#6b7280" />
               <TextInput
                 value={search}
                 onChangeText={setSearch}
                 placeholder={ts.searchPlaceholder}
                 placeholderTextColor="#6b7280"
-                className="flex-1 py-2.5 px-2 text-foreground text-sm"
+                className="flex-1 py-2.5 px-2 text-light-foreground dark:text-foreground text-sm"
                 onSubmitEditing={() => fetchSchemes(1)}
                 returnKeyType="search"
               />
@@ -375,7 +375,7 @@ export default function SchemeFinder() {
               className={`px-3 rounded-xl border items-center justify-center ${
                 selectedCategory || selectedState
                   ? "bg-primary border-primary"
-                  : "bg-card border-border"
+                  : "bg-light-card dark:bg-card border-light-border dark:border-border"
               }`}
             >
               <Filter size={18} color={selectedCategory || selectedState ? "white" : "#6b7280"} />
@@ -393,7 +393,7 @@ export default function SchemeFinder() {
             onPress={() => setShowCategories(!showCategories)}
             className="flex-row justify-between items-center px-5 py-2"
           >
-            <Text className="text-foreground text-sm font-semibold">
+            <Text className="text-light-foreground dark:text-foreground text-sm font-semibold">
               {selectedCategory && !showCategories
                 ? `${ts.categorySelected}: ${selectedCategory.split(",")[0]}`
                 : ts.categoriesLabel}
@@ -425,7 +425,7 @@ export default function SchemeFinder() {
                       className={`px-3 py-1.5 rounded-full border ${
                         isSelected
                           ? "bg-primary border-primary"
-                          : "bg-card border-border"
+                          : "bg-light-card dark:bg-card border-light-border dark:border-border"
                       }`}
                     >
                       <Text
@@ -451,7 +451,7 @@ export default function SchemeFinder() {
           ) : !hasSearched ? (
             <View className="flex-1 items-center justify-center px-8">
               <Text className="text-5xl mb-4">🏛️</Text>
-              <Text className="text-foreground font-bold text-lg text-center mb-2">
+              <Text className="text-light-foreground dark:text-foreground font-bold text-lg text-center mb-2">
                 {ts.exploreTitle}
               </Text>
               <Text className="text-muted text-center text-sm mb-6">
@@ -467,7 +467,7 @@ export default function SchemeFinder() {
           ) : schemes.length === 0 ? (
             <View className="flex-1 items-center justify-center">
               <Text className="text-4xl mb-3">🔍</Text>
-              <Text className="text-foreground font-semibold">{ts.noResults}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold">{ts.noResults}</Text>
               <Text className="text-muted text-sm mt-1">{ts.tryDifferent}</Text>
             </View>
           ) : (
@@ -483,19 +483,19 @@ export default function SchemeFinder() {
                       onPress={() => fetchSchemes(page - 1)}
                       disabled={page === 1}
                       className={`p-2 rounded-xl border ${
-                        page === 1 ? "border-border opacity-40" : "border-primary bg-primary/10"
+                        page === 1 ? "border-light-border dark:border-border opacity-40" : "border-primary bg-primary/10"
                       }`}
                     >
                       <ChevronLeft size={20} color={page === 1 ? "#6b7280" : "#8B5CF6"} />
                     </Pressable>
-                    <Text className="text-foreground font-semibold">
+                    <Text className="text-light-foreground dark:text-foreground font-semibold">
                       {page} / {totalPages}
                     </Text>
                     <Pressable
                       onPress={() => fetchSchemes(page + 1)}
                       disabled={page === totalPages}
                       className={`p-2 rounded-xl border ${
-                        page === totalPages ? "border-border opacity-40" : "border-primary bg-primary/10"
+                        page === totalPages ? "border-light-border dark:border-border opacity-40" : "border-primary bg-primary/10"
                       }`}
                     >
                       <ChevronRight size={20} color={page === totalPages ? "#6b7280" : "#8B5CF6"} />
@@ -527,7 +527,7 @@ export default function SchemeFinder() {
 
               {/* Age */}
               <View className="mb-4">
-                <Text className="text-foreground text-sm font-semibold mb-2">
+                <Text className="text-light-foreground dark:text-foreground text-sm font-semibold mb-2">
                   {ts.age} <Text className="text-red-500">*</Text>
                 </Text>
                 <TextInput
@@ -536,7 +536,7 @@ export default function SchemeFinder() {
                   placeholder={ts.agePlaceholder}
                   placeholderTextColor="#6b7280"
                   keyboardType="numeric"
-                  className="border border-border rounded-xl px-3 py-2.5 text-foreground bg-card"
+                  className="border border-light-border dark:border-border rounded-xl px-3 py-2.5 text-light-foreground dark:text-foreground bg-light-card dark:bg-card"
                 />
               </View>
 
@@ -567,14 +567,14 @@ export default function SchemeFinder() {
 
               {/* State - Modal Picker */}
               <View className="mb-4">
-                <Text className="text-foreground text-sm font-semibold mb-2">
+                <Text className="text-light-foreground dark:text-foreground text-sm font-semibold mb-2">
                   {ts.state} <Text className="text-red-500">*</Text>
                 </Text>
                 <Pressable
                   onPress={() => setShowStatePicker(true)}
-                  className="border border-border rounded-xl px-3 py-3 bg-card"
+                  className="border border-light-border dark:border-border rounded-xl px-3 py-3 bg-light-card dark:bg-card"
                 >
-                  <Text className={form.state ? "text-foreground" : "text-muted"}>
+                  <Text className={form.state ? "text-light-foreground dark:text-foreground" : "text-muted"}>
                     {form.state || ts.selectState}
                   </Text>
                 </Pressable>
@@ -608,7 +608,7 @@ export default function SchemeFinder() {
               />
 
               {/* Toggles */}
-              <Text className="text-foreground text-sm font-semibold mb-2">
+              <Text className="text-light-foreground dark:text-foreground text-sm font-semibold mb-2">
                 {ts.additionalCriteria}
               </Text>
               <ToggleRow
@@ -660,7 +660,7 @@ export default function SchemeFinder() {
               {eligibleSchemes.length === 0 ? (
                 <View className="items-center py-10">
                   <Text className="text-4xl mb-3">😕</Text>
-                  <Text className="text-foreground font-semibold">{ts.noMatches}</Text>
+                  <Text className="text-light-foreground dark:text-foreground font-semibold">{ts.noMatches}</Text>
                   <Text className="text-muted text-sm mt-1 text-center">
                     {ts.noMatchesDesc}
                   </Text>
@@ -686,16 +686,16 @@ export default function SchemeFinder() {
       {/* ── Filter Modal ── */}
       <Modal visible={showFilter} animationType="slide" transparent>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-card rounded-t-2xl p-5 max-h-[80%]">
+          <View className="bg-light-card dark:bg-card rounded-t-2xl p-5 max-h-[80%]">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-foreground font-bold text-lg">{ts.filters}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-bold text-lg">{ts.filters}</Text>
               <Pressable onPress={() => setShowFilter(false)}>
                 <X size={22} color="#6b7280" />
               </Pressable>
             </View>
 
             <ScrollView>
-              <Text className="text-foreground font-semibold mb-2">{ts.stateFilter}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold mb-2">{ts.stateFilter}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
                 <View className="flex-row gap-2">
                   {INDIAN_STATES.map((s) => (
@@ -705,7 +705,7 @@ export default function SchemeFinder() {
                       className={`px-3 py-1.5 rounded-full border ${
                         selectedState === s
                           ? "bg-primary border-primary"
-                          : "bg-secondary border-border"
+                          : "bg-secondary border-light-border dark:border-border"
                       }`}
                     >
                       <Text
@@ -727,7 +727,7 @@ export default function SchemeFinder() {
                   setSelectedCategory("");
                   setSelectedState("");
                 }}
-                className="flex-1 py-3 rounded-xl border border-border items-center"
+                className="flex-1 py-3 rounded-xl border border-light-border dark:border-border items-center"
               >
                 <Text className="text-muted font-semibold">{ts.clearAll}</Text>
               </Pressable>
@@ -748,9 +748,9 @@ export default function SchemeFinder() {
       {/* ── State Selection Modal for Eligibility ── */}
       <Modal visible={showStatePicker} animationType="slide" transparent>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-card rounded-t-2xl max-h-[70%] p-4 pb-10">
+          <View className="bg-light-card dark:bg-card rounded-t-2xl max-h-[70%] p-4 pb-10">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-foreground font-bold text-lg">{ts.selectStateTitle}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-bold text-lg">{ts.selectStateTitle}</Text>
               <Pressable onPress={() => setShowStatePicker(false)}>
                 <X size={22} color="#6b7280" />
               </Pressable>
@@ -761,7 +761,7 @@ export default function SchemeFinder() {
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <Pressable
-                  className={`py-3 px-2 border-b border-border ${
+                  className={`py-3 px-2 border-b border-light-border dark:border-border ${
                     form.state === item ? "bg-primary/10 rounded-lg" : ""
                   }`}
                   onPress={() => {
@@ -771,7 +771,7 @@ export default function SchemeFinder() {
                 >
                   <Text
                     className={`text-base ${
-                      form.state === item ? "text-primary font-bold" : "text-foreground"
+                      form.state === item ? "text-primary font-bold" : "text-light-foreground dark:text-foreground"
                     }`}
                   >
                     {item}
@@ -786,11 +786,11 @@ export default function SchemeFinder() {
       {/* ── Scheme Detail Modal ── */}
       <Modal visible={!!selectedScheme} animationType="slide" transparent>
         <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-card rounded-t-2xl max-h-[85%]">
+          <View className="bg-light-card dark:bg-card rounded-t-2xl max-h-[85%]">
             {/* Header */}
-            <View className="flex-row justify-between items-start p-4 border-b border-border">
+            <View className="flex-row justify-between items-start p-4 border-b border-light-border dark:border-border">
               <View className="flex-1 mr-3">
-                <Text className="text-foreground font-bold text-base">
+                <Text className="text-light-foreground dark:text-foreground font-bold text-base">
                   {selectedScheme?.name}
                 </Text>
                 <Text className="text-primary text-sm mt-0.5">
@@ -817,12 +817,12 @@ export default function SchemeFinder() {
                 ))}
               </View>
 
-              <Text className="text-foreground font-semibold mb-2">{ts.about}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold mb-2">{ts.about}</Text>
               <Text className="text-muted text-sm leading-relaxed mb-4">
                 {selectedScheme?.description}
               </Text>
 
-              <Text className="text-foreground font-semibold mb-2">{ts.categories}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold mb-2">{ts.categories}</Text>
               <View className="flex-row flex-wrap gap-2 mb-4">
                 {selectedScheme?.category.map((cat) => (
                   <View key={cat} className="bg-primary/10 px-3 py-1 rounded-full">
@@ -833,10 +833,10 @@ export default function SchemeFinder() {
                 ))}
               </View>
 
-              <Text className="text-foreground font-semibold mb-2">{ts.tags}</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold mb-2">{ts.tags}</Text>
               <View className="flex-row flex-wrap gap-2 mb-6">
                 {selectedScheme?.tags.map((tag) => (
-                  <View key={tag} className="bg-secondary border border-border px-2 py-1 rounded-lg">
+                  <View key={tag} className="bg-secondary border border-light-border dark:border-border px-2 py-1 rounded-lg">
                     <Text className="text-muted text-xs">{tag}</Text>
                   </View>
                 ))}

@@ -59,11 +59,11 @@ export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogPro
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 bg-black/50 items-center justify-center">
-        <View className="bg-card w-[90%] rounded-2xl p-4">
-          <Text className="text-xl font-bold mb-4 text-foreground">Language Preferences</Text>
-          <Text className="mb-2 font-medium text-foreground">Preferred Language</Text>
+        <View className="bg-light-card dark:bg-card w-[90%] rounded-2xl p-4">
+          <Text className="text-xl font-bold mb-4 text-light-foreground dark:text-foreground">Language Preferences</Text>
+          <Text className="mb-2 font-medium text-light-foreground dark:text-foreground">Preferred Language</Text>
 
-          <View className="border border-border rounded-lg mb-3">
+          <View className="border border-light-border dark:border-border rounded-lg mb-3">
             <Picker selectedValue={language} onValueChange={(v) => setLanguage(v)}>
               {languages.map((lang) => (
                 <Picker.Item key={lang.value} label={lang.label} value={lang.value} />
@@ -76,8 +76,8 @@ export const LanguageDialog = ({ open, onOpenChange, userId }: LanguageDialogPro
           </Text>
 
           <View className="flex-row justify-end gap-3">
-            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-border">
-              <Text className="text-foreground">Cancel</Text>
+            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-light-border dark:border-border">
+              <Text className="text-light-foreground dark:text-foreground">Cancel</Text>
             </Pressable>
             <Pressable onPress={handleSubmit} disabled={loading} className="px-4 py-2 rounded-lg bg-primary">
               {loading ? <ActivityIndicator color="white" /> : <Text className="text-white">Save</Text>}

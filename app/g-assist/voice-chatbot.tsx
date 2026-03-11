@@ -325,7 +325,7 @@ export default function VoiceChatbot() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background pb-14"
+      className="flex-1 bg-light-background dark:bg-background pb-14"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Header */}
@@ -338,12 +338,12 @@ export default function VoiceChatbot() {
           <Text className="ml-2 text-muted">{t.common.back}</Text>
         </Pressable>
 
-        <Text className="text-foreground font-bold text-lg">
+        <Text className="text-light-foreground dark:text-foreground font-bold text-lg">
           {t.chat.title}
         </Text>
 
-        <View className="px-3 py-1 rounded-full bg-secondary border border-border">
-          <Text className="text-foreground text-sm font-semibold">
+        <View className="px-3 py-1 rounded-full bg-secondary border border-light-border dark:border-border">
+          <Text className="text-light-foreground dark:text-foreground text-sm font-semibold">
             {language?.toUpperCase()}
           </Text>
         </View>
@@ -374,12 +374,12 @@ export default function VoiceChatbot() {
               className={`px-4 py-3 rounded-2xl ${
                 msg.role === "user"
                   ? "bg-primary rounded-tr-sm"
-                  : "bg-card border border-border rounded-tl-sm"
+                  : "bg-light-card dark:bg-card border border-light-border dark:border-border rounded-tl-sm"
               }`}
             >
               <Text
                 className={`text-sm leading-5 ${
-                  msg.role === "user" ? "text-white" : "text-foreground"
+                  msg.role === "user" ? "text-white" : "text-light-foreground dark:text-foreground"
                 }`}
               >
                 {msg.content}
@@ -396,7 +396,7 @@ export default function VoiceChatbot() {
 
         {isThinking && (
           <View className="self-start mb-3">
-            <View className="px-4 py-3 rounded-2xl bg-card border border-border rounded-tl-sm flex-row items-center">
+            <View className="px-4 py-3 rounded-2xl bg-light-card dark:bg-card border border-light-border dark:border-border rounded-tl-sm flex-row items-center">
               <ActivityIndicator size="small" color="#8B5CF6" />
               <Text className="text-muted text-sm ml-2">{t.chat.thinking}</Text>
             </View>
@@ -405,7 +405,7 @@ export default function VoiceChatbot() {
       </ScrollView>
 
       {/* Bottom Controls */}
-      <View className="px-4 pb-6 pt-3 border-t border-border bg-background">
+      <View className="px-4 pb-6 pt-3 border-t border-light-border dark:border-border bg-light-background dark:bg-background">
         {/* Status */}
         <Text
           style={{ color: getStatusColor() }}
@@ -461,7 +461,7 @@ export default function VoiceChatbot() {
             onChangeText={setTextInput}
             placeholder={t.chat.typeMessage}
             placeholderTextColor="#94A3B8"
-            className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-foreground text-sm"
+            className="flex-1 bg-light-card dark:bg-card border border-light-border dark:border-border rounded-xl px-4 py-3 text-light-foreground dark:text-foreground text-sm"
             multiline={false}
             returnKeyType="send"
             onSubmitEditing={() => handleInput(textInput)}

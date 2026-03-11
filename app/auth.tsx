@@ -21,7 +21,6 @@ import type { Language } from "@/translations";
 import { Platform } from "react-native";
 import { useToast } from "@/hooks/useToast";
 
-// Native Google Sign-In (Android/iOS only)
 let GoogleSignin: any;
 let statusCodes: any;
 if (Platform.OS !== "web") {
@@ -63,14 +62,12 @@ export default function Auth() {
     setGoogleLoading(true);
     try {
       if (Platform.OS === "web") {
-        // Web: use Firebase popup
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         router.replace("/");
         return;
       }
 
-      // Native Android/iOS: use native Google Sign-In SDK
       if (!GoogleSignin) {
         toast.error(t.auth.googleNotAvailable);
         return;
@@ -88,9 +85,7 @@ export default function Auth() {
 
     } catch (e: any) {
       if (statusCodes && e.code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled — do nothing
       } else if (statusCodes && e.code === statusCodes.IN_PROGRESS) {
-        // Sign in already in progress — do nothing
       } else {
         toast.error(e.message || t.auth.googleFailed);
       }
@@ -134,9 +129,8 @@ export default function Auth() {
   };
   
   return (
-    <View className="flex-1 bg-background items-center justify-center px-5">
+    <View className="flex-1 bg-light-background dark:bg-background items-center justify-center px-5">
 
-      {/* Language Selector */}
       <View className="absolute top-12 right-4 flex-row gap-1">
         {LANGUAGES.map((lang) => (
           <Pressable
@@ -145,7 +139,7 @@ export default function Auth() {
             className={`px-2 py-1 rounded-lg border ${
               language === lang.code
                 ? "bg-primary border-primary"
-                : "bg-card border-border"
+                : "bg-light-card dark:bg-card border-light-border dark:border-border"
             }`}
           >
             <Text className={`text-xs font-bold ${
@@ -157,12 +151,11 @@ export default function Auth() {
         ))}
       </View>
 
-      {/* Logo & Title */}
       <View className="items-center mb-6">
         <View className="w-16 h-16 rounded-xl bg-primary items-center justify-center mb-3">
           <User size={28} color="white" />
         </View>
-        <Text className="text-2xl font-bold text-foreground">
+        <Text className="text-2xl font-bold text-light-foreground dark:text-foreground">
           {t.home.welcome}
         </Text>
         <Text className="text-muted mt-1 text-center">
@@ -170,16 +163,15 @@ export default function Auth() {
         </Text>
       </View>
 
-      {/* Sign In / Sign Up Toggle */}
       <View className="flex-row w-full mb-4">
         <Pressable
           onPress={() => setMode("signin")}
           className={`flex-1 py-2 rounded-l-lg ${
-            mode === "signin" ? "bg-primary" : "bg-card"
+            mode === "signin" ? "bg-primary" : "bg-light-card dark:bg-card"
           }`}
         >
           <Text className={`text-center font-semibold ${
-            mode === "signin" ? "text-white" : "text-foreground"
+            mode === "signin" ? "text-white" : "text-light-foreground dark:text-foreground"
           }`}>
             {t.auth.signIn}
           </Text>
@@ -187,18 +179,17 @@ export default function Auth() {
         <Pressable
           onPress={() => setMode("signup")}
           className={`flex-1 py-2 rounded-r-lg ${
-            mode === "signup" ? "bg-primary" : "bg-card"
+            mode === "signup" ? "bg-primary" : "bg-light-card dark:bg-card"
           }`}
         >
           <Text className={`text-center font-semibold ${
-            mode === "signup" ? "text-white" : "text-foreground"
+            mode === "signup" ? "text-white" : "text-light-foreground dark:text-foreground"
           }`}>
             {t.auth.signUp}
           </Text>
         </Pressable>
       </View>
 
-      {/* Form */}
       <View className="w-full space-y-3">
         {mode === "signup" && (
           <View className="flex-row gap-2 mb-3">
@@ -207,14 +198,14 @@ export default function Auth() {
               placeholderTextColor="#94A3B8"
               value={firstName}
               onChangeText={setFirstName}
-              className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
+              className="flex-1 border border-light-border dark:border-border rounded-lg px-3 py-2 text-light-foreground dark:text-foreground"
             />
             <TextInput
               placeholder={t.auth.lastName}
               placeholderTextColor="#94A3B8"
               value={lastName}
               onChangeText={setLastName}
-              className="flex-1 border border-border rounded-lg px-3 py-2 text-foreground"
+              className="flex-1 border border-light-border dark:border-border rounded-lg px-3 py-2 text-light-foreground dark:text-foreground"
             />
           </View>
         )}
@@ -226,7 +217,7 @@ export default function Auth() {
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
-          className="border border-border rounded-lg px-3 py-2 mb-3 text-foreground"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-3 text-light-foreground dark:text-foreground"
         />
         <TextInput
           placeholder={t.auth.password}
@@ -234,7 +225,7 @@ export default function Auth() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          className="border border-border rounded-lg px-3 py-2 mb-3 text-foreground"
+          className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-3 text-light-foreground dark:text-foreground"
         />
 
         <Pressable
@@ -251,18 +242,16 @@ export default function Auth() {
           )}
         </Pressable>
 
-        {/* Divider */}
         <View className="flex-row items-center my-3">
-          <View className="flex-1 h-px bg-border" />
+          <View className="flex-1 h-px bg-light-border dark:bg-border" />
           <Text className="text-muted text-xs mx-3">{t.auth.orContinueWith}</Text>
-          <View className="flex-1 h-px bg-border" />
+          <View className="flex-1 h-px bg-light-border dark:bg-border" />
         </View>
 
-        {/* Google Sign-In Button */}
         <Pressable
           onPress={handleGoogleSignIn}
           disabled={googleLoading}
-          className="border border-border bg-card py-3 rounded-lg items-center flex-row justify-center gap-2"
+          className="border border-light-border dark:border-border bg-light-card dark:bg-card py-3 rounded-lg items-center flex-row justify-center gap-2"
           style={{ opacity: googleLoading ? 0.7 : 1 }}
         >
           {googleLoading ? (
@@ -270,7 +259,7 @@ export default function Auth() {
           ) : (
             <>
               <Text style={{ fontSize: 16, fontWeight: "bold", color: "#4285F4" }}>G</Text>
-              <Text className="text-foreground font-semibold ml-1">
+              <Text className="text-light-foreground dark:text-foreground font-semibold ml-1">
                 {t.auth.continueWithGoogle}
               </Text>
             </>

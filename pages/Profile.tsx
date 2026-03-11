@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
 import {
   View,
   Text,
@@ -170,7 +172,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View className="flex-1 items-center justify-center bg-light-background dark:bg-background">
         <ActivityIndicator size="large" color="#8B5CF6" />
         <Text className="text-muted mt-2">{t.common.loading}</Text>
       </View>
@@ -203,21 +205,19 @@ export default function Profile() {
   ];
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-light-background dark:bg-background">
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
 
-        {/* Header */}
         <View className="mb-6">
           <View className="flex-row items-center gap-3">
             <View className="w-12 h-12 rounded-xl bg-primary items-center justify-center">
               <User size={22} color="white" />
             </View>
-            <Text className="text-2xl font-bold text-foreground">{t.profile.title}</Text>
+            <Text className="text-2xl font-bold text-light-foreground dark:text-foreground">{t.profile.title}</Text>
           </View>
           <Text className="text-muted mt-2">{t.profile.subtitle}</Text>
         </View>
 
-        {/* Profile Card */}
         <View className="p-4 rounded-2xl bg-primary mb-6">
           <View className="flex-row items-center gap-4">
             <Pressable onPress={handleAvatarPress} disabled={avatarLoading} style={{ position: "relative" }}>
@@ -258,13 +258,14 @@ export default function Profile() {
               <LogOut size={16} color="white" />
               <Text className="text-white">{t.profile.logout}</Text>
             </Pressable>
+            <ThemeToggle />
           </View>
+          
         </View>
 
-        {/* Language Selector */}
-        <View className="bg-card border border-border rounded-2xl p-4 mb-4">
+        <View className="bg-light-card dark:bg-card border border-light-border dark:border-border rounded-2xl p-4 mb-4">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-foreground font-semibold">{t.profile.chooseLanguage}</Text>
+            <Text className="text-light-foreground dark:text-foreground font-semibold">{t.profile.chooseLanguage}</Text>
             {savingLang && <ActivityIndicator size="small" color="#8B5CF6" />}
           </View>
           <View className="flex-row gap-2">
@@ -273,10 +274,10 @@ export default function Profile() {
                 key={lang.code}
                 onPress={() => handleLanguageChange(lang.code)}
                 className={`flex-1 py-3 rounded-xl items-center border ${
-                  language === lang.code ? "bg-primary border-primary" : "bg-secondary border-border"
+                  language === lang.code ? "bg-primary border-primary" : "bg-secondary border-light-border dark:border-border"
                 }`}
               >
-                <Text className={`font-bold text-sm ${language === lang.code ? "text-white" : "text-foreground"}`}>
+                <Text className={`font-bold text-sm ${language === lang.code ? "text-white" : "text-light-foreground dark:text-foreground"}`}>
                   {lang.native}
                 </Text>
                 <Text className={`text-xs mt-1 ${language === lang.code ? "text-white opacity-80" : "text-muted"}`}>
@@ -287,29 +288,27 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Personal Info */}
-        <Pressable onPress={() => router.push("/profile/personal-info")} className="p-4 mb-3 rounded-xl bg-card border border-border">
+        <Pressable onPress={() => router.push("/profile/personal-info")} className="p-4 mb-3 rounded-xl bg-light-card dark:bg-card border border-light-border dark:border-border">
           <View className="flex-row gap-3 items-center">
             <View className="rounded-lg bg-primary items-center justify-center p-4">
               <User size={18} color="white" />
             </View>
             <View className="flex-1">
-              <Text className="font-semibold text-foreground">{t.profile.personalInfo}</Text>
+              <Text className="font-semibold text-light-foreground dark:text-foreground">{t.profile.personalInfo}</Text>
               <Text className="text-muted text-sm">{t.profile.personalInfoDesc}</Text>
             </View>
             <ChevronRight size={18} color="#64748B" />
           </View>
         </Pressable>
 
-        {/* Settings Sections */}
         {sections.map((s, i) => (
-          <Pressable key={i} onPress={s.action} className="p-4 mb-3 rounded-xl bg-card border border-border">
+          <Pressable key={i} onPress={s.action} className="p-4 mb-3 rounded-xl bg-light-card dark:bg-card border border-light-border dark:border-border">
             <View className="flex-row gap-3 items-center">
               <View className="rounded-lg bg-primary items-center justify-center p-4">
                 <s.icon size={18} color="white" />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-foreground">{s.title}</Text>
+                <Text className="font-semibold text-light-foreground dark:text-foreground">{s.title}</Text>
                 <Text className="text-muted text-sm">{s.desc}</Text>
               </View>
               <ChevronRight size={18} color="#64748B" />
@@ -317,7 +316,6 @@ export default function Profile() {
           </Pressable>
         ))}
 
-        {/* Stats */}
         <View className="flex-row gap-3 mt-6 p-4">
           {[
             { label: t.profile.scans, count: dbUser?.prescriptionHistory?.length ?? 0 },
@@ -337,7 +335,6 @@ export default function Profile() {
       <HelpSupportDialog open={helpSupportOpen} onOpenChange={setHelpSupportOpen} />
       <ProfileChatbot />
 
-      {/* Avatar Modal */}
       <Modal visible={avatarModalOpen} transparent animationType="fade" onRequestClose={closeAvatarModal}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.85)", alignItems: "center", justifyContent: "center" }}>
 

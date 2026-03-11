@@ -65,12 +65,12 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
   return (
     <Modal visible={open} transparent animationType="fade">
       <View className="flex-1 bg-black/50 items-center justify-center">
-        <View className="bg-card w-[90%] rounded-xl p-4">
-          <Text className="text-xl font-bold mb-4 text-foreground">Accessibility Settings</Text>
+        <View className="bg-light-card dark:bg-card w-[90%] rounded-xl p-4">
+          <Text className="text-xl font-bold mb-4 text-light-foreground dark:text-foreground">Accessibility Settings</Text>
 
           <View className="mb-4">
-            <Text className="mb-1 font-medium text-foreground">Text Size</Text>
-            <View className="border border-border rounded-lg">
+            <Text className="mb-1 font-medium text-light-foreground dark:text-foreground">Text Size</Text>
+            <View className="border border-light-border dark:border-border rounded-lg">
               <Picker
                 selectedValue={settings.text_size}
                 onValueChange={(value) => setSettings({ ...settings, text_size: value })}
@@ -84,7 +84,7 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
           </View>
 
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-foreground">High Contrast Mode</Text>
+            <Text className="text-light-foreground dark:text-foreground">High Contrast Mode</Text>
             <Switch
               value={settings.high_contrast}
               onValueChange={(v) => setSettings({ ...settings, high_contrast: v })}
@@ -92,7 +92,7 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
           </View>
 
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-foreground">Screen Reader Support</Text>
+            <Text className="text-light-foreground dark:text-foreground">Screen Reader Support</Text>
             <Switch
               value={settings.screen_reader}
               onValueChange={(v) => setSettings({ ...settings, screen_reader: v })}
@@ -100,7 +100,7 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
           </View>
 
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-foreground">Voice Navigation</Text>
+            <Text className="text-light-foreground dark:text-foreground">Voice Navigation</Text>
             <Switch
               value={settings.voice_navigation}
               onValueChange={(v) => setSettings({ ...settings, voice_navigation: v })}
@@ -108,8 +108,8 @@ export const AccessibilityDialog = ({ open, onOpenChange, userId }: Accessibilit
           </View>
 
           <View className="flex-row justify-end gap-3">
-            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-border">
-              <Text className="text-foreground">Cancel</Text>
+            <Pressable onPress={() => onOpenChange(false)} className="px-4 py-2 rounded-lg border border-light-border dark:border-border">
+              <Text className="text-light-foreground dark:text-foreground">Cancel</Text>
             </Pressable>
             <Pressable onPress={handleSubmit} disabled={loading} className="px-4 py-2 rounded-lg bg-primary">
               {loading ? <ActivityIndicator color="white" /> : <Text className="text-white">Save</Text>}

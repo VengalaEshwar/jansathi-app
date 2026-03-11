@@ -168,7 +168,7 @@ export default function PhotoToForm() {
   const stepKeys = ["upload", "fill", "done"];
 
   return (
-    <View className="flex-1 bg-background pb-14">
+    <View className="flex-1 bg-light-background dark:bg-background pb-14">
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
 
         {/* Back */}
@@ -179,7 +179,7 @@ export default function PhotoToForm() {
 
         {/* Title */}
         <View className="mb-6">
-          <Text className="text-2xl font-bold text-foreground">{t.photoForm.title}</Text>
+          <Text className="text-2xl font-bold text-light-foreground dark:text-foreground">{t.photoForm.title}</Text>
           <Text className="text-muted mt-1">{t.photoForm.subtitle}</Text>
         </View>
 
@@ -201,11 +201,11 @@ export default function PhotoToForm() {
             {isLoading && (
               <View className="mt-6 p-6 rounded-2xl bg-secondary items-center">
                 <ActivityIndicator color="#8B5CF6" />
-                <Text className="mt-2 text-foreground">{t.photoForm.extracting}</Text>
+                <Text className="mt-2 text-light-foreground dark:text-foreground">{t.photoForm.extracting}</Text>
               </View>
             )}
             <View className="bg-secondary p-4 rounded-xl mt-6">
-              <Text className="font-semibold text-foreground mb-2">{t.photoForm.howToUse}</Text>
+              <Text className="font-semibold text-light-foreground dark:text-foreground mb-2">{t.photoForm.howToUse}</Text>
               <Text className="text-muted text-sm">{t.photoForm.instructions}</Text>
             </View>
           </View>
@@ -214,14 +214,14 @@ export default function PhotoToForm() {
         {/* Step 2: Fill Fields */}
         {step === "fill" && (
           <View>
-            <Text className="text-lg font-semibold text-foreground mb-4">
+            <Text className="text-lg font-semibold text-light-foreground dark:text-foreground mb-4">
               {t.photoForm.fillDetails} ({fields.length} {t.photoForm.fieldsFound})
             </Text>
 
             {fields.map((field) => (
               <View key={field.id} className="mb-4">
                 <View className="flex-row items-center gap-2 mb-1">
-                  <Text className="text-foreground font-medium">
+                  <Text className="text-light-foreground dark:text-foreground font-medium">
                     {field.label}
                     {field.required && <Text className="text-red-500"> *</Text>}
                   </Text>
@@ -281,7 +281,7 @@ export default function PhotoToForm() {
             <View className="w-20 h-20 rounded-full bg-green-500 items-center justify-center mb-4">
               <Text className="text-4xl">✅</Text>
             </View>
-            <Text className="text-2xl font-bold text-foreground mb-2">{t.photoForm.formFilled}</Text>
+            <Text className="text-2xl font-bold text-light-foreground dark:text-foreground mb-2">{t.photoForm.formFilled}</Text>
             <Text className="text-muted text-center mb-8">{t.photoForm.formFilledDesc}</Text>
 
             <Pressable
@@ -305,7 +305,7 @@ export default function PhotoToForm() {
         <View className="mt-8">
           <View className="flex-row items-center gap-2 mb-3">
             <History size={18} color="#8B5CF6" />
-            <Text className="text-foreground font-bold text-base">Recent Forms</Text>
+            <Text className="text-light-foreground dark:text-foreground font-bold text-base">Recent Forms</Text>
           </View>
 
           {historyLoading ? (
@@ -314,13 +314,13 @@ export default function PhotoToForm() {
             <Text className="text-muted text-sm">No previous forms</Text>
           ) : (
             history.map((item) => (
-              <View key={item._id} className="bg-card border border-border rounded-xl mb-3 overflow-hidden">
+              <View key={item._id} className="bg-light-card dark:bg-card border border-light-border dark:border-border rounded-xl mb-3 overflow-hidden">
                 <Pressable
                   onPress={() => setExpandedId(expandedId === item._id ? null : item._id)}
                   className="flex-row items-center p-3 gap-3"
                 >
                   <View className="flex-1">
-                    <Text className="text-foreground font-medium text-sm">
+                    <Text className="text-light-foreground dark:text-foreground font-medium text-sm">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </Text>
                     <Text className="text-muted text-xs">
@@ -340,11 +340,11 @@ export default function PhotoToForm() {
                 </Pressable>
 
                 {expandedId === item._id && (
-                  <View className="px-4 pb-4 border-t border-border">
+                  <View className="px-4 pb-4 border-t border-light-border dark:border-border">
                     {item.formFields.map((f, i) => (
-                      <View key={i} className="py-2 border-b border-border/50">
+                      <View key={i} className="py-2 border-b border-light-border/50 dark:border-border/50">
                         <Text className="text-muted text-xs">{f.label}</Text>
-                        <Text className="text-foreground text-sm font-medium">{f.value || "—"}</Text>
+                        <Text className="text-light-foreground dark:text-foreground text-sm font-medium">{f.value || "—"}</Text>
                       </View>
                     ))}
                   </View>

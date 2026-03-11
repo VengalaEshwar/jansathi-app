@@ -44,8 +44,8 @@ const GAssist = () => {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-background px-4 py-6">
-      <Text className="text-2xl font-bold mb-4 text-foreground">
+    <ScrollView className="flex-1 bg-light-background dark:bg-background px-4 py-6">
+      <Text className="text-2xl font-bold mb-4 text-light-foreground dark:text-foreground">
         {t.gAssist.title}
       </Text>
 

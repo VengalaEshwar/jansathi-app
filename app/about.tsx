@@ -7,23 +7,21 @@ export default function AboutUs() {
 
   return (
     <ScrollView
-      className="flex-1 bg-background"
+      className="flex-1 bg-light-background dark:bg-background"
       contentContainerStyle={{ paddingBottom: 40 }}
     >
       <View className="p-4 pb-16">
 
-        {/* Header */}
         <View className="items-center mb-12">
           <View className="w-16 h-16 rounded-2xl bg-primary items-center justify-center mb-4">
             <Heart size={32} color="white" />
           </View>
-          <Text className="text-3xl font-bold mb-2 text-foreground">
+          <Text className="text-3xl font-bold mb-2 text-light-foreground dark:text-foreground">
             {t.about.title}
           </Text>
           <Text className="text-muted text-center">{t.about.subtitle}</Text>
         </View>
 
-        {/* Mission */}
         <View className="bg-primary rounded-2xl p-5 mb-10">
           <View className="flex-row items-center mb-3">
             <Target size={24} color="white" />
@@ -36,7 +34,6 @@ export default function AboutUs() {
           </Text>
         </View>
 
-        {/* Features */}
         <View className="gap-4 mb-10">
           <FeatureCard
             icon={Heart}
@@ -50,8 +47,7 @@ export default function AboutUs() {
           />
         </View>
 
-        {/* Values */}
-        <Text className="text-xl font-bold text-center mb-6 text-foreground">
+        <Text className="text-xl font-bold text-center mb-6 text-light-foreground dark:text-foreground">
           {t.about.ourValues}
         </Text>
 
@@ -73,10 +69,9 @@ export default function AboutUs() {
           />
         </View>
 
-        {/* Contact */}
         <View className="bg-secondary rounded-2xl p-5 items-center mb-12">
           <Mail size={36} color="#4f46e5" />
-          <Text className="text-xl font-bold mt-3 text-foreground">
+          <Text className="text-xl font-bold mt-3 text-light-foreground dark:text-foreground">
             {t.about.getInTouch}
           </Text>
           <Text className="text-muted text-center mt-2 mb-4">
@@ -87,7 +82,6 @@ export default function AboutUs() {
           </Pressable>
         </View>
 
-        {/* Stats */}
         <View className="flex-row flex-wrap gap-3">
           <StatBox value="10+" label={t.about.languages} />
           <StatBox value="5" label={t.about.healthTools} />
@@ -102,10 +96,10 @@ export default function AboutUs() {
 
 function FeatureCard({ icon: Icon, title, desc }: any) {
   return (
-    <View className="bg-card p-4 rounded-xl border border-border">
+    <View className="bg-light-card dark:bg-card p-4 rounded-xl border border-light-border dark:border-border">
       <View className="flex-row items-center mb-2">
         <Icon size={20} color="#4f46e5" />
-        <Text className="font-semibold ml-2 text-foreground">{title}</Text>
+        <Text className="font-semibold ml-2 text-light-foreground dark:text-foreground">{title}</Text>
       </View>
       <Text className="text-muted text-sm">{desc}</Text>
     </View>
@@ -118,7 +112,7 @@ function ValueBox({ icon: Icon, title, text }: any) {
       <View className="w-12 h-12 bg-primary rounded-xl items-center justify-center mb-2">
         <Icon size={22} color="white" />
       </View>
-      <Text className="font-semibold text-foreground">{title}</Text>
+      <Text className="font-semibold text-light-foreground dark:text-foreground">{title}</Text>
       <Text className="text-muted text-sm text-center">{text}</Text>
     </View>
   );
