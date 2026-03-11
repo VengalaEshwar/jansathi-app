@@ -66,11 +66,12 @@ const scheduleReminderNotifications = async (reminder: Reminder): Promise<string
             body: `Time to take ${reminder.medicineName} - ${reminder.dosage}`,
             data: { reminderId: reminder._id },
           },
+          
           trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
             hour,
             minute,
-            repeats: true,
-          },
+            },
         });
         ids.push(id);
       } catch (e) {
@@ -92,7 +93,10 @@ const scheduleReminderNotifications = async (reminder: Reminder): Promise<string
                 body: `Time to take ${reminder.medicineName} - ${reminder.dosage}`,
                 data: { reminderId: reminder._id },
               },
-              trigger: { date: new Date(current) },
+                trigger: {
+    type: Notifications.SchedulableTriggerInputTypes.DATE,
+    date: new Date(current),
+    }
             });
             ids.push(id);
             count++;

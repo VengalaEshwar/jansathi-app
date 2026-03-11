@@ -6,12 +6,19 @@ import { useTranslation } from "@/hooks/useTranslation";
 import React from "react";
 
 
-
-
 import * as Notifications from "expo-notifications";
-import { ConstructionIcon } from "lucide-react-native";
+import { useToast } from "@/hooks/useToast";
+
 const TestNotificationButton = () => {
+  const toast = useToast();
+
   const handleTest = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      toast.error("Enable notifications in your phone settings.");
+      return;
+    }
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "💊 Medicine Reminder",
@@ -19,10 +26,12 @@ const TestNotificationButton = () => {
         data: { test: true },
       },
       trigger: {
-        seconds: 10, // fires after 10 seconds
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 10,
       },
     });
-    alert("✅ Notification scheduled! Coming in 10 seconds...");
+
+    toast.success("Notification in 10s — background the app now!");
   };
 
   return (
@@ -110,7 +119,7 @@ const Home = () => {
         description={t.home.aboutDesc}
         onPress={() => router.push("/about")}
       />
-      <TestNotificationButton />
+     { __DEV__ && <TestNotificationButton />}
     </ScrollView>
   );
 };
