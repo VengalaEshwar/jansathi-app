@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   View, Text, ScrollView, Pressable,
-  ActivityIndicator, TextInput, Modal, Switch,
+  ActivityIndicator, TextInput, Modal, Switch, Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -30,23 +30,105 @@ interface Reminder {
   createdAt: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
+const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"));
+const MINUTES = ["00", "15", "30", "45"];
+
 const parseDate = (str: string): Date | null => {
   const parts = str.split("/");
   if (parts.length !== 3) return null;
   const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
   return isNaN(d.getTime()) ? null : d;
 };
+
 const formatDateForApi = (str: string): string | null => {
   const d = parseDate(str);
   return d ? d.toISOString() : null;
 };
+
 const formatDateForDisplay = (iso: string): string => {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 };
 
-// ── NotifyToggle — defined OUTSIDE component ──────────────────────
+interface TimePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  onRemove?: () => void;
+  showRemove: boolean;
+}
+
+const TimePicker = ({ value, onChange, onRemove, showRemove }: TimePickerProps) => {
+  const [hour, minute] = value.split(":");
+  const safeHour = HOURS.includes(hour) ? hour : "08";
+  const safeMinute = MINUTES.includes(minute) ? minute : "00";
+
+  return (
+    <View style={{ marginBottom: 16, backgroundColor: "#0F172A", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#334155" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Clock size={16} color="#8B5CF6" />
+          <Text style={{ color: "#A78BFA", fontSize: 16, fontWeight: "700" }}>
+            {safeHour}:{safeMinute}
+          </Text>
+        </View>
+        {showRemove && (
+          <Pressable onPress={onRemove} hitSlop={8} style={{ backgroundColor: "#2d0a0a", padding: 6, borderRadius: 8 }}>
+            <X size={14} color="#EF4444" />
+          </Pressable>
+        )}
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={{ flex: 1, backgroundColor: "#1E293B", borderRadius: 8, padding: 4 }}
+        >
+          {HOURS.map((h) => (
+            <Pressable
+              key={h}
+              onPress={() => onChange(`${h}:${safeMinute}`)}
+              style={{
+                paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6,
+                backgroundColor: safeHour === h ? "#8B5CF6" : "transparent",
+                marginRight: 4,
+              }}
+            >
+              <Text style={{ color: safeHour === h ? "white" : "#94A3B8", fontWeight: safeHour === h ? "700" : "500", fontSize: 14 }}>
+                {h}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <Text style={{ color: "#64748B", fontSize: 18, fontWeight: "700" }}>:</Text>
+
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={{ flex: 1, backgroundColor: "#1E293B", borderRadius: 8, padding: 4 }}
+        >
+          {MINUTES.map((m) => (
+            <Pressable
+              key={m}
+              onPress={() => onChange(`${safeHour}:${m}`)}
+              style={{
+                paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6,
+                backgroundColor: safeMinute === m ? "#8B5CF6" : "transparent",
+                marginRight: 4,
+              }}
+            >
+              <Text style={{ color: safeMinute === m ? "white" : "#94A3B8", fontWeight: safeMinute === m ? "700" : "500", fontSize: 14 }}>
+                {m}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
 interface NotifyToggleProps {
   icon: any;
   label: string;
@@ -132,7 +214,6 @@ const NotifyToggle = ({
   </View>
 );
 
-// ── OtpModal — defined OUTSIDE component ─────────────────────────
 interface OtpModalProps {
   visible: boolean;
   onClose: () => void;
@@ -151,7 +232,6 @@ interface OtpModalProps {
   sendOtpLabel: string;
   enterOtpLabel: string;
   verifyLabel: string;
-  // SMS availability props (only for phone modal)
   checkingAvailability?: boolean;
   smsAvailable?: boolean | null;
 }
@@ -197,8 +277,6 @@ const OtpModal = ({
                 color: "white", padding: 14, marginBottom: 8, fontSize: 15,
               }}
             />
-
-            {/* SMS Availability indicator */}
             {checkingAvailability && (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
                 <ActivityIndicator size="small" color="#94A3B8" />
@@ -212,7 +290,7 @@ const OtpModal = ({
               }}>
                 <AlertCircle size={14} color="#F59E0B" />
                 <Text style={{ color: "#F59E0B", fontSize: 12, flex: 1 }}>
-                  SMS is disabled for this number in production. Use email notifications instead.
+                  SMS is disabled for this number. Use email notifications instead.
                 </Text>
               </View>
             )}
@@ -222,7 +300,7 @@ const OtpModal = ({
                 backgroundColor: "#052e16", borderRadius: 8, padding: 10, marginBottom: 12,
               }}>
                 <CheckCircle size={14} color="#22C55E" />
-                <Text style={{ color: "#22C55E", fontSize: 12 }}>SMS available for this number ✓</Text>
+                <Text style={{ color: "#22C55E", fontSize: 12 }}>SMS available ✓</Text>
               </View>
             )}
           </>
@@ -276,7 +354,6 @@ const OtpModal = ({
   </Modal>
 );
 
-// ── Main Screen ───────────────────────────────────────────────────
 export default function HealthNotifications() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -293,7 +370,6 @@ export default function HealthNotifications() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [medicineName, setMedicineName] = useState("");
   const [dosage, setDosage] = useState("");
   const [times, setTimes] = useState<string[]>(["08:00"]);
@@ -303,7 +379,6 @@ export default function HealthNotifications() {
   const [notifySms, setNotifySms] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState(false);
 
-  // Verification state
   const [showPhoneVerify, setShowPhoneVerify] = useState(false);
   const [showEmailVerify, setShowEmailVerify] = useState(false);
   const [phoneInput, setPhoneInput] = useState("");
@@ -313,7 +388,6 @@ export default function HealthNotifications() {
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
 
-  // SMS availability (production guard)
   const [smsAvailable, setSmsAvailable] = useState<boolean | null>(null);
   const [checkingPhone, setCheckingPhone] = useState(false);
 
@@ -344,7 +418,6 @@ export default function HealthNotifications() {
 
   const openAddForm = () => { resetForm(); setShowForm(true); };
 
-  // ── SMS Availability Check ─────────────────────────────────────
   const checkSmsAvailability = useCallback(async (phone: string) => {
     if (!phone || phone.replace(/\s/g, "").length < 10) {
       setSmsAvailable(null);
@@ -364,32 +437,40 @@ export default function HealthNotifications() {
   }, []);
 
   const openEditForm = (r: Reminder) => {
-    setMedicineName(r.medicineName); setDosage(r.dosage);
-    setTimes(r.times);
+    setMedicineName(r.medicineName);
+    setDosage(r.dosage);
+    setTimes(r.times.map((t) => {
+      const [h, m] = t.split(":");
+      const normH = String(Number(h)).padStart(2, "0");
+      const normM = MINUTES.includes(m) ? m : "00";
+      return `${normH}:${normM}`;
+    }));
     setStartDate(formatDateForDisplay(r.startDate));
     setEndDate(r.endDate ? formatDateForDisplay(r.endDate) : "");
     setIsEveryday(r.isEveryday);
-    setNotifySms(r.notifySms); setNotifyEmail(r.notifyEmail);
-    setEditingId(r._id); setShowForm(true);
+    setNotifySms(r.notifySms);
+    setNotifyEmail(r.notifyEmail);
+    setEditingId(r._id);
+    setShowForm(true);
   };
 
   const addTime = () => setTimes([...times, "08:00"]);
   const removeTime = (i: number) => setTimes(times.filter((_, idx) => idx !== i));
   const updateTime = (i: number, val: string) => {
-    const updated = [...times]; updated[i] = val; setTimes(updated);
+    const updated = [...times];
+    updated[i] = val;
+    setTimes(updated);
   };
 
-  // ── SMS toggle handler ─────────────────────────────────────────
   const handleSmsToggle = useCallback((v: boolean) => {
     if (v && !phoneVerified) {
-      setSmsAvailable(null); // reset on each open
+      setSmsAvailable(null);
       setShowPhoneVerify(true);
     } else {
       setNotifySms(v);
     }
   }, [phoneVerified]);
 
-  // ── Email toggle handler ───────────────────────────────────────
   const handleEmailToggle = useCallback((v: boolean) => {
     if (v && !emailVerified) {
       setShowEmailVerify(true);
@@ -450,7 +531,6 @@ export default function HealthNotifications() {
     });
   };
 
-  // ── Phone OTP ──────────────────────────────────────────────────
   const sendPhoneOtp = async () => {
     if (!phoneInput.trim()) { toast.error(hn.phoneRequired); return; }
     setVerifyLoading(true);
@@ -486,7 +566,6 @@ export default function HealthNotifications() {
     } finally { setVerifyLoading(false); }
   };
 
-  // ── Email OTP ──────────────────────────────────────────────────
   const sendEmailOtp = async () => {
     setVerifyLoading(true);
     try {
@@ -528,7 +607,6 @@ export default function HealthNotifications() {
     <View style={{ flex: 1, backgroundColor: "#0F172A" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
 
-        {/* Back */}
         <Pressable
           onPress={() => router.back()}
           style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
@@ -537,7 +615,6 @@ export default function HealthNotifications() {
           <Text style={{ color: "#6b7280", marginLeft: 8 }}>{hn.backToHealth}</Text>
         </Pressable>
 
-        {/* Header */}
         <View style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 6 }}>
             <View style={{
@@ -551,7 +628,6 @@ export default function HealthNotifications() {
           <Text style={{ color: "#64748B", fontSize: 14 }}>{hn.subtitle}</Text>
         </View>
 
-        {/* Add Button */}
         <Pressable
           onPress={openAddForm}
           style={{
@@ -564,7 +640,6 @@ export default function HealthNotifications() {
           <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>{hn.addReminder}</Text>
         </Pressable>
 
-        {/* Reminders List */}
         {loading ? (
           <ActivityIndicator color="#8B5CF6" style={{ marginTop: 20 }} />
         ) : reminders.length === 0 ? (
@@ -676,7 +751,6 @@ export default function HealthNotifications() {
         )}
       </ScrollView>
 
-      {/* Add/Edit Form Modal */}
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" }}>
           <View style={{ backgroundColor: "#1E293B", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "92%" }}>
@@ -691,7 +765,6 @@ export default function HealthNotifications() {
                 </Pressable>
               </View>
 
-              {/* Medicine Name */}
               <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 6, fontWeight: "600" }}>{hn.medicineName}</Text>
               <TextInput
                 placeholder={hn.medicineNamePlaceholder}
@@ -705,7 +778,6 @@ export default function HealthNotifications() {
                 }}
               />
 
-              {/* Dosage */}
               <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 6, fontWeight: "600" }}>{hn.dosage}</Text>
               <TextInput
                 placeholder={hn.dosagePlaceholder}
@@ -719,37 +791,29 @@ export default function HealthNotifications() {
                 }}
               />
 
-              {/* Times */}
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <Text style={{ color: "#94A3B8", fontSize: 13, fontWeight: "600" }}>{hn.times}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Text style={{ color: "#94A3B8", fontSize: 13, fontWeight: "600" }}>{hn.times}</Text>
+                  <View style={{ backgroundColor: "#1E293B", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 }}>
+                    <Text style={{ color: "#64748B", fontSize: 11 }}>every 15 min slots</Text>
+                  </View>
+                </View>
                 <Pressable onPress={addTime} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                   <Plus size={14} color="#8B5CF6" />
                   <Text style={{ color: "#8B5CF6", fontSize: 13, fontWeight: "600" }}>{hn.addTime}</Text>
                 </Pressable>
               </View>
+
               {times.map((time, i) => (
-                <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <Clock size={16} color="#8B5CF6" />
-                  <TextInput
-                    value={time}
-                    onChangeText={(v) => updateTime(i, v)}
-                    placeholder="HH:MM"
-                    placeholderTextColor="#475569"
-                    style={{
-                      flex: 1, backgroundColor: "#0F172A", borderRadius: 10,
-                      borderWidth: 1, borderColor: "#334155",
-                      color: "white", padding: 11, fontSize: 14,
-                    }}
-                  />
-                  {times.length > 1 && (
-                    <Pressable onPress={() => removeTime(i)}>
-                      <X size={16} color="#EF4444" />
-                    </Pressable>
-                  )}
-                </View>
+                <TimePicker
+                  key={i}
+                  value={time}
+                  onChange={(val) => updateTime(i, val)}
+                  onRemove={() => removeTime(i)}
+                  showRemove={times.length > 1}
+                />
               ))}
 
-              {/* Dates */}
               <View style={{ marginTop: 8, marginBottom: 16 }}>
                 <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 8, fontWeight: "600" }}>{hn.startDate}</Text>
                 <TextInput
@@ -795,7 +859,6 @@ export default function HealthNotifications() {
                 )}
               </View>
 
-              {/* Notify Via */}
               <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 10, fontWeight: "600" }}>{hn.notifyVia}</Text>
 
               <NotifyToggle
@@ -843,7 +906,6 @@ export default function HealthNotifications() {
         </View>
       </Modal>
 
-      {/* Phone OTP Modal */}
       <OtpModal
         visible={showPhoneVerify}
         onClose={() => {
@@ -857,10 +919,7 @@ export default function HealthNotifications() {
         subtitle={hn.phoneRequired}
         showPhoneInput={true}
         phoneValue={phoneInput}
-        onPhoneChange={(v) => {
-          setPhoneInput(v);
-          setSmsAvailable(null);
-        }}
+        onPhoneChange={(v) => { setPhoneInput(v); setSmsAvailable(null); }}
         onPhoneBlur={() => checkSmsAvailability(phoneInput)}
         otpValue={phoneOtp}
         onOtpChange={setPhoneOtp}
@@ -875,7 +934,6 @@ export default function HealthNotifications() {
         smsAvailable={smsAvailable}
       />
 
-      {/* Email OTP Modal */}
       <OtpModal
         visible={showEmailVerify}
         onClose={() => {

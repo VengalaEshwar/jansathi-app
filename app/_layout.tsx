@@ -18,12 +18,6 @@ import { useAppDispatch } from "@/store/hooks";
 import { ToastContainer } from "@/components/Toast";
 import { ConfirmModal } from "@/components/ConfirmModal";
 
-// FCM only on native
-let messaging: any = null;
-if (Platform.OS !== "web") {
-  messaging = require("@react-native-firebase/messaging").default;
-}
-
 const queryClient = new QueryClient();
 LogBox.ignoreAllLogs();
 
@@ -43,7 +37,6 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
 
-  // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -72,49 +65,6 @@ function AppContent() {
     return unsubscribe;
   }, []);
 
-  // FCM setup — native only
-  useEffect(() => {
-    if (Platform.OS === "web" || !messaging) return;
-
-    let unsubscribeForeground: (() => void) | null = null;
-
-    const setupFcm = async () => {
-      try {
-        const authStatus = await messaging().requestPermission();
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-        if (enabled) {
-          const token = await messaging().getToken();
-          if (token) {
-            await apiRequest("/reminders/fcm-token", "POST", { fcmToken: token });
-          }
-        }
-
-        // Handle messages when app is in foreground
-        unsubscribeForeground = messaging().onMessage(async (remoteMessage: any) => {
-          console.log("FCM foreground message:", remoteMessage.notification?.title);
-          // Toast is shown via the notification itself on native
-        });
-
-        // Handle token refresh
-        messaging().onTokenRefresh(async (token: string) => {
-          await apiRequest("/reminders/fcm-token", "POST", { fcmToken: token });
-        });
-
-      } catch (e) {
-        console.log("FCM setup failed:", e);
-      }
-    };
-
-    setupFcm();
-
-    return () => {
-      if (unsubscribeForeground) unsubscribeForeground();
-    };
-  }, []);
-
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-black">
@@ -128,7 +78,6 @@ function AppContent() {
             pathname !== "/g-assist/voice-chatbot" && <GlobalChatbot />}
         </View>
       </SafeAreaView>
-      {/* Global overlays — outside SafeAreaView so they cover everything */}
       <ToastContainer />
       <ConfirmModal />
     </SafeAreaProvider>
