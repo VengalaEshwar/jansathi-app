@@ -3,6 +3,43 @@ import { useRouter } from "expo-router";
 import { Heart, Sparkles, User, Info, ArrowRight } from "lucide-react-native";
 import { Card } from "@/components/Card";
 import { useTranslation } from "@/hooks/useTranslation";
+import React from "react";
+
+
+
+
+import * as Notifications from "expo-notifications";
+import { ConstructionIcon } from "lucide-react-native";
+const TestNotificationButton = () => {
+  const handleTest = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "💊 Medicine Reminder",
+        body: "Time to take Paracetamol - 500mg",
+        data: { test: true },
+      },
+      trigger: {
+        seconds: 10, // fires after 10 seconds
+      },
+    });
+    alert("✅ Notification scheduled! Coming in 10 seconds...");
+  };
+
+  return (
+    <Pressable
+      onPress={handleTest}
+      style={{
+        backgroundColor: "#8B5CF6", borderRadius: 12,
+        padding: 14, alignItems: "center", margin: 16,
+      }}
+    >
+      <Text style={{ color: "white", fontWeight: "700" }}>
+        🔔 Test Notification (10s)
+      </Text>
+    </Pressable>
+  );
+};
+
 
 const Home = () => {
   const router = useRouter();
@@ -73,6 +110,7 @@ const Home = () => {
         description={t.home.aboutDesc}
         onPress={() => router.push("/about")}
       />
+      <TestNotificationButton />
     </ScrollView>
   );
 };
