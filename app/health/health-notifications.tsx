@@ -7,7 +7,8 @@ import { useRouter } from "expo-router";
 import {
   ArrowLeft, Bell, Plus, Trash2, Pencil,
   Check, X, Clock, ChevronDown, ChevronUp,
-  MessageSquare, Mail, ShieldCheck, AlertCircle, CheckCircle,
+  MessageSquare, Mail, ShieldCheck, AlertCircle,
+  CheckCircle, Smartphone,
 } from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -15,6 +16,7 @@ import { updateDbUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/useToast";
 import { useConfirm } from "@/hooks/useConfirm";
+import { scheduleAllReminders } from "@/utils/notificationScheduler";
 
 interface Reminder {
   _id: string;
@@ -24,6 +26,7 @@ interface Reminder {
   startDate: string;
   endDate: string | null;
   isEveryday: boolean;
+  notifyApp: boolean;
   notifySms: boolean;
   notifyEmail: boolean;
   isActive: boolean;
@@ -376,6 +379,7 @@ export default function HealthNotifications() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isEveryday, setIsEveryday] = useState(true);
+  const [notifyApp, setNotifyApp] = useState(false);
   const [notifySms, setNotifySms] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState(false);
 
@@ -412,7 +416,7 @@ export default function HealthNotifications() {
   const resetForm = () => {
     setMedicineName(""); setDosage(""); setTimes(["08:00"]);
     setStartDate(""); setEndDate(""); setIsEveryday(true);
-    setNotifySms(false); setNotifyEmail(false);
+    setNotifyApp(false); setNotifySms(false); setNotifyEmail(false);
     setEditingId(null);
   };
 
@@ -448,6 +452,7 @@ export default function HealthNotifications() {
     setStartDate(formatDateForDisplay(r.startDate));
     setEndDate(r.endDate ? formatDateForDisplay(r.endDate) : "");
     setIsEveryday(r.isEveryday);
+    setNotifyApp(r.notifyApp ?? false);
     setNotifySms(r.notifySms);
     setNotifyEmail(r.notifyEmail);
     setEditingId(r._id);
@@ -483,8 +488,8 @@ export default function HealthNotifications() {
     if (!medicineName.trim() || !dosage.trim() || times.length === 0) {
       toast.error(hn.fillRequired); return;
     }
-    if (!notifySms && !notifyEmail) {
-      toast.error(hn.notifyAtLeastOne); return;
+    if (!notifyApp && !notifySms && !notifyEmail) {
+      toast.error("Please enable at least one notification method"); return;
     }
     if (notifySms && !phoneVerified) { toast.error(hn.verifyPhoneFirst); return; }
     if (notifyEmail && !emailVerified) { toast.error(hn.verifyEmailFirst); return; }
@@ -499,7 +504,7 @@ export default function HealthNotifications() {
       const payload = {
         medicineName, dosage, times,
         startDate: parsedStart, endDate: parsedEnd,
-        isEveryday, notifySms, notifyEmail,
+        isEveryday, notifyApp, notifySms, notifyEmail,
       };
       const data = editingId
         ? await apiRequest(`/reminders/${editingId}`, "PATCH", payload)
@@ -510,6 +515,10 @@ export default function HealthNotifications() {
         toast.success(hn.reminderSaved);
         setShowForm(false);
         resetForm();
+
+        if (Platform.OS !== "web") {
+          await scheduleAllReminders(data.reminders);
+        }
       }
     } catch (e: any) {
       toast.error(e.message || hn.saveFailed);
@@ -525,7 +534,13 @@ export default function HealthNotifications() {
       onConfirm: async () => {
         try {
           const data = await apiRequest(`/reminders/${id}`, "DELETE");
-          if (data.success) { setReminders(data.reminders); toast.success(hn.reminderDeleted); }
+          if (data.success) { 
+            setReminders(data.reminders); 
+            toast.success(hn.reminderDeleted); 
+            if (Platform.OS !== "web") {
+              await scheduleAllReminders(data.reminders);
+            }
+          }
         } catch { toast.error(t.common.error); }
       },
     });
@@ -707,6 +722,11 @@ export default function HealthNotifications() {
                       {r.endDate ? ` → ${formatDateForDisplay(r.endDate)}` : ` (${hn.everyday})`}
                     </Text>
                     <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                      {r.notifyApp && (
+                        <View style={{ backgroundColor: "#0c1e2d", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                          <Text style={{ color: "#38BDF8", fontSize: 11 }}>📱 In-App</Text>
+                        </View>
+                      )}
                       {r.notifySms && (
                         <View style={{ backgroundColor: "#1c2e1c", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
                           <Text style={{ color: "#4ADE80", fontSize: 11 }}>💬 {hn.smsNotification}</Text>
@@ -861,6 +881,13 @@ export default function HealthNotifications() {
 
               <Text style={{ color: "#94A3B8", fontSize: 13, marginBottom: 10, fontWeight: "600" }}>{hn.notifyVia}</Text>
 
+              <NotifyToggle
+                icon={Smartphone}
+                label="In-App Notification"
+                value={notifyApp}
+                onValueChange={setNotifyApp}
+                color="#38BDF8"
+              />
               <NotifyToggle
                 icon={MessageSquare}
                 label={hn.smsNotification}

@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { LogBox, View, Platform } from "react-native";
+import { useEffect, useRef } from "react";
+import { LogBox, View, Platform, AppState } from "react-native";
 import { Stack, usePathname } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -17,6 +17,9 @@ import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch } from "@/store/hooks";
 import { ToastContainer } from "@/components/Toast";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import * as Notifications from "expo-notifications";
+import { scheduleAllReminders } from "@/utils/notificationScheduler";
+import { useToast } from "@/hooks/useToast";
 
 const queryClient = new QueryClient();
 LogBox.ignoreAllLogs();
@@ -33,9 +36,41 @@ if (Platform.OS === "web" && typeof document !== "undefined") {
   document.head.appendChild(style);
 }
 
+// ── Foreground handler — show toast instead of system notification ─
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: false,   // suppress system banner when app is open
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
 function AppContent() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
+  const toast = useToast();
+  const notifListenerRef = useRef<any>(null);
+
+  useEffect(() => {
+    // ── Request notification permissions (mobile only) ──────────
+    if (Platform.OS !== "web") {
+      Notifications.requestPermissionsAsync();
+    }
+
+    // ── Foreground notification → show as toast ─────────────────
+    if (Platform.OS !== "web") {
+      notifListenerRef.current = Notifications.addNotificationReceivedListener((notification) => {
+        const { title, body } = notification.request.content;
+        toast.info(`${title}\n${body}`);
+      });
+    }
+
+    return () => {
+      if (notifListenerRef.current) {
+        Notifications.removeNotificationSubscription(notifListenerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -53,12 +88,28 @@ function AppContent() {
             if (data.user.language) {
               dispatch(setAppLanguage(data.user.language));
             }
+
+            // ── Fetch reminders & schedule local notifications ──
+            if (Platform.OS !== "web") {
+              try {
+                const reminderData = await apiRequest("/reminders");
+                if (reminderData.success) {
+                  await scheduleAllReminders(reminderData.reminders);
+                }
+              } catch (e) {
+                console.log("Failed to schedule reminders:", e);
+              }
+            }
           }
         } catch (e) {
           console.log("Failed to fetch user profile:", e);
         }
       } else {
         dispatch(clearUser());
+        // Cancel all notifications on logout
+        if (Platform.OS !== "web") {
+          await Notifications.cancelAllScheduledNotificationsAsync();
+        }
       }
     });
 
