@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { LogBox, View, Platform } from "react-native";
+import { LogBox, View, Platform, useWindowDimensions } from "react-native";
 import { Stack, usePathname } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -54,9 +54,6 @@ function AppContent() {
   // ── Theme sync ──────────────────────────────────────────────────
   const theme = useAppSelector((state) => state.app.theme);
   const { setColorScheme } = useColorScheme();
-
-  // Call synchronously during render (not in useEffect) so the very first
-  // render already has the correct color scheme applied — fixes the flash on native
   setColorScheme(theme);
   // ───────────────────────────────────────────────────────────────
 
@@ -125,6 +122,9 @@ function AppContent() {
     return unsubscribe;
   }, []);
 
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]">
@@ -132,11 +132,14 @@ function AppContent() {
           style={theme === "dark" ? "light" : "dark"}
           backgroundColor={theme === "dark" ? "#0F172A" : "#F8FAFC"}
         />
+        {/* On wide screens: NavBar is at top in normal flow, content scrolls below */}
+        {isDesktop && <NavBar />}
         <View className="flex-1">
           <View className="w-full h-full">
             <Stack screenOptions={{ headerShown: false }} />
           </View>
-          <NavBar />
+          {/* On mobile: NavBar is absolute bottom */}
+          {!isDesktop && <NavBar />}
           {pathname !== "/profile" &&
             pathname !== "/g-assist/voice-chatbot" && <GlobalChatbot />}
         </View>
