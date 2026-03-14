@@ -1,11 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   Animated,
-  Dimensions,
-  Pressable,
   PanResponder,
+  StyleSheet,
+  ImageBackground,
+  ImageSourcePropType,
+  Platform,
+  useWindowDimensions,
+  Pressable,
 } from "react-native";
 import {
   Heart,
@@ -17,18 +21,41 @@ import {
   Mic,
   User,
 } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { useAppSelector } from "@/store/hooks";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const SLIDE_HEIGHT = SCREEN_HEIGHT * 0.30;
+// =========================
+// DARK MODE IMAGES
+// =========================
+const HealthImage = require("../assets/images/gen_images/hero-health-services-dark.jpg");
+const GovtImage = require("../assets/images/gen_images/hero-government-assist-dark.jpg");
+const MedicinesImage = require("../assets/images/gen_images/hero-medication-reminders-dark.jpg");
+const PrescriptionImage = require("../assets/images/gen_images/hero-prescription-reader-dark.jpg");
+const ClinicsImage = require("../assets/images/gen_images/hero-nearby-clinics-dark.jpg");
+const SchemesImage = require("../assets/images/gen_images/hero-health-schemes-dark.jpg");
+const VoiceImage = require("../assets/images/gen_images/hero-voice-assistant-dark.jpg");
+const ProfileImage = require("../assets/images/gen_images/hero-profile-dark.jpg");
+
+// =========================
+// LIGHT MODE IMAGES
+// =========================
+const HealthImageLight = require("../assets/images/gen_images/hero-health-services-light.jpg");
+const GovtImageLight = require("../assets/images/gen_images/hero-government-assist-light.jpg");
+const MedicinesImageLight = require("../assets/images/gen_images/hero-medication-reminders-light.jpg");
+const PrescriptionImageLight = require("../assets/images/gen_images/hero-prescription-reader-light.jpg");
+const ClinicsImageLight = require("../assets/images/gen_images/hero-nearby-clinics-light.jpg");
+const SchemesImageLight = require("../assets/images/gen_images/hero-health-schemes-light.jpg");
+const VoiceImageLight = require("../assets/images/gen_images/hero-voice-assistant-light.jpg");
+const ProfileImageLight = require("../assets/images/gen_images/hero-profile-light.jpg");
+
 const INTERVAL = 3500;
 
 interface Slide {
   icon: any;
   title: string;
   description: string;
-  gradientColors: [string, string, string];
   iconColor: string;
+  image: ImageSourcePropType;
+  imageL: ImageSourcePropType;
 }
 
 const SLIDES: Slide[] = [
@@ -36,69 +63,99 @@ const SLIDES: Slide[] = [
     icon: Heart,
     title: "Health Services",
     description: "Scan medicines & read prescriptions instantly",
-    gradientColors: ["#1a0533", "#4C1D95", "#7C3AED"],
     iconColor: "#F9A8D4",
+    image: HealthImage,
+    imageL: HealthImageLight,
   },
   {
     icon: Sparkles,
     title: "Government Assist",
     description: "AI-powered help with forms and schemes",
-    gradientColors: ["#0c1a3d", "#1E3A8A", "#3B82F6"],
     iconColor: "#93C5FD",
+    image: GovtImage,
+    imageL: GovtImageLight,
   },
   {
     icon: Bell,
     title: "Medication Reminders",
     description: "Never miss a dose with smart reminders",
-    gradientColors: ["#1a1200", "#92400E", "#F59E0B"],
     iconColor: "#FDE68A",
+    image: MedicinesImage,
+    imageL: MedicinesImageLight,
   },
   {
     icon: FileText,
     title: "Prescription Reader",
     description: "Get prescriptions explained in plain language",
-    gradientColors: ["#001a0e", "#065F46", "#10B981"],
     iconColor: "#6EE7B7",
+    image: PrescriptionImage,
+    imageL: PrescriptionImageLight,
   },
   {
     icon: MapPin,
     title: "Nearby Clinics",
     description: "Find hospitals and pharmacies near you",
-    gradientColors: ["#001233", "#1E3A8A", "#6366F1"],
     iconColor: "#A5B4FC",
+    image: ClinicsImage,
+    imageL: ClinicsImageLight,
   },
   {
     icon: Shield,
     title: "Health Schemes",
     description: "Discover government schemes you qualify for",
-    gradientColors: ["#001a1a", "#164E63", "#06B6D4"],
     iconColor: "#67E8F9",
+    image: SchemesImage,
+    imageL: SchemesImageLight,
   },
   {
     icon: Mic,
     title: "Voice Assistant",
     description: "Talk in Hindi, Telugu, or English",
-    gradientColors: ["#1a0022", "#831843", "#EC4899"],
     iconColor: "#F9A8D4",
+    image: VoiceImage,
+    imageL: VoiceImageLight,
   },
   {
     icon: User,
     title: "Your Profile",
     description: "Manage health data and preferences",
-    gradientColors: ["#0d0d1a", "#312E81", "#6366F1"],
     iconColor: "#C4B5FD",
+    image: ProfileImage,
+    imageL: ProfileImageLight,
   },
 ];
 
 export const HeroSlideshow = () => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+
+  // Adaptive height
+  const isMobile = SCREEN_WIDTH < 768;
+  const SLIDE_HEIGHT = isMobile
+    ? Math.max(SCREEN_WIDTH * 0.55, 200)
+    : Math.max(SCREEN_WIDTH * 0.36, 140);
+
   const [current, setCurrent] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<any>(null);
   const currentRef = useRef(0);
 
-  // Dot scale animations
-  const dotScales = useRef(SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0.7))).current;
-  const dotOpacities = useRef(SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0.4))).current;
+  // Theme from Redux
+  const theme = useAppSelector((state) => state.app.theme);
+  const isDark = theme === "dark";
+
+  // Dynamic theme colors
+  const titleColor = isDark ? "white" : "#0F172A";
+  const descColor = isDark ? "rgba(255,255,255,0.9)" : "rgba(15, 23, 42, 0.82)";
+  const overlayColor = isDark ? "rgba(0,0,0,0.35)" : "rgba(248,250,252,0.18)";
+  const elementsColor = isDark ? "white" : "#334155";
+
+  const dotScales = useRef(
+    SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0.7))
+  ).current;
+
+  const dotOpacities = useRef(
+    SLIDES.map((_, i) => new Animated.Value(i === 0 ? 1 : 0.4))
+  ).current;
 
   const animateDots = (index: number) => {
     SLIDES.forEach((_, i) => {
@@ -106,8 +163,6 @@ export const HeroSlideshow = () => {
         Animated.spring(dotScales[i], {
           toValue: i === index ? 1 : 0.7,
           useNativeDriver: true,
-          speed: 20,
-          bounciness: 8,
         }),
         Animated.timing(dotOpacities[i], {
           toValue: i === index ? 1 : 0.4,
@@ -119,24 +174,25 @@ export const HeroSlideshow = () => {
   };
 
   const slideTo = (nextIndex: number) => {
+    if (nextIndex === currentRef.current) return;
+
     const direction = nextIndex > currentRef.current ? -1 : 1;
 
-    // Slide out current
     Animated.timing(translateX, {
       toValue: direction * SCREEN_WIDTH,
-      duration: 0,
+      duration: 150,
       useNativeDriver: true,
     }).start(() => {
       currentRef.current = nextIndex;
       setCurrent(nextIndex);
       animateDots(nextIndex);
 
-      // Slide in from opposite side
       translateX.setValue(-direction * SCREEN_WIDTH);
+
       Animated.spring(translateX, {
         toValue: 0,
         useNativeDriver: true,
-        speed: 16,
+        speed: 14,
         bounciness: 4,
       }).start();
     });
@@ -144,41 +200,38 @@ export const HeroSlideshow = () => {
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+
     timerRef.current = setInterval(() => {
-      const next = (currentRef.current + 1) % SLIDES.length;
-      slideTo(next);
+      slideTo((currentRef.current + 1) % SLIDES.length);
     }, INTERVAL);
   };
 
   useEffect(() => {
     startTimer();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+    return () => clearInterval(timerRef.current);
+  }, [SCREEN_WIDTH]);
 
-  // Swipe gesture support
+  const handleDotPress = (index: number) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    slideTo(index);
+    startTimer();
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
       onPanResponderMove: (_, g) => {
-        translateX.setValue(g.dx * 0.3); // slight drag follow
+        translateX.setValue(g.dx * 0.4);
       },
       onPanResponderRelease: (_, g) => {
-        if (timerRef.current) clearInterval(timerRef.current);
-        if (g.dx < -40) {
-          const next = (currentRef.current + 1) % SLIDES.length;
-          slideTo(next);
-        } else if (g.dx > 40) {
-          const prev = (currentRef.current - 1 + SLIDES.length) % SLIDES.length;
-          slideTo(prev);
+        if (g.dx < -50) {
+          slideTo((currentRef.current + 1) % SLIDES.length);
+        } else if (g.dx > 50) {
+          slideTo((currentRef.current - 1 + SLIDES.length) % SLIDES.length);
         } else {
-          // Snap back
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: true,
-            speed: 20,
-            bounciness: 6,
           }).start();
         }
         startTimer();
@@ -191,126 +244,184 @@ export const HeroSlideshow = () => {
 
   return (
     <View
-      style={{ height: SLIDE_HEIGHT, overflow: "hidden", borderRadius: 20 }}
-      className="mb-6"
+      style={[
+        styles.mainContainer,
+        {
+          height: SLIDE_HEIGHT,
+          backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
+          shadowColor: isDark ? "#000" : "#94A3B8",
+        },
+      ]}
     >
       <Animated.View
-        style={{
-          flex: 1,
-          transform: [{ translateX }],
-        }}
+        style={{ flex: 1, transform: [{ translateX }] }}
         {...panResponder.panHandlers}
       >
-        <LinearGradient
-          colors={slide.gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ flex: 1, padding: 24, justifyContent: "space-between" }}
+        <ImageBackground
+          source={isDark ? slide.image : slide.imageL}
+          resizeMode="cover"
+          style={styles.slideContent}
+          imageStyle={styles.imageStyle}
         >
-          {/* Decorative circles */}
+          {/* Optional subtle overlay for both modes */}
           <View
-            style={{
-              position: "absolute",
-              top: -40,
-              right: -40,
-              width: 160,
-              height: 160,
-              borderRadius: 80,
-              backgroundColor: "rgba(255,255,255,0.05)",
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              bottom: -20,
-              left: -20,
-              width: 100,
-              height: 100,
-              borderRadius: 50,
-              backgroundColor: "rgba(255,255,255,0.04)",
-            }}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: overlayColor,
+                borderRadius: 24,
+              },
+            ]}
           />
 
-          {/* Slide number badge */}
-          <View className="flex-row justify-between items-start">
-            <View
-              style={{
-                backgroundColor: "rgba(255,255,255,0.15)",
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 20,
-              }}
-            >
-              <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 11, fontWeight: "600" }}>
-                {current + 1} / {SLIDES.length}
-              </Text>
-            </View>
-
-            {/* Icon badge */}
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 14,
-                backgroundColor: "rgba(255,255,255,0.15)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon size={24} color={slide.iconColor} />
-            </View>
-          </View>
-
-          {/* Text content */}
-          <View>
-            <Text
-              style={{
-                color: "white",
-                fontSize: 26,
-                fontWeight: "800",
-                letterSpacing: -0.5,
-                marginBottom: 6,
-              }}
-            >
-              {slide.title}
-            </Text>
-            <Text
-              style={{
-                color: "rgba(255,255,255,0.75)",
-                fontSize: 14,
-                lineHeight: 20,
-              }}
-            >
-              {slide.description}
-            </Text>
-          </View>
-
-          {/* Dot indicators */}
-          <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-            {SLIDES.map((_, i) => (
-              <Pressable
-                key={i}
-                onPress={() => {
-                  if (timerRef.current) clearInterval(timerRef.current);
-                  slideTo(i);
-                  startTimer();
-                }}
+          <View style={styles.innerContent}>
+            {/* Top Row */}
+            <View style={styles.topRow}>
+              <View
+                style={[
+                  styles.iconBox,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.16)"
+                      : "rgba(255,255,255,0.72)",
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.22)"
+                      : "rgba(148,163,184,0.22)",
+                  },
+                ]}
               >
-                <Animated.View
-                  style={{
-                    height: 4,
-                    width: i === current ? 24 : 6,
-                    borderRadius: 2,
-                    backgroundColor: "white",
-                    opacity: dotOpacities[i],
-                    transform: [{ scaleY: dotScales[i] }],
-                  }}
-                />
-              </Pressable>
-            ))}
+                <Icon size={24} color={elementsColor} />
+              </View>
+
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(15,23,42,0.45)"
+                      : "rgba(255,255,255,0.75)",
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.16)"
+                      : "rgba(148,163,184,0.22)",
+                  },
+                ]}
+              >
+                <Text style={[styles.badgeText, { color: elementsColor }]}>
+                  {current + 1} / {SLIDES.length}
+                </Text>
+              </View>
+            </View>
+
+            {/* Bottom Content */}
+            <View>
+              <Text style={[styles.titleText, { color: titleColor }]}>
+                {slide.title}
+              </Text>
+
+              <Text
+                style={[styles.descText, { color: descColor }]}
+                numberOfLines={2}
+              >
+                {slide.description}
+              </Text>
+
+              <View style={styles.dotContainer}>
+                {SLIDES.map((_, i) => (
+                  <Pressable key={i} onPress={() => handleDotPress(i)}>
+                    <Animated.View
+                      style={[
+                        styles.dot,
+                        {
+                          width: i === current ? 20 : 6,
+                          opacity: dotOpacities[i],
+                          transform: [{ scaleY: dotScales[i] }],
+                          backgroundColor: elementsColor,
+                        },
+                      ]}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
           </View>
-        </LinearGradient>
+        </ImageBackground>
       </Animated.View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  mainContainer: {
+    overflow: "hidden",
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 24,
+    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  slideContent: {
+    flex: 1,
+    padding: 20,
+  },
+  innerContent: {
+    flex: 1,
+    justifyContent: "space-between",
+    zIndex: 2,
+  },
+  imageStyle: {
+    borderRadius: 24,
+    ...Platform.select({
+      web: {
+        width: "100%",
+        height: "100%",
+        objectFit: "cover" as any,
+      },
+      default: {},
+    }),
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  descText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  dotContainer: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+  },
+  dot: {
+    height: 4,
+    borderRadius: 2,
+  },
+});

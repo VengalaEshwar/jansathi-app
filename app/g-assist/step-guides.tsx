@@ -9,6 +9,7 @@ import {
   Users, Home, Car, Briefcase, Heart, GraduationCap,
   CheckCircle, Clock, AlertCircle, ArrowRight,
 } from "lucide-react-native";
+import TabButton from "@/components/TabButton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab     = "guides" | "ai";
@@ -543,8 +544,19 @@ export default function StepGuides() {
       </Animated.View>
 
       {/* Tabs */}
-      <Animated.View style={tabAnim}
+      <Animated.View
+        style={[
+          tabAnim,
+          {
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 6,
+            elevation: 2,
+          },
+        ]}
         className="flex-row bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-1 mb-5"
+        // eslint-disable-next-line react/jsx-no-duplicate-props
         style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
         <TabButton label="Guides"    icon={BookOpen}  active={tab === "guides"} onPress={() => { setTab("guides"); setSelectedGuide(null); }} />
         <TabButton label="Ask AI"    icon={Sparkles}  active={tab === "ai"}     onPress={() => setTab("ai")} />

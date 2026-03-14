@@ -1,40 +1,30 @@
-import { useState } from "react";
+// app/auth.tsx
+import { useState, useEffect, useRef } from "react";
 import {
-  View, Text, TextInput, Pressable,
-  ActivityIndicator,
+  View, Text, TextInput, Pressable, ActivityIndicator,
+  Animated, KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithCredential,
-  signInWithPopup,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  updateProfile, GoogleAuthProvider, signInWithCredential, signInWithPopup,
 } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
-import { User } from "lucide-react-native";
+import { Sparkles, Mail, Lock, User, Eye, EyeOff } from "lucide-react-native";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch } from "@/store/hooks";
 import { setAppLanguage } from "@/store/slices/appSlice";
 import type { Language } from "@/translations";
-import { Platform } from "react-native";
 import { useToast } from "@/hooks/useToast";
+import { useSound } from "@/hooks/useSound";
 
-let GoogleSignin: any;
-let statusCodes: any;
+let GoogleSignin: any, statusCodes: any;
 if (Platform.OS !== "web") {
   try {
-    const RNGoogleSignin = require("@react-native-google-signin/google-signin");
-    GoogleSignin = RNGoogleSignin.GoogleSignin;
-    statusCodes = RNGoogleSignin.statusCodes;
-
-    GoogleSignin.configure({
-      webClientId: "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com",
-    });
-  } catch (e) {
-    console.log("Google Sign-In not available:", e);
-  }
+    const G = require("@react-native-google-signin/google-signin");
+    GoogleSignin = G.GoogleSignin; statusCodes = G.statusCodes;
+    GoogleSignin.configure({ webClientId: "926203078040-veqcg4kjg32m9jpn0o72ljjsc6iekf90.apps.googleusercontent.com" });
+  } catch {}
 }
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -43,229 +33,273 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: "te", label: "తె" },
 ];
 
+const useFadeSlideIn = (delay = 0) => {
+  const opacity    = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(24)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity,    { toValue: 1, duration: 420, delay, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, delay, useNativeDriver: true, speed: 12, bounciness: 6 }),
+    ]).start();
+  }, []);
+  return { opacity, transform: [{ translateY }] };
+};
+
+// Animated input with icon and optional eye toggle
+const AnimInput = ({ icon: Icon, placeholder, value, onChangeText, secureTextEntry = false, keyboardType = "default" as any, autoCapitalize = "none" as any, delay = 0 }: any) => {
+  const anim    = useFadeSlideIn(delay);
+  const [secure, setSecure]   = useState(secureTextEntry);
+  const [focused, setFocused] = useState(false);
+  return (
+    <Animated.View style={[anim, { marginBottom: 12 }]}>
+      <View style={{
+        flexDirection: "row", alignItems: "center", gap: 10,
+        borderWidth: 1.5, borderColor: focused ? "#8B5CF6" : "#E2E8F0",
+        borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
+        backgroundColor: focused ? "#8B5CF608" : "white",
+      }}>
+        <Icon size={18} color={focused ? "#8B5CF6" : "#94A3B8"} />
+        <TextInput
+          style={{ flex: 1, color: "#0F172A", fontSize: 14 }}
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secure}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+        {secureTextEntry && (
+          <Pressable onPress={() => setSecure((v: boolean) => !v)} hitSlop={8}>
+            {secure ? <Eye size={16} color="#94A3B8" /> : <EyeOff size={16} color="#94A3B8" />}
+          </Pressable>
+        )}
+      </View>
+    </Animated.View>
+  );
+};
+
+// Small spring-animated pressable
+const SpringBtn = ({ children, onPress, style }: any) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
+        onPressOut={() => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, speed: 20, bounciness: 8 }).start()}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+};
+
 export default function Auth() {
   const router = useRouter();
   const { t, language } = useTranslation();
   const dispatch = useAppDispatch();
+  const toast    = useToast();
+  const { playClick } = useSound();
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [loading, setLoading] = useState(false);
+  const [mode,          setMode]          = useState<"signin" | "signup">("signin");
+  const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  
-  const toast = useToast();
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [firstName,     setFirstName]     = useState("");
+  const [lastName,      setLastName]      = useState("");
+
+  const logoAnim   = useFadeSlideIn(0);
+  const tabAnim    = useFadeSlideIn(100);
+  const bottomAnim = useFadeSlideIn(420);
 
   const handleGoogleSignIn = async () => {
+    playClick("mechanical");
     setGoogleLoading(true);
     try {
       if (Platform.OS === "web") {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        router.replace("/");
-        return;
+        await signInWithPopup(auth, new GoogleAuthProvider());
+        router.replace("/"); return;
       }
-
-      if (!GoogleSignin) {
-        toast.error(t.auth.googleNotAvailable);
-        return;
-      }
-
+      if (!GoogleSignin) { toast.error(t.auth.googleNotAvailable); return; }
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
-
-      if (!idToken) throw new Error("No ID token received");
-
-      const credential = GoogleAuthProvider.credential(idToken);
-      await signInWithCredential(auth, credential);
+      const idToken  = userInfo.data?.idToken;
+      if (!idToken) throw new Error("No ID token");
+      await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
       router.replace("/");
-
     } catch (e: any) {
-      if (statusCodes && e.code === statusCodes.SIGN_IN_CANCELLED) {
-      } else if (statusCodes && e.code === statusCodes.IN_PROGRESS) {
-      } else {
-        toast.error(e.message || t.auth.googleFailed);
-      }
-    } finally {
-      setGoogleLoading(false);
+      if (statusCodes && (e.code === statusCodes.SIGN_IN_CANCELLED || e.code === statusCodes.IN_PROGRESS)) return;
+      toast.error(e.message || t.auth.googleFailed);
+    } finally { setGoogleLoading(false); }
+  };
+
+  const handleSubmit = async () => {
+    playClick("mechanical");
+    if (mode === "signup") {
+      if (!email || !password || !firstName || !lastName) { toast.error(t.auth.fillAllFields); return; }
+      setLoading(true);
+      try {
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(user, { displayName: `${firstName} ${lastName}` });
+        toast.success(t.auth.accountCreated);
+        router.replace("/");
+      } catch (e: any) { toast.error(e.message || t.auth.signupFailed); }
+      finally { setLoading(false); }
+    } else {
+      if (!email || !password) { toast.error(t.auth.enterCredentials); return; }
+      setLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.replace("/");
+      } catch (e: any) { toast.error(e.message || t.auth.signinFailed); }
+      finally { setLoading(false); }
     }
   };
 
-  const handleSignUp = async () => {
-    if (!email || !password || !firstName || !lastName) {
-      toast.error(t.auth.fillAllFields);
-      return;
-    }
-    setLoading(true);
-    try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(user, { displayName: `${firstName} ${lastName}` });
-      toast.success(t.auth.accountCreated);
-      router.replace("/");
-    } catch (e: any) {
-      toast.error(e.message || t.auth.signupFailed);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      toast.error(t.auth.enterCredentials);
-      return;
-    }
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/");
-    } catch (e: any) {
-      toast.error(e.message || t.auth.signinFailed);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   return (
-    <View className="flex-1 bg-light-background dark:bg-background items-center justify-center px-5">
-
-      <View className="absolute top-12 right-4 flex-row gap-1">
-        {LANGUAGES.map((lang) => (
-          <Pressable
-            key={lang.code}
-            onPress={() => dispatch(setAppLanguage(lang.code))}
-            className={`px-2 py-1 rounded-lg border ${
-              language === lang.code
-                ? "bg-primary border-primary"
-                : "bg-light-card dark:bg-card border-light-border dark:border-border"
-            }`}
-          >
-            <Text className={`text-xs font-bold ${
-              language === lang.code ? "text-white" : "text-muted"
-            }`}>
-              {lang.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View className="items-center mb-6">
-        <View className="w-16 h-16 rounded-xl bg-primary items-center justify-center mb-3">
-          <User size={28} color="white" />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: "#F8FAFC" }}
+      className="dark:bg-[#0F172A]"
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Language switcher */}
+        <View style={{ position: "absolute", top: 52, right: 20, flexDirection: "row", gap: 6, zIndex: 10 }}>
+          {LANGUAGES.map((lang) => {
+            const active = language === lang.code;
+            const s = useRef(new Animated.Value(1)).current;
+            return (
+              <Animated.View key={lang.code} style={{ transform: [{ scale: s }] }}>
+                <Pressable
+                  onPress={() => { playClick("soft"); dispatch(setAppLanguage(lang.code)); }}
+                  onPressIn={() => Animated.spring(s, { toValue: 0.88, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
+                  onPressOut={() => Animated.spring(s, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 8 }).start()}
+                  style={{
+                    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10,
+                    backgroundColor: active ? "#8B5CF6" : "white",
+                    borderWidth: 1.5, borderColor: active ? "#8B5CF6" : "#E2E8F0",
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: active ? "white" : "#64748B" }}>
+                    {lang.label}
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
         </View>
-        <Text className="text-2xl font-bold text-light-foreground dark:text-foreground">
-          {t.home.welcome}
-        </Text>
-        <Text className="text-muted mt-1 text-center">
-          {t.auth.subtitle}
-        </Text>
-      </View>
 
-      <View className="flex-row w-full mb-4">
-        <Pressable
-          onPress={() => setMode("signin")}
-          className={`flex-1 py-2 rounded-l-lg ${
-            mode === "signin" ? "bg-primary" : "bg-light-card dark:bg-card"
-          }`}
-        >
-          <Text className={`text-center font-semibold ${
-            mode === "signin" ? "text-white" : "text-light-foreground dark:text-foreground"
-          }`}>
-            {t.auth.signIn}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setMode("signup")}
-          className={`flex-1 py-2 rounded-r-lg ${
-            mode === "signup" ? "bg-primary" : "bg-light-card dark:bg-card"
-          }`}
-        >
-          <Text className={`text-center font-semibold ${
-            mode === "signup" ? "text-white" : "text-light-foreground dark:text-foreground"
-          }`}>
-            {t.auth.signUp}
-          </Text>
-        </Pressable>
-      </View>
+        {/* Logo */}
+        <Animated.View style={[logoAnim, { alignItems: "center", marginBottom: 28 }]}>
+          <View style={{
+            width: 72, height: 72, borderRadius: 22, backgroundColor: "#8B5CF6",
+            alignItems: "center", justifyContent: "center", marginBottom: 14,
+            shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
+          }}>
+            <Sparkles size={32} color="white" />
+          </View>
+          <Text style={{ fontSize: 26, fontWeight: "800", color: "#0F172A", letterSpacing: -0.5 }}
+            className="dark:text-white">JanSathi</Text>
+          <Text style={{ color: "#64748B", fontSize: 13, marginTop: 4, textAlign: "center", maxWidth: 260 }}
+            className="dark:text-[#94A3B8]">{t.auth.subtitle}</Text>
+        </Animated.View>
 
-      <View className="w-full space-y-3">
+        {/* Tab toggle */}
+        <Animated.View style={[tabAnim, {
+          flexDirection: "row", backgroundColor: "white", borderRadius: 16, padding: 4,
+          marginBottom: 20, borderWidth: 1, borderColor: "#E2E8F0",
+          shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+        }]}>
+          {(["signin", "signup"] as const).map((m) => {
+            const active = mode === m;
+            const s = useRef(new Animated.Value(1)).current;
+            return (
+              <Animated.View key={m} style={{ flex: 1, transform: [{ scale: s }] }}>
+                <Pressable
+                  onPress={() => { playClick("soft"); setMode(m); }}
+                  onPressIn={() => Animated.spring(s, { toValue: 0.96, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
+                  onPressOut={() => Animated.spring(s, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 8 }).start()}
+                  style={{ paddingVertical: 10, borderRadius: 12, alignItems: "center", backgroundColor: active ? "#8B5CF6" : "transparent" }}
+                >
+                  <Text style={{ fontWeight: "700", fontSize: 14, color: active ? "white" : "#64748B" }}>
+                    {m === "signin" ? t.auth.signIn : t.auth.signUp}
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
+
+        {/* Form */}
         {mode === "signup" && (
-          <View className="flex-row gap-2 mb-3">
-            <TextInput
-              placeholder={t.auth.firstName}
-              placeholderTextColor="#94A3B8"
-              value={firstName}
-              onChangeText={setFirstName}
-              className="flex-1 border border-light-border dark:border-border rounded-lg px-3 py-2 text-light-foreground dark:text-foreground"
-            />
-            <TextInput
-              placeholder={t.auth.lastName}
-              placeholderTextColor="#94A3B8"
-              value={lastName}
-              onChangeText={setLastName}
-              className="flex-1 border border-light-border dark:border-border rounded-lg px-3 py-2 text-light-foreground dark:text-foreground"
-            />
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <AnimInput icon={User} placeholder={t.auth.firstName} value={firstName} onChangeText={setFirstName} autoCapitalize="words" delay={200} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <AnimInput icon={User} placeholder={t.auth.lastName}  value={lastName}  onChangeText={setLastName}  autoCapitalize="words" delay={240} />
+            </View>
           </View>
         )}
+        <AnimInput icon={Mail} placeholder={t.auth.email}    value={email}    onChangeText={setEmail}    keyboardType="email-address" delay={280} />
+        <AnimInput icon={Lock} placeholder={t.auth.password} value={password} onChangeText={setPassword}  secureTextEntry delay={320} />
 
-        <TextInput
-          placeholder={t.auth.email}
-          placeholderTextColor="#94A3B8"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-3 text-light-foreground dark:text-foreground"
-        />
-        <TextInput
-          placeholder={t.auth.password}
-          placeholderTextColor="#94A3B8"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          className="border border-light-border dark:border-border rounded-lg px-3 py-2 mb-3 text-light-foreground dark:text-foreground"
-        />
+        {/* Submit */}
+        <Animated.View style={bottomAnim}>
+          <SpringBtn
+            onPress={handleSubmit}
+            style={{
+              backgroundColor: "#8B5CF6", borderRadius: 14, paddingVertical: 14,
+              alignItems: "center", marginTop: 4, marginBottom: 16,
+              shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.38, shadowRadius: 12, elevation: 6,
+              opacity: loading ? 0.8 : 1,
+            }}
+          >
+            {loading
+              ? <ActivityIndicator color="white" />
+              : <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                  {mode === "signin" ? t.auth.signIn : t.auth.createAccount}
+                </Text>
+            }
+          </SpringBtn>
 
-        <Pressable
-          onPress={mode === "signin" ? handleSignIn : handleSignUp}
-          disabled={loading}
-          className="bg-primary py-3 rounded-lg items-center mt-2"
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-semibold">
-              {mode === "signin" ? t.auth.signIn : t.auth.createAccount}
-            </Text>
-          )}
-        </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} />
+            <Text style={{ color: "#94A3B8", fontSize: 12, marginHorizontal: 12 }}>{t.auth.orContinueWith}</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} />
+          </View>
 
-        <View className="flex-row items-center my-3">
-          <View className="flex-1 h-px bg-light-border dark:bg-border" />
-          <Text className="text-muted text-xs mx-3">{t.auth.orContinueWith}</Text>
-          <View className="flex-1 h-px bg-light-border dark:bg-border" />
-        </View>
-
-        <Pressable
-          onPress={handleGoogleSignIn}
-          disabled={googleLoading}
-          className="border border-light-border dark:border-border bg-light-card dark:bg-card py-3 rounded-lg items-center flex-row justify-center gap-2"
-          style={{ opacity: googleLoading ? 0.7 : 1 }}
-        >
-          {googleLoading ? (
-            <ActivityIndicator color="#8B5CF6" />
-          ) : (
-            <>
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#4285F4" }}>G</Text>
-              <Text className="text-light-foreground dark:text-foreground font-semibold ml-1">
-                {t.auth.continueWithGoogle}
-              </Text>
-            </>
-          )}
-        </Pressable>
-      </View>
-    </View>
+          <SpringBtn
+            onPress={handleGoogleSignIn}
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+              borderWidth: 1.5, borderColor: "#E2E8F0", borderRadius: 14, paddingVertical: 13,
+              backgroundColor: "white",
+              shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+              opacity: googleLoading ? 0.75 : 1,
+            }}
+          >
+            {googleLoading
+              ? <ActivityIndicator color="#8B5CF6" />
+              : <>
+                  <Text style={{ fontSize: 18, fontWeight: "900", color: "#4285F4" }}>G</Text>
+                  <Text style={{ color: "#0F172A", fontWeight: "600", fontSize: 14 }}>{t.auth.continueWithGoogle}</Text>
+                </>
+            }
+          </SpringBtn>
+        </Animated.View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
