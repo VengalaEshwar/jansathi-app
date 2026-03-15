@@ -96,6 +96,9 @@ function AppContent() {
             if (data.user.theme === "dark" || data.user.theme === "light") {
               dispatch(setAppTheme(data.user.theme));
             }
+            if (data.user.soundEnabled !== undefined) {
+              dispatch(setAppTheme(data.user.soundEnabled));
+            }
 
             if (Platform.OS !== "web") {
               try {
