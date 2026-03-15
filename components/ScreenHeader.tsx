@@ -29,23 +29,26 @@ export const ScreenHeader = ({
   }, []);
 
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY }], flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 }}>
-      <View style={{
-        width: 48, height: 48, borderRadius: 16,
-        backgroundColor: iconColor,
-        alignItems: "center", justifyContent: "center",
-        shadowColor: iconColor,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.38, shadowRadius: 10, elevation: 6,
-      }}>
+    <Animated.View style={{ opacity, transform: [{ translateY }] }} className="flex-row items-center gap-3 mb-6">
+      <View
+        className="w-12 h-12 rounded-2xl items-center justify-center"
+        style={{
+          backgroundColor: iconColor,
+          shadowColor: iconColor,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.38,
+          shadowRadius: 10,
+          elevation: 6,
+        }}
+      >
         <Icon size={22} color="white" />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: "#0F172A", letterSpacing: -0.4 }}
-          className="dark:text-white">{title}</Text>
+      <View className="flex-1">
+        <Text className="text-2xl font-bold text-[#0F172A] dark:text-white" style={{ letterSpacing: -0.4 }}>
+          {title}
+        </Text>
         {subtitle ? (
-          <Text style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}
-            className="dark:text-[#94A3B8]">{subtitle}</Text>
+          <Text className="text-sm text-[#64748B] dark:text-[#94A3B8] mt-0.5">{subtitle}</Text>
         ) : null}
       </View>
     </Animated.View>

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -320,7 +321,7 @@ export default function MedicineScanner() {
           gradientColors={["#7C3AED", "#EC4899"]}
           delay={0}
         />
-
+        { Platform.OS === "web" && <View className="py-2"></View> }
         {/* Upload */}
         <Animated.View style={bodyAnim}>
           <ImageUpload
@@ -361,7 +362,7 @@ export default function MedicineScanner() {
             </Text>
           </View>
         )}
-
+        { Platform.OS === "web" && <View className="py-2"></View> }
         {/* Result */}
         {analysis !== "" && (
           <Animated.View style={resultAnim} className="mt-5">
@@ -478,7 +479,7 @@ export default function MedicineScanner() {
             </View>
           </Animated.View>
         )}
-
+        { Platform.OS === "web" && <View className="py-2"></View> }
         {/* History */}
         <Animated.View style={historyAnim} className="mt-6">
           <View

@@ -1,5 +1,7 @@
-import { useRef } from "react";
-import { View, Text, Pressable, Animated, useWindowDimensions } from "react-native";
+/* eslint-disable react/display-name */
+// components/NavBar.tsx
+import { useRef, memo } from "react";
+import { View, Text, Pressable, Animated, useWindowDimensions, Platform } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { Home, Heart, Sparkles, User, Info } from "lucide-react-native";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -7,16 +9,20 @@ import { useSound } from "@/hooks/useSound";
 
 const WEB_BREAKPOINT = 768;
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface NavItem { path: string; label: string; icon: any; }
+interface NavProps { navItems: NavItem[]; pathname: string; onPress: (path: string) => void; }
+
+// ─── NavBar (root) ────────────────────────────────────────────────────────────
 export const NavBar = () => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const router      = useRouter();
+  const pathname    = usePathname();
+  const { t }       = useTranslation();
+  const { width }   = useWindowDimensions();
   const { playClick } = useSound();
+  const isWide      = width >= WEB_BREAKPOINT
 
-  const isWide = width >= WEB_BREAKPOINT;
-
-  const navItems = [
+  const navItems: NavItem[] = [
     { path: "/",         label: t.nav.home,    icon: Home     },
     { path: "/health",   label: t.nav.health,  icon: Heart    },
     { path: "/g-assist", label: t.nav.assist,  icon: Sparkles },
@@ -29,30 +35,12 @@ export const NavBar = () => {
     router.push(path as any);
   };
 
-  if (isWide) {
-    return <TopNavBar navItems={navItems} pathname={pathname} onPress={handlePress} />;
-  }
-
-  return <BottomNavBar navItems={navItems} pathname={pathname} onPress={handlePress} />;
+  if (isWide) return <TopNavBar    navItems={navItems} pathname={pathname} onPress={handlePress} />;
+  return           <BottomNavBar navItems={navItems} pathname={pathname} onPress={handlePress} />;
 };
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: any;
-}
-
-interface NavProps {
-  navItems: NavItem[];
-  pathname: string;
-  onPress: (path: string) => void;
-}
-
-// ── Top NavBar (web / wide screen) ───────────────────────────────────────────
-
-const TopNavBar = ({ navItems, pathname, onPress }: NavProps) => (
+// ─── Top NavBar (web / wide) ──────────────────────────────────────────────────
+const TopNavBar = memo(({ navItems, pathname, onPress }: NavProps) => (
   <View
     className="bg-white dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#1E293B]"
     style={{
@@ -73,16 +61,11 @@ const TopNavBar = ({ navItems, pathname, onPress }: NavProps) => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View
         style={{
-          width: 34,
-          height: 34,
-          borderRadius: 10,
+          width: 34, height: 34, borderRadius: 10,
           backgroundColor: "#8B5CF6",
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#8B5CF6",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.4,
-          shadowRadius: 8,
+          alignItems: "center", justifyContent: "center",
+          shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4, shadowRadius: 8,
         }}
       >
         <Sparkles size={18} color="white" />
@@ -95,7 +78,7 @@ const TopNavBar = ({ navItems, pathname, onPress }: NavProps) => (
       </Text>
     </View>
 
-    {/* Nav items */}
+    {/* Nav items — style gap, not className */}
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
       {navItems.map(({ path, label, icon: Icon }) => (
         <TopNavItem
@@ -109,9 +92,9 @@ const TopNavBar = ({ navItems, pathname, onPress }: NavProps) => (
       ))}
     </View>
   </View>
-);
+));
 
-const TopNavItem = ({
+const TopNavItem = memo(({
   path, label, Icon, isActive, onPress,
 }: {
   path: string; label: string; Icon: any; isActive: boolean; onPress: (p: string) => void;
@@ -128,36 +111,34 @@ const TopNavItem = ({
         onPressOut={() =>
           Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start()
         }
+        // @ts-ignore — web only
+        onHoverIn={() => {
+          if (Platform.OS === "web")
+            Animated.spring(scale, { toValue: 1.05, useNativeDriver: true, speed: 28, bounciness: 8 }).start();
+        }}
+        onHoverOut={() => {
+          if (Platform.OS === "web")
+            Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 8 }).start();
+        }}
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 6,
-          paddingHorizontal: 14,
-          paddingVertical: 8,
-          borderRadius: 10,
+          flexDirection: "row", alignItems: "center", gap: 6,
+          paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
           backgroundColor: isActive ? "#8B5CF620" : "transparent",
           borderWidth: 1,
           borderColor: isActive ? "#8B5CF640" : "transparent",
         }}
       >
         <Icon size={16} color={isActive ? "#8B5CF6" : "#64748B"} />
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: isActive ? "700" : "500",
-            color: isActive ? "#8B5CF6" : "#64748B",
-          }}
-        >
+        <Text style={{ fontSize: 13, fontWeight: isActive ? "700" : "500", color: isActive ? "#8B5CF6" : "#64748B" }}>
           {label}
         </Text>
       </Pressable>
     </Animated.View>
   );
-};
+});
 
-// ── Bottom NavBar (mobile / narrow screen) ────────────────────────────────────
-
-const BottomNavBar = ({ navItems, pathname, onPress }: NavProps) => (
+// ─── Bottom NavBar (mobile) ───────────────────────────────────────────────────
+const BottomNavBar = memo(({ navItems, pathname, onPress }: NavProps) => (
   <View
     className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0F172A] border-t border-[#E2E8F0] dark:border-[#1E293B]"
     style={{
@@ -166,9 +147,11 @@ const BottomNavBar = ({ navItems, pathname, onPress }: NavProps) => (
       shadowOpacity: 0.08,
       shadowRadius: 12,
       elevation: 12,
+      zIndex: 100,
     }}
   >
-    <View className="flex-row justify-around py-2">
+    {/* flex-row with style gap — NOT className gap */}
+    <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 8 }}>
       {navItems.map(({ path, label, icon: Icon }) => (
         <BottomNavItem
           key={path}
@@ -181,14 +164,14 @@ const BottomNavBar = ({ navItems, pathname, onPress }: NavProps) => (
       ))}
     </View>
   </View>
-);
+));
 
-const BottomNavItem = ({
+const BottomNavItem = memo(({
   path, label, Icon, isActive, onPress,
 }: {
   path: string; label: string; Icon: any; isActive: boolean; onPress: (p: string) => void;
 }) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale      = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
   return (
@@ -212,21 +195,28 @@ const BottomNavItem = ({
           paddingHorizontal: 12,
           paddingVertical: 4,
           borderRadius: 12,
+          // Active indicator background
           backgroundColor: isActive ? "#8B5CF615" : "transparent",
         }}
       >
+        {/* Active dot indicator */}
+        {isActive && (
+          <View style={{
+            position: "absolute", top: 2,
+            width: 4, height: 4, borderRadius: 2,
+            backgroundColor: "#8B5CF6",
+          }} />
+        )}
         <Icon size={22} color={isActive ? "#8B5CF6" : "#9CA3AF"} />
-        <Text
-          style={{
-            fontSize: 11,
-            marginTop: 3,
-            fontWeight: isActive ? "700" : "400",
-            color: isActive ? "#8B5CF6" : "#9CA3AF",
-          }}
-        >
+        <Text style={{
+          fontSize: 11,
+          marginTop: 3,
+          fontWeight: isActive ? "700" : "400",
+          color: isActive ? "#8B5CF6" : "#9CA3AF",
+        }}>
           {label}
         </Text>
       </Pressable>
     </Animated.View>
   );
-};
+});
