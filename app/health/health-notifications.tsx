@@ -1,8 +1,14 @@
 // app/health/health-notifications.tsx
 import { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, TextInput, Modal, Switch, Platform } from "react-native";
+import {
+  View, Text, ScrollView, Pressable, Animated, ActivityIndicator,
+  TextInput, Modal, Switch, Platform, useWindowDimensions,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { Bell, Plus, Trash2, Pencil, Check, X, Clock, ChevronDown, ChevronUp, MessageSquare, Mail, ShieldCheck, AlertCircle, CheckCircle, Smartphone } from "lucide-react-native";
+import {
+  Bell, Plus, Trash2, Pencil, Check, X, Clock, ChevronDown, ChevronUp,
+  MessageSquare, Mail, ShieldCheck, AlertCircle, CheckCircle, Smartphone, ArrowLeft,
+} from "lucide-react-native";
 import { apiRequest } from "@/integrations/api/client";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { updateDbUser } from "@/store/slices/authSlice";
@@ -23,7 +29,6 @@ const parseDate        = (str: string): Date | null => { const p = str.split("/"
 const formatDateForApi = (str: string): string | null => { const d = parseDate(str); return d ? d.toISOString() : null; };
 const formatDateForDisplay = (iso: string): string => { const d = new Date(iso); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`; };
 
-// ── TimePicker ─────────────────────────────────────────────────────────────────
 const TimePicker = ({ value, onChange, onRemove, showRemove }: { value: string; onChange: (v: string) => void; onRemove?: () => void; showRemove: boolean }) => {
   const [hour, minute] = value.split(":");
   const safeH = HOURS.includes(hour) ? hour : "08";
@@ -62,7 +67,6 @@ const TimePicker = ({ value, onChange, onRemove, showRemove }: { value: string; 
   );
 };
 
-// ── NotifyToggle ───────────────────────────────────────────────────────────────
 const NotifyToggle = ({ icon: Icon, label, value, onValueChange, verified, verifyLabel, onVerifyPress, color, disabled, disabledLabel }: any) => (
   <View className={`flex-row items-center bg-white dark:bg-[#1E293B] rounded-xl p-3 mb-2 border ${disabled ? "opacity-50 border-[#E2E8F0] dark:border-[#334155]" : "border-[#E2E8F0] dark:border-[#334155]"}`}>
     <View className="w-9 h-9 rounded-xl items-center justify-center mr-2.5" style={{ backgroundColor: `${color}22` }}>
@@ -93,7 +97,6 @@ const NotifyToggle = ({ icon: Icon, label, value, onValueChange, verified, verif
   </View>
 );
 
-// ── OtpModal ───────────────────────────────────────────────────────────────────
 const OtpModal = ({ visible, onClose, title, subtitle, showPhoneInput, phoneValue, onPhoneChange, onPhoneBlur, otpValue, onOtpChange, otpSentState, onSendOtp, onVerifyOtp, loading: vLoading, sendOtpLabel, enterOtpLabel, verifyLabel, checkingAvailability, smsAvailable }: any) => (
   <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
     <View className="flex-1 bg-black/70 justify-end">
@@ -132,16 +135,18 @@ const OtpModal = ({ visible, onClose, title, subtitle, showPhoneInput, phoneValu
   </Modal>
 );
 
-// ── Main ───────────────────────────────────────────────────────────────────────
 export default function HealthNotifications() {
   const router  = useRouter();
   const { t }   = useTranslation();
   const hn      = t.healthNotif;
   const toast   = useToast();
-  const { confirm } = useConfirm();
-  const dispatch    = useAppDispatch();
-  const dbUser      = useAppSelector((s) => s.auth.dbUser);
+  const { confirm }   = useConfirm();
+  const dispatch      = useAppDispatch();
+  const dbUser        = useAppSelector((s) => s.auth.dbUser);
   const { playClick } = useSound();
+  const { width }     = useWindowDimensions();
+  const isWide        = width >= 700;
+  const isLarge       = width >= 1100;
 
   const [reminders,  setReminders]  = useState<Reminder[]>([]);
   const [loading,    setLoading]    = useState(false);
@@ -174,6 +179,10 @@ export default function HealthNotifications() {
   const isGoogleUser  = dbUser?.isVerified   ?? false;
   const phoneVerified = dbUser?.phoneVerified ?? false;
   const emailVerified = dbUser?.emailVerified ?? false;
+
+  // ── Correct width formula ──────────────────────────────────────────────────
+  const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
+  const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 20;
 
   useEffect(() => { loadReminders(); }, []);
 
@@ -267,77 +276,71 @@ export default function HealthNotifications() {
 
   return (
     <View className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
-        <AnimatedPressable onPress={() => router.back()} soundType="soft" className="flex-row items-center gap-1.5 mb-4">
-          <Text className="text-[#8B5CF6] font-semibold text-sm">← {hn.backToHealth}</Text>
-        </AnimatedPressable>
+        {/* ── FULL WIDTH: back + HeroSection ── */}
+        <View style={{ paddingHorizontal: sidePad, paddingTop: 20 }}>
+          {Platform.OS === "web" && <View style={{ height: 8 }} />}
 
-        <HeroSection icon={Bell} title={hn.title} subtitle={hn.subtitle} gradientColors={["#F59E0B", "#EF4444"]} delay={0} />
+          <AnimatedPressable onPress={() => router.back()} soundType="soft"
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}>
+            <ArrowLeft size={18} color="#8B5CF6" />
+            <Text className="text-[#8B5CF6] font-semibold text-sm">{hn.backToHealth}</Text>
+          </AnimatedPressable>
 
-        <AnimatedPressable onPress={openAddForm} soundType="mechanical"
-          className="flex-row items-center justify-center gap-2 bg-primary rounded-2xl py-3.5 mb-5">
-          <Plus size={18} color="white" />
-          <Text className="text-white font-bold text-[15px]">{hn.addReminder}</Text>
-        </AnimatedPressable>
+          <HeroSection icon={Bell} title={hn.title} subtitle={hn.subtitle}
+            gradientColors={["#F59E0B", "#EF4444"]} delay={0} />
+          {Platform.OS === "web" && <View style={{ height: 8 }} />}
+        </View>
 
-        {loading ? <ActivityIndicator color="#8B5CF6" /> :
-         reminders.length === 0 ? (
-          <View className="items-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
-            <Bell size={40} color="#94A3B8" />
-            <Text className="text-[#0F172A] dark:text-white mt-3 font-semibold text-[15px]">{hn.noReminders}</Text>
-            <Text className="text-[#94A3B8] mt-1.5 text-[13px] text-center px-6">{hn.noRemindersDesc}</Text>
-          </View>
-         ) : reminders.map((r) => {
-          const scale = useRef(new Animated.Value(1)).current;
-          return (
-            <Animated.View key={r._id} style={{ transform: [{ scale }] }} className="mb-2.5">
-              <View className={`rounded-2xl border overflow-hidden ${r.isActive ? "bg-white dark:bg-[#1E293B] border-[#E2E8F0] dark:border-[#334155]" : "bg-[#F8FAFC] dark:bg-[#0F172A] border-transparent"}`}>
-                <Pressable
-                  onPress={() => { playClick("soft"); setExpandedId(expandedId === r._id ? null : r._id); }}
-                  onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
-                  onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 8 }).start()}
-                  className="p-3.5"
-                >
-                  <View className="flex-row items-center">
-                    <View className={`w-11 h-11 rounded-xl items-center justify-center mr-2.5 border ${r.isActive ? "bg-primary/10 border-primary" : "bg-[#F1F5F9] dark:bg-[#334155] border-[#E2E8F0] dark:border-[#334155]"}`}>
-                      <Bell size={18} color={r.isActive ? "#8B5CF6" : "#94A3B8"} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-[#0F172A] dark:text-white font-bold text-[15px]">{r.medicineName}</Text>
-                      <Text className="text-[#94A3B8] text-xs mt-0.5">{r.dosage} · {r.times.join(", ")}</Text>
-                    </View>
-                    <View className={`px-2 py-1 rounded-lg mr-2 ${r.isActive ? "bg-green-100 dark:bg-green-900/30" : "bg-[#F1F5F9] dark:bg-[#334155]"}`}>
-                      <Text className={`text-xs font-bold ${r.isActive ? "text-green-600 dark:text-green-400" : "text-[#94A3B8]"}`}>{r.isActive ? hn.active : hn.inactive}</Text>
-                    </View>
-                    {expandedId === r._id ? <ChevronUp size={15} color="#94A3B8" /> : <ChevronDown size={15} color="#94A3B8" />}
-                  </View>
-                </Pressable>
-                {expandedId === r._id && (
-                  <View className="px-3.5 pb-3.5 border-t border-[#E2E8F0] dark:border-[#334155]">
-                    <Text className="text-[#94A3B8] text-xs mt-2.5 mb-1.5">📅 {formatDateForDisplay(r.startDate)}{r.endDate ? ` → ${formatDateForDisplay(r.endDate)}` : ` (${hn.everyday})`}</Text>
-                    <View className="flex-row gap-1.5 flex-wrap mb-3">
-                      {r.notifyApp   && <View className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-lg"><Text className="text-blue-600 dark:text-blue-400 text-xs">📱 In-App</Text></View>}
-                      {r.notifySms   && <View className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-lg"><Text className="text-green-600 dark:text-green-400 text-xs">💬 {hn.smsNotification}</Text></View>}
-                      {r.notifyEmail && <View className="bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-lg"><Text className="text-purple-600 dark:text-purple-400 text-xs">✉️ {hn.emailNotification}</Text></View>}
-                    </View>
-                    <View className="flex-row gap-2">
-                      <AnimatedPressable onPress={() => openEditForm(r)} soundType="soft" className="flex-1 flex-row items-center justify-center gap-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-xl py-2.5">
-                        <Pencil size={13} color="#8B5CF6" /><Text className="text-primary font-semibold text-[13px]">{hn.editReminder}</Text>
-                      </AnimatedPressable>
-                      <AnimatedPressable onPress={() => handleDelete(r._id)} soundType="soft" className="flex-1 flex-row items-center justify-center gap-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl py-2.5">
-                        <Trash2 size={13} color="#EF4444" /><Text className="text-red-500 font-semibold text-[13px]">{hn.deleteReminder}</Text>
-                      </AnimatedPressable>
-                    </View>
-                  </View>
-                )}
-              </View>
-            </Animated.View>
-          );
-         })}
+        {/* ── CENTERED CONTENT ── */}
+        <View style={{
+          paddingHorizontal: sidePad,
+          ...(containerWidth ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" } : {}),
+        }}>
+
+          {/* Add Reminder button — pure style */}
+          <AnimatedPressable onPress={openAddForm} soundType="mechanical"
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+              backgroundColor: "#8B5CF6", paddingVertical: 14, borderRadius: 16, marginBottom: 20,
+              shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 6,
+            }}>
+            <Plus size={18} color="white" />
+            <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>{hn.addReminder}</Text>
+          </AnimatedPressable>
+
+          {loading ? <ActivityIndicator color="#8B5CF6" /> :
+           reminders.length === 0 ? (
+            <View className="items-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
+              <Bell size={40} color="#94A3B8" />
+              <Text className="text-[#0F172A] dark:text-white mt-3 font-semibold text-[15px]">{hn.noReminders}</Text>
+              <Text className="text-[#94A3B8] mt-1.5 text-[13px] text-center px-6">{hn.noRemindersDesc}</Text>
+            </View>
+           ) : (
+            <View>
+              {reminders.map((r) => {
+                // NOTE: scale ref must be at component level — extracted to separate component is ideal
+                // but keeping inline here as original code did (matches original pattern)
+                return (
+                  <ReminderRow
+                    key={r._id}
+                    reminder={r}
+                    isExpanded={expandedId === r._id}
+                    onToggle={() => { playClick("soft"); setExpandedId(expandedId === r._id ? null : r._id); }}
+                    onEdit={() => openEditForm(r)}
+                    onDelete={() => handleDelete(r._id)}
+                    hn={hn}
+                  />
+                );
+              })}
+            </View>
+           )
+          }
+        </View>
       </ScrollView>
 
-      {/* Add/Edit Form Modal */}
+      {/* Add/Edit Modal */}
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
         <View className="flex-1 bg-black/70 justify-end">
           <View className="bg-white dark:bg-[#1E293B] rounded-t-3xl max-h-[92%]">
@@ -346,13 +349,10 @@ export default function HealthNotifications() {
                 <Text className="text-[#0F172A] dark:text-white font-extrabold text-lg flex-1">{editingId ? hn.editReminder : hn.addReminder}</Text>
                 <Pressable onPress={() => { setShowForm(false); resetForm(); }}><X size={22} color="#94A3B8" /></Pressable>
               </View>
-
               <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs font-semibold mb-1.5">{hn.medicineName}</Text>
               <TextInput placeholder={hn.medicineNamePlaceholder} placeholderTextColor="#94A3B8" value={medicineName} onChangeText={setMedicineName} className={inputClass} />
-
               <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs font-semibold mb-1.5">{hn.dosage}</Text>
               <TextInput placeholder={hn.dosagePlaceholder} placeholderTextColor="#94A3B8" value={dosage} onChangeText={setDosage} className={inputClass} />
-
               <View className="flex-row items-center justify-between mb-2.5">
                 <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs font-semibold">{hn.times}</Text>
                 <AnimatedPressable onPress={addTime} soundType="soft" className="flex-row items-center gap-1">
@@ -360,10 +360,8 @@ export default function HealthNotifications() {
                 </AnimatedPressable>
               </View>
               {times.map((time, i) => <TimePicker key={i} value={time} onChange={(val) => updateTime(i, val)} onRemove={() => removeTime(i)} showRemove={times.length > 1} />)}
-
               <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs font-semibold mb-1.5 mt-1">{hn.startDate}</Text>
               <TextInput placeholder="DD/MM/YYYY" placeholderTextColor="#94A3B8" value={startDate} onChangeText={setStartDate} className={inputClass} />
-
               <View className={`flex-row items-center bg-[#F8FAFC] dark:bg-[#0F172A] rounded-xl p-3 mb-3 border ${isEveryday ? "border-primary" : "border-[#E2E8F0] dark:border-[#334155]"}`}>
                 <Text className="text-[#0F172A] dark:text-white flex-1 text-sm">{hn.everyday}</Text>
                 <Switch value={isEveryday} onValueChange={setIsEveryday} trackColor={{ false: "#CBD5E1", true: "#7C3AED" }} thumbColor={isEveryday ? "#8B5CF6" : "#94A3B8"} />
@@ -374,12 +372,10 @@ export default function HealthNotifications() {
                   <TextInput placeholder="DD/MM/YYYY" placeholderTextColor="#94A3B8" value={endDate} onChangeText={setEndDate} className={inputClass} />
                 </>
               )}
-
               <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs font-semibold mb-2">{hn.notifyVia}</Text>
               <NotifyToggle icon={Smartphone} label="In-App Notification" value={notifyApp} onValueChange={setNotifyApp} color="#38BDF8" />
               <NotifyToggle icon={MessageSquare} label={hn.smsNotification} value={notifySms} onValueChange={handleSmsToggle} verified={phoneVerified} verifyLabel={hn.verifyPhone} onVerifyPress={() => { setSmsAvailable(null); setShowPhoneVerify(true); }} color="#22C55E" disabled={smsAvailable === false} disabledLabel="Unavailable" />
               <NotifyToggle icon={Mail} label={hn.emailNotification} value={notifyEmail} onValueChange={handleEmailToggle} verified={emailVerified} verifyLabel={hn.verifyEmail} onVerifyPress={() => setShowEmailVerify(true)} color="#C084FC" />
-
               <AnimatedPressable onPress={handleSave} disabled={saving} soundType="mechanical" className="bg-primary rounded-2xl p-4 items-center mt-4">
                 {saving ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-base">{hn.saveReminder}</Text>}
               </AnimatedPressable>
@@ -400,5 +396,55 @@ export default function HealthNotifications() {
         otpValue={emailOtp} onOtpChange={setEmailOtp} otpSentState={emailOtpSent} onSendOtp={sendEmailOtp} onVerifyOtp={verifyEmailOtp}
         loading={verifyLoading} sendOtpLabel={hn.sendOtp} enterOtpLabel={hn.enterOtp} verifyLabel={hn.otpVerified} />
     </View>
+  );
+}
+
+// ── Extracted ReminderRow to avoid hook-in-map violation ──────────────────────
+function ReminderRow({ reminder: r, isExpanded, onToggle, onEdit, onDelete, hn }: {
+  reminder: Reminder; isExpanded: boolean;
+  onToggle: () => void; onEdit: () => void; onDelete: () => void; hn: any;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Animated.View style={{ transform: [{ scale }], marginBottom: 10 }}>
+      <View className={`rounded-2xl border overflow-hidden ${r.isActive ? "bg-white dark:bg-[#1E293B] border-[#E2E8F0] dark:border-[#334155]" : "bg-[#F8FAFC] dark:bg-[#0F172A] border-transparent"}`}>
+        <Pressable onPress={onToggle}
+          onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
+          onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 8 }).start()}
+          className="p-3.5">
+          <View className="flex-row items-center">
+            <View className={`w-11 h-11 rounded-xl items-center justify-center mr-2.5 border ${r.isActive ? "bg-primary/10 border-primary" : "bg-[#F1F5F9] dark:bg-[#334155] border-[#E2E8F0] dark:border-[#334155]"}`}>
+              <Bell size={18} color={r.isActive ? "#8B5CF6" : "#94A3B8"} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[#0F172A] dark:text-white font-bold text-[15px]">{r.medicineName}</Text>
+              <Text className="text-[#94A3B8] text-xs mt-0.5">{r.dosage} · {r.times.join(", ")}</Text>
+            </View>
+            <View className={`px-2 py-1 rounded-lg mr-2 ${r.isActive ? "bg-green-100 dark:bg-green-900/30" : "bg-[#F1F5F9] dark:bg-[#334155]"}`}>
+              <Text className={`text-xs font-bold ${r.isActive ? "text-green-600 dark:text-green-400" : "text-[#94A3B8]"}`}>{r.isActive ? hn.active : hn.inactive}</Text>
+            </View>
+            {isExpanded ? <ChevronUp size={15} color="#94A3B8" /> : <ChevronDown size={15} color="#94A3B8" />}
+          </View>
+        </Pressable>
+        {isExpanded && (
+          <View className="px-3.5 pb-3.5 border-t border-[#E2E8F0] dark:border-[#334155]">
+            <Text className="text-[#94A3B8] text-xs mt-2.5 mb-1.5">📅 {formatDateForDisplay(r.startDate)}{r.endDate ? ` → ${formatDateForDisplay(r.endDate)}` : ` (${hn.everyday})`}</Text>
+            <View className="flex-row gap-1.5 flex-wrap mb-3">
+              {r.notifyApp   && <View className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-lg"><Text className="text-blue-600 dark:text-blue-400 text-xs">📱 In-App</Text></View>}
+              {r.notifySms   && <View className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-lg"><Text className="text-green-600 dark:text-green-400 text-xs">💬 {hn.smsNotification}</Text></View>}
+              {r.notifyEmail && <View className="bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-lg"><Text className="text-purple-600 dark:text-purple-400 text-xs">✉️ {hn.emailNotification}</Text></View>}
+            </View>
+            <View className="flex-row gap-2">
+              <AnimatedPressable onPress={onEdit} soundType="soft" className="flex-1 flex-row items-center justify-center gap-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-xl py-2.5">
+                <Pencil size={13} color="#8B5CF6" /><Text className="text-primary font-semibold text-[13px]">{hn.editReminder}</Text>
+              </AnimatedPressable>
+              <AnimatedPressable onPress={onDelete} soundType="soft" className="flex-1 flex-row items-center justify-center gap-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl py-2.5">
+                <Trash2 size={13} color="#EF4444" /><Text className="text-red-500 font-semibold text-[13px]">{hn.deleteReminder}</Text>
+              </AnimatedPressable>
+            </View>
+          </View>
+        )}
+      </View>
+    </Animated.View>
   );
 }

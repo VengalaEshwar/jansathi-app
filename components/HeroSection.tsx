@@ -39,8 +39,14 @@ export const HeroSection = ({
     ]).start();
   }, []);
 
+  // Cap minHeight — on wide screens 0.36 * width is too tall (e.g. 540px on 1500px monitor)
+  // Mobile: proportional. Wide: fixed compact height.
+  const minHeight = width >= 700
+    ? 160   // compact on wide / web — just enough for icon + text
+    : Math.max(width * 0.36, 140); // proportional on mobile
+
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY }, { scale }] }} className="mb-6">
+    <Animated.View style={{ opacity, transform: [{ translateY }, { scale }], marginBottom: 16 }}>
       <LinearGradient
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
@@ -48,7 +54,7 @@ export const HeroSection = ({
         style={{
           borderRadius: 24,
           padding: 20,
-          minHeight: Math.max(width * 0.36, 140),
+          minHeight,
           justifyContent: "space-between",
           overflow: "hidden",
           shadowColor: gradientColors[0],
@@ -63,21 +69,25 @@ export const HeroSection = ({
         <View style={{ position: "absolute", bottom: -16, left: width * 0.35, width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.06)" }} />
 
         {/* Top row */}
-        <View className="flex-row items-start justify-between">
+        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View style={{ width: 52, height: 52, borderRadius: 17, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" }}>
             <Icon size={26} color="white" />
           </View>
           {badge ? (
             <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" }}>
-              <Text className="text-white text-xs font-bold">{badge}</Text>
+              <Text style={{ color: "white", fontSize: 12, fontWeight: "700" }}>{badge}</Text>
             </View>
           ) : null}
         </View>
 
         {/* Text + CTA */}
-        <View className="mt-4">
-          <Text className="text-white text-xl font-extrabold mb-1.5" style={{ letterSpacing: -0.4 }}>{title}</Text>
-          <Text className="text-white/80 text-sm leading-5" style={{ marginBottom: ctaLabel ? 14 : 0 }}>{subtitle}</Text>
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ color: "white", fontSize: 22, fontWeight: "800", letterSpacing: -0.4, marginBottom: 6 }} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", fontSize: 14, lineHeight: 20, marginBottom: ctaLabel ? 14 : 0 }} numberOfLines={2}>
+            {subtitle}
+          </Text>
           {ctaLabel && onCta ? (
             <AnimatedPressable
               onPress={onCta}
@@ -85,14 +95,12 @@ export const HeroSection = ({
               style={{
                 alignSelf: "flex-start",
                 backgroundColor: "rgba(255,255,255,0.22)",
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 12,
-                borderWidth: 1,
+                paddingHorizontal: 16, paddingVertical: 8,
+                borderRadius: 12, borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.35)",
               }}
             >
-              <Text className="text-white font-bold text-sm">{ctaLabel}</Text>
+              <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>{ctaLabel}</Text>
             </AnimatedPressable>
           ) : null}
         </View>

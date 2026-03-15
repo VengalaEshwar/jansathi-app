@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+// app/profile/index.tsx
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, Pressable,
   ActivityIndicator, Modal, Image, Platform, Animated,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -16,15 +18,15 @@ import { HelpSupportDialog } from "@/components/profile/HelpSupportDialog";
 import { ProfileChatbot } from "@/components/profile/ProfileChatbot";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setAppLanguage, setSoundEnabled } from "@/store/slices/appSlice";
+import { setAppLanguage, setAppTheme, setSoundEnabled } from "@/store/slices/appSlice";
 import { updateDbUser } from "@/store/slices/authSlice";
 import { apiRequest, BASE_URL } from "@/integrations/api/client";
 import type { Language } from "@/translations";
 import * as ImagePicker from "expo-image-picker";
 import { useToast } from "@/hooks/useToast";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useTheme } from "@/hooks/useTheme";
 import { useSound } from "@/hooks/useSound";
+import type { Theme } from "@/store/slices/appSlice";
 
 const LANGUAGES: { code: Language; native: string; label: string }[] = [
   { code: "en", native: "English", label: "EN" },
@@ -43,7 +45,11 @@ const Toggle = ({ value, onToggle }: { value: boolean; onToggle: () => void }) =
   return (
     <Pressable onPress={onToggle} hitSlop={8}>
       <Animated.View style={{ width: 48, height: 28, borderRadius: 14, backgroundColor: bg, justifyContent: "center" }}>
-        <Animated.View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: "white", transform: [{ translateX: tx }], shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3, elevation: 3 }} />
+        <Animated.View style={{
+          width: 22, height: 22, borderRadius: 11, backgroundColor: "white",
+          transform: [{ translateX: tx }],
+          shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3, elevation: 3,
+        }} />
       </Animated.View>
     </Pressable>
   );
@@ -56,7 +62,7 @@ const SectionRow = ({
   icon: any; title: string; desc: string;
   onPress?: () => void; right?: React.ReactNode; iconColor?: string; delay?: number;
 }) => {
-  const scale  = useRef(new Animated.Value(1)).current;
+  const scale      = useRef(new Animated.Value(1)).current;
   const opacity    = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(14)).current;
   useEffect(() => {
@@ -65,17 +71,13 @@ const SectionRow = ({
       Animated.spring(translateY, { toValue: 0, delay, useNativeDriver: true, speed: 14, bounciness: 5 }),
     ]).start();
   }, []);
-
   return (
     <Animated.View style={{ opacity, transform: [{ translateY }, { scale }] }}>
-      <Pressable
-        onPress={onPress}
+      <Pressable onPress={onPress} disabled={!onPress}
         onPressIn={() => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 40, bounciness: 4 }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, speed: 22, bounciness: 8 }).start()}
-        disabled={!onPress}
         className="flex-row items-center gap-3 p-4 mb-3 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]"
-        style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
-      >
+        style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
         <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: iconColor + "18", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: iconColor + "30" }}>
           <Icon size={18} color={iconColor} />
         </View>
@@ -89,29 +91,36 @@ const SectionRow = ({
   );
 };
 
-// ── Section label ─────────────────────────────────────────────────────────────
 const SectionLabel = ({ label }: { label: string }) => (
-  <Text className="text-xs font-semibold uppercase tracking-widest text-[#8B5CF6] mb-3 ml-1">
-    {label}
-  </Text>
+  <Text className="text-xs font-semibold uppercase tracking-widest text-[#8B5CF6] mb-3 ml-1">{label}</Text>
 );
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Profile() {
-  const router = useRouter();
+  const router            = useRouter();
   const { user, loading } = useAuth();
   const { t, language }   = useTranslation();
   const dispatch          = useAppDispatch();
   const dbUser            = useAppSelector((s) => s.auth.dbUser);
   const soundEnabled      = useAppSelector((s) => s.app.soundEnabled);
+  const theme             = useAppSelector((s) => s.app.theme);
   const toast             = useToast();
   const { confirm }       = useConfirm();
-  const { theme, toggleTheme } = useTheme();
   const { playClick }     = useSound();
+  const { width }         = useWindowDimensions();
+  const isWide            = width >= 700;
+  const isLarge           = width >= 1100;
+
+  // ── Correct width formula ──────────────────────────────────────────────────
+  const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
+  const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 16;
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [helpSupportOpen,   setHelpSupportOpen]   = useState(false);
   const [savingLang,        setSavingLang]        = useState(false);
+  // ✅ Separate loaders — theme and sound don't affect each other
+  const [savingTheme,       setSavingTheme]       = useState(false);
+  const [savingSound,       setSavingSound]       = useState(false);
   const [avatarLoading,     setAvatarLoading]     = useState(false);
   const [avatarModalOpen,   setAvatarModalOpen]   = useState(false);
 
@@ -124,9 +133,55 @@ export default function Profile() {
     ]).start();
   }, []);
 
+  useEffect(() => { if (!loading && !user) router.replace("/auth"); }, [user, loading]);
+
+  // ── Restore preferences from DB on mount ─────────────────────────────────
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
-  }, [user, loading]);
+    if (!dbUser?.preferences) return;
+    const prefs = dbUser.preferences;
+    if (prefs.theme        && prefs.theme        !== theme)        dispatch(setAppTheme(prefs.theme as Theme));
+    if (prefs.language     && prefs.language     !== language)     dispatch(setAppLanguage(prefs.language as Language));
+    if (prefs.soundEnabled !== undefined && prefs.soundEnabled !== soundEnabled) dispatch(setSoundEnabled(prefs.soundEnabled));
+  }, [dbUser?.preferences]);
+
+  // ── Theme toggle — own loader ─────────────────────────────────────────────
+  const handleToggleTheme = useCallback(async () => {
+    playClick("soft");
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    dispatch(setAppTheme(next));           // optimistic update
+    setSavingTheme(true);
+    try {
+      const data = await apiRequest("/auth/preferences", "PATCH", { theme: next });
+      if (data.success) dispatch(updateDbUser({ preferences: { ...dbUser?.preferences, theme: next } }));
+    } catch { toast.error(t.common.error); dispatch(setAppTheme(theme)); } // rollback on error
+    finally { setSavingTheme(false); }
+  }, [theme, dbUser?.preferences, dispatch, t, toast, playClick]);
+
+  // ── Sound toggle — own loader ─────────────────────────────────────────────
+  const handleToggleSound = useCallback(async () => {
+    playClick("soft");
+    const next = !soundEnabled;
+    dispatch(setSoundEnabled(next));       // optimistic update
+    setSavingSound(true);
+    try {
+      const data = await apiRequest("/auth/preferences", "PATCH", { soundEnabled: next });
+      if (data.success) dispatch(updateDbUser({ preferences: { ...dbUser?.preferences, soundEnabled: next } }));
+    } catch { toast.error(t.common.error); dispatch(setSoundEnabled(soundEnabled)); } // rollback
+    finally { setSavingSound(false); }
+  }, [soundEnabled, dbUser?.preferences, dispatch, t, toast, playClick]);
+
+  // ── Language change ───────────────────────────────────────────────────────
+  const handleLanguageChange = useCallback(async (lang: Language) => {
+    if (lang === language) return;
+    playClick("soft");
+    dispatch(setAppLanguage(lang));
+    setSavingLang(true);
+    try {
+      const data = await apiRequest("/auth/preferences", "PATCH", { language: lang });
+      if (data.success) dispatch(updateDbUser({ preferences: { ...dbUser?.preferences, language: lang } }));
+    } catch { toast.error(t.common.error); dispatch(setAppLanguage(language)); } // rollback
+    finally { setSavingLang(false); }
+  }, [language, dbUser?.preferences, dispatch, t, toast, playClick]);
 
   const closeAvatarModal = () => setAvatarModalOpen(false);
 
@@ -179,15 +234,6 @@ export default function Profile() {
     },
   });
 
-  const handleLanguageChange = async (lang: Language) => {
-    playClick("soft"); dispatch(setAppLanguage(lang)); setSavingLang(true);
-    try {
-      const data = await apiRequest("/auth/preferences", "PATCH", { language: lang });
-      if (data.success) dispatch(updateDbUser({ language: lang }));
-    } catch { toast.error(t.common.error); }
-    finally { setSavingLang(false); }
-  };
-
   if (loading) return (
     <View className="flex-1 items-center justify-center bg-[#F8FAFC] dark:bg-[#0F172A]">
       <ActivityIndicator size="large" color="#8B5CF6" />
@@ -205,115 +251,150 @@ export default function Profile() {
 
   return (
     <View className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]">
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
 
-        {/* Page header */}
-        <Animated.View style={{ opacity: headerOp, transform: [{ translateY: headerY }] }} className="flex-row items-center gap-3 mb-6">
-          <View className="w-12 h-12 rounded-2xl bg-primary items-center justify-center"
-            style={{ shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 }}>
-            <User size={22} color="white" />
-          </View>
-          <View>
-            <Text className="text-2xl font-bold text-[#0F172A] dark:text-white" style={{ letterSpacing: -0.4 }}>{t.profile.title}</Text>
-            <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm">{t.profile.subtitle}</Text>
-          </View>
-        </Animated.View>
+        {/* ── CENTERED CONTENT CONTAINER ── */}
+        <View style={{
+          paddingHorizontal: sidePad, paddingTop: 16,
+          ...(containerWidth ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" } : {}),
+        }}>
+          {Platform.OS === "web" && <View style={{ height: 8 }} />}
 
-        {/* Hero card */}
-        <Animated.View style={{ opacity: headerOp, transform: [{ translateY: headerY }] }}>
-          <View className="rounded-3xl bg-primary p-5 mb-5 overflow-hidden"
-            style={{ shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}>
-            {/* Decorative circle */}
-            <View style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.06)" }} />
+          {/* Page header */}
+          <Animated.View style={{ opacity: headerOp, transform: [{ translateY: headerY }] }}
+            className="flex-row items-center gap-3 mb-6">
+            <View className="w-12 h-12 rounded-2xl bg-primary items-center justify-center"
+              style={{ shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 }}>
+              <User size={22} color="white" />
+            </View>
+            <View>
+              <Text className="text-2xl font-bold text-[#0F172A] dark:text-white" style={{ letterSpacing: -0.4 }}>{t.profile.title}</Text>
+              <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm">{t.profile.subtitle}</Text>
+            </View>
+          </Animated.View>
 
-            <View className="flex-row items-center gap-4 mb-4">
-              <Pressable onPress={handleAvatarPress} disabled={avatarLoading}>
-                <View style={{ width: 68, height: 68, borderRadius: 34, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", overflow: "hidden", borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" }}>
-                  {avatarLoading ? <ActivityIndicator color="white" /> :
-                   dbUser?.avatar ? <Image source={{ uri: dbUser.avatar }} style={{ width: 68, height: 68, borderRadius: 34 }} /> :
-                   <User size={28} color="white" />}
+          {/* Hero card */}
+          <Animated.View style={{ opacity: headerOp, transform: [{ translateY: headerY }] }}>
+            <View className="rounded-3xl bg-primary p-5 mb-5 overflow-hidden"
+              style={{ shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}>
+              <View style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.06)" }} />
+              <View className="flex-row items-center gap-4 mb-4">
+                <Pressable onPress={handleAvatarPress} disabled={avatarLoading}>
+                  <View style={{ width: 68, height: 68, borderRadius: 34, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", overflow: "hidden", borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" }}>
+                    {avatarLoading ? <ActivityIndicator color="white" /> :
+                     dbUser?.avatar ? <Image source={{ uri: dbUser.avatar }} style={{ width: 68, height: 68, borderRadius: 34 }} /> :
+                     <User size={28} color="white" />}
+                  </View>
+                  <View style={{ position: "absolute", bottom: 0, right: 0, backgroundColor: "#7C3AED", borderRadius: 10, padding: 4, borderWidth: 2, borderColor: "white" }}>
+                    <Camera size={10} color="white" />
+                  </View>
+                </Pressable>
+                <View className="flex-1">
+                  <Text className="text-white text-xl font-bold">{displayName}</Text>
+                  <Text className="text-white/75 text-sm">{user.email}</Text>
+                  {dbUser?.phone ? <Text className="text-white/55 text-xs mt-1">{dbUser.phone}</Text> : null}
                 </View>
-                <View style={{ position: "absolute", bottom: 0, right: 0, backgroundColor: "#7C3AED", borderRadius: 10, padding: 4, borderWidth: 2, borderColor: "white" }}>
-                  <Camera size={10} color="white" />
-                </View>
-              </Pressable>
-              <View className="flex-1">
-                <Text className="text-white text-xl font-bold">{displayName}</Text>
-                <Text className="text-white/75 text-sm">{user.email}</Text>
-                {dbUser?.phone ? <Text className="text-white/55 text-xs mt-1">{dbUser.phone}</Text> : null}
+              </View>
+              <View className="flex-row gap-2">
+                <Pressable onPress={() => router.push("/profile/personal-info")} className="flex-1 items-center py-2.5 rounded-xl bg-white/20">
+                  <Text className="text-white font-semibold text-sm">{t.profile.editProfile}</Text>
+                </Pressable>
+                <Pressable onPress={handleSignOut} className="flex-row items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/30">
+                  <LogOut size={14} color="white" />
+                  <Text className="text-white text-sm">{t.profile.logout}</Text>
+                </Pressable>
               </View>
             </View>
+          </Animated.View>
 
-            <View className="flex-row gap-2">
-              <Pressable onPress={() => router.push("/profile/personal-info")} className="flex-1 items-center py-2.5 rounded-xl bg-white/20">
-                <Text className="text-white font-semibold text-sm">{t.profile.editProfile}</Text>
-              </Pressable>
-              <Pressable onPress={handleSignOut} className="flex-row items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/30">
-                <LogOut size={14} color="white" />
-                <Text className="text-white text-sm">{t.profile.logout}</Text>
-              </Pressable>
-            </View>
+          {/* Language — 2-col on wide */}
+          <SectionLabel label={t.profile.chooseLanguage} />
+          <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
+            {LANGUAGES.map((lang) => {
+              const isActive = language === lang.code;
+              return (
+                <Pressable key={lang.code} onPress={() => handleLanguageChange(lang.code)}
+                  style={{
+                    flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center",
+                    backgroundColor: isActive ? "#8B5CF6" : "transparent",
+                    borderWidth: 1, borderColor: isActive ? "#8B5CF6" : "#E2E8F0",
+                  }}
+                  className={isActive ? "" : "dark:border-[#334155]"}>
+                  {savingLang && isActive ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <>
+                      <Text style={{ fontWeight: "700", fontSize: 14, color: isActive ? "white" : "#8B5CF6" }}
+                        className={isActive ? "" : "dark:text-white"}>{lang.native}</Text>
+                      <Text style={{ fontSize: 11, marginTop: 2, color: isActive ? "rgba(255,255,255,0.7)" : "#64748B" }}
+                        className={isActive ? "" : "dark:text-[#94A3B8]"}>{lang.label}</Text>
+                    </>
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
-        </Animated.View>
 
-        {/* Language */}
-        <SectionLabel label={t.profile.chooseLanguage} />
-        <View className="flex-row gap-2 mb-5">
-          {LANGUAGES.map((lang) => (
-            <Pressable key={lang.code} onPress={() => handleLanguageChange(lang.code)} className="flex-1 py-3 rounded-xl items-center"
-              style={{ backgroundColor: language === lang.code ? "#8B5CF6" : "transparent", borderWidth: 1, borderColor: language === lang.code ? "#8B5CF6" : "#E2E8F0" }}>
-              {savingLang && language === lang.code
-                ? <ActivityIndicator size="small" color="white" />
-                : <>
-                    <Text style={{ fontWeight: "700", fontSize: 14, color: language === lang.code ? "white" : "#0F172A" }}>{lang.native}</Text>
-                    <Text style={{ fontSize: 11, marginTop: 2, color: language === lang.code ? "rgba(255,255,255,0.7)" : "#64748B" }}>{lang.label}</Text>
-                  </>
-              }
-            </Pressable>
+          {/* Accessibility */}
+          <SectionLabel label="Accessibility" />
+
+          {/* Dark/Light Mode — own loader, no bleed into sound row */}
+          <SectionRow
+            icon={theme === "dark" ? Moon : Sun}
+            title={theme === "dark" ? "Dark Mode" : "Light Mode"}
+            desc={theme === "dark" ? "Tap to switch to light theme" : "Tap to switch to dark theme"}
+            iconColor={theme === "dark" ? "#6366F1" : "#F59E0B"}
+            delay={0}
+            right={
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                {/* ✅ savingTheme — only lights up when theme is saving */}
+                {savingTheme && <ActivityIndicator size="small" color="#8B5CF6" />}
+                <Toggle value={theme === "dark"} onToggle={handleToggleTheme} />
+              </View>
+            }
+          />
+
+          {/* Click Sound — own loader, no bleed into theme row */}
+          <SectionRow
+            icon={soundEnabled ? Volume2 : VolumeX}
+            title="Click Sound"
+            desc={soundEnabled ? "Tap sounds are enabled" : "Tap sounds are disabled"}
+            iconColor={soundEnabled ? "#8B5CF6" : "#94A3B8"}
+            delay={60}
+            right={
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                {/* ✅ savingSound — only lights up when sound is saving */}
+                {savingSound && <ActivityIndicator size="small" color="#8B5CF6" />}
+                <Toggle value={soundEnabled} onToggle={handleToggleSound} />
+              </View>
+            }
+          />
+
+          {/* Account */}
+          <SectionLabel label="Account" />
+          <SectionRow icon={User} title={t.profile.personalInfo} desc={t.profile.personalInfoDesc}
+            onPress={() => router.push("/profile/personal-info")} iconColor="#8B5CF6" delay={120} />
+          {accountSections.map((s, i) => (
+            <SectionRow key={i} icon={s.icon} title={s.title} desc={s.desc}
+              onPress={s.action} iconColor={s.color} delay={180 + i * 60} />
           ))}
+
+          {/* Stats */}
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
+            {[
+              { label: t.profile.scans,   count: dbUser?.prescriptionHistory?.length ?? 0, color: "#8B5CF6" },
+              { label: t.profile.forms,   count: dbUser?.formHistory?.length ?? 0,          color: "#3B82F6" },
+              { label: t.profile.schemes, count: 0,                                          color: "#10B981" },
+            ].map((stat, i) => (
+              <View key={i} className="flex-1 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 items-center"
+                style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
+                <Text style={{ color: stat.color, fontSize: 22, fontWeight: "800" }}>{stat.count}</Text>
+                <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs mt-0.5">{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+
         </View>
-
-        {/* Accessibility */}
-        <SectionLabel label="Accessibility" />
-        <SectionRow
-          icon={theme === "dark" ? Moon : Sun}
-          title={theme === "dark" ? "Dark Mode" : "Light Mode"}
-          desc={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-          iconColor={theme === "dark" ? "#6366F1" : "#F59E0B"}
-          delay={0}
-          right={<Toggle value={theme === "dark"} onToggle={toggleTheme} />}
-        />
-        <SectionRow
-          icon={soundEnabled ? Volume2 : VolumeX}
-          title="Click Sound"
-          desc={soundEnabled ? "Tap sounds are enabled" : "Tap sounds are disabled"}
-          iconColor={soundEnabled ? "#8B5CF6" : "#94A3B8"}
-          delay={60}
-          right={<Toggle value={soundEnabled} onToggle={() => dispatch(setSoundEnabled(!soundEnabled))} />}
-        />
-
-        {/* Account */}
-        <SectionLabel label="Account" />
-        <SectionRow icon={User} title={t.profile.personalInfo} desc={t.profile.personalInfoDesc} onPress={() => router.push("/profile/personal-info")} iconColor="#8B5CF6" delay={120} />
-        {accountSections.map((s, i) => (
-          <SectionRow key={i} icon={s.icon} title={s.title} desc={s.desc} onPress={s.action} iconColor={s.color} delay={180 + i * 60} />
-        ))}
-
-        {/* Stats — back at bottom */}
-        <View className="flex-row gap-3 mt-6">
-          {[
-            { label: t.profile.scans,   count: dbUser?.prescriptionHistory?.length ?? 0, color: "#8B5CF6" },
-            { label: t.profile.forms,   count: dbUser?.formHistory?.length ?? 0,          color: "#3B82F6" },
-            { label: t.profile.schemes, count: 0,                                          color: "#10B981" },
-          ].map((stat, i) => (
-            <View key={i} className="flex-1 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 items-center"
-              style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
-              <Text style={{ color: stat.color, fontSize: 22, fontWeight: "800" }}>{stat.count}</Text>
-              <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs mt-0.5">{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-
       </ScrollView>
 
       <NotificationsDialog open={notificationsOpen} onOpenChange={setNotificationsOpen} userId={user.uid} />

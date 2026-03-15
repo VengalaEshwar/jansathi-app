@@ -1,11 +1,13 @@
+// components/GlobalChatbot.tsx
+import { memo, useCallback } from "react";
 import { DraggableChatbot } from "@/components/DraggableChatbot";
 import { apiRequest } from "@/integrations/api/client";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export const GlobalChatbot = () => {
+export const GlobalChatbot = memo(() => {
   const { t, language } = useTranslation();
 
-  const handleSend = async (
+  const handleSend = useCallback(async (
     message: string,
     history: Array<{ role: "user" | "assistant"; content: string }>
   ) => {
@@ -15,7 +17,7 @@ export const GlobalChatbot = () => {
       language,
     });
     return data.reply as string;
-  };
+  }, [language]);
 
   return (
     <DraggableChatbot
@@ -26,4 +28,4 @@ export const GlobalChatbot = () => {
       onSendMessage={handleSend}
     />
   );
-};
+});
