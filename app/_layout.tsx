@@ -12,7 +12,7 @@ import { store } from "@/store";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
 import { setUser, setDbUser, clearUser } from "@/store/slices/authSlice";
-import { setAppLanguage, setAppTheme } from "@/store/slices/appSlice";
+import { setAppLanguage, setAppTheme ,setSoundEnabled} from "@/store/slices/appSlice";
 import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { ToastContainer } from "@/components/Toast";
@@ -97,7 +97,7 @@ function AppContent() {
               dispatch(setAppTheme(data.user.theme));
             }
             if (data.user.soundEnabled !== undefined) {
-              dispatch(setAppTheme(data.user.soundEnabled));
+              dispatch(setSoundEnabled(data.user.soundEnabled));
             }
 
             if (Platform.OS !== "web") {
