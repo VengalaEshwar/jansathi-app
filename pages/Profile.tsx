@@ -7,13 +7,12 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
-  User, Bell, Shield, HelpCircle, LogOut,
-  ChevronRight, Camera, X, Trash2, Sun, Moon, Volume2, VolumeX,
+  User, Shield, HelpCircle, LogOut,
+  ChevronRight, Camera, X, Trash2, Sun, Moon, Volume2, VolumeX, Users,
 } from "lucide-react-native";
 import { signOut } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/integrations/firebase/client";
-import { NotificationsDialog } from "@/components/profile/NotificationsDialog";
 import { HelpSupportDialog } from "@/components/profile/HelpSupportDialog";
 import { ProfileChatbot } from "@/components/profile/ProfileChatbot";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -33,6 +32,14 @@ const LANGUAGES: { code: Language; native: string; label: string }[] = [
   { code: "hi", native: "हिंदी",   label: "HI" },
   { code: "te", native: "తెలుగు",  label: "TE" },
 ];
+
+const SPECIALITY_LABELS: Record<string, string> = {
+  legal:      "Legal Aid",
+  health:     "Healthcare",
+  education:  "Education",
+  government: "Govt Schemes",
+  general:    "General Help",
+};
 
 // ── Animated toggle switch ────────────────────────────────────────────────────
 const Toggle = ({ value, onToggle }: { value: boolean; onToggle: () => void }) => {
@@ -104,6 +111,7 @@ export default function Profile() {
   const dbUser            = useAppSelector((s) => s.auth.dbUser);
   const soundEnabled      = useAppSelector((s) => s.app.soundEnabled);
   const theme             = useAppSelector((s) => s.app.theme);
+  const isDark            = theme === "dark";
   const toast             = useToast();
   const { confirm }       = useConfirm();
   const { playClick }     = useSound();
@@ -115,14 +123,14 @@ export default function Profile() {
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 16;
 
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [helpSupportOpen,   setHelpSupportOpen]   = useState(false);
   const [savingLang,        setSavingLang]        = useState(false);
-  // ✅ Separate loaders — theme and sound don't affect each other
   const [savingTheme,       setSavingTheme]       = useState(false);
   const [savingSound,       setSavingSound]       = useState(false);
   const [avatarLoading,     setAvatarLoading]     = useState(false);
   const [avatarModalOpen,   setAvatarModalOpen]   = useState(false);
+  // ✅ Volunteer registration status
+  const [volunteerReg,      setVolunteerReg]      = useState<any>(null);
 
   const headerOp = useRef(new Animated.Value(0)).current;
   const headerY  = useRef(new Animated.Value(-14)).current;
@@ -134,6 +142,14 @@ export default function Profile() {
   }, []);
 
   useEffect(() => { if (!loading && !user) router.replace("/auth"); }, [user, loading]);
+
+  // ── Load volunteer registration status ────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    apiRequest("/volunteer/my-registration")
+      .then((d) => setVolunteerReg(d.registration))
+      .catch(() => {});
+  }, [user]);
 
   // ── Restore preferences from DB on mount ─────────────────────────────────
   useEffect(() => {
@@ -244,9 +260,8 @@ export default function Profile() {
 
   const displayName = dbUser?.name || user.displayName || t.profile.welcomeBack;
   const accountSections = [
-    { icon: Bell,       title: t.profile.notifications, desc: t.profile.notificationsDesc, action: () => setNotificationsOpen(true), color: "#F59E0B" },
-    { icon: Shield,     title: t.profile.privacy,       desc: t.profile.comingSoon,        action: () => toast.info(t.profile.comingSoon), color: "#10B981" },
-    { icon: HelpCircle, title: t.profile.helpSupport,   desc: t.profile.helpSupportDesc,   action: () => setHelpSupportOpen(true), color: "#3B82F6" },
+    { icon: Shield,     title: t.profile.privacy,     desc: t.profile.comingSoon,      action: () => toast.info(t.profile.comingSoon), color: "#10B981" },
+    { icon: HelpCircle, title: t.profile.helpSupport, desc: t.profile.helpSupportDesc, action: () => setHelpSupportOpen(true),         color: "#3B82F6" },
   ];
 
   return (
@@ -307,7 +322,7 @@ export default function Profile() {
             </View>
           </Animated.View>
 
-          {/* Language — 2-col on wide */}
+          {/* Language */}
           <SectionLabel label={t.profile.chooseLanguage} />
           <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
             {LANGUAGES.map((lang) => {
@@ -316,18 +331,22 @@ export default function Profile() {
                 <Pressable key={lang.code} onPress={() => handleLanguageChange(lang.code)}
                   style={{
                     flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center",
-                    backgroundColor: isActive ? "#8B5CF6" : "transparent",
-                    borderWidth: 1, borderColor: isActive ? "#8B5CF6" : "#E2E8F0",
-                  }}
-                  className={isActive ? "" : "dark:border-[#334155]"}>
+                    backgroundColor: isActive ? "#8B5CF6" : isDark ? "#1E293B" : "#F8FAFC",
+                    borderWidth: 1.5,
+                    borderColor: isActive ? "#8B5CF6" : isDark ? "#334155" : "#E2E8F0",
+                  }}>
                   {savingLang && isActive ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
                     <>
-                      <Text style={{ fontWeight: "700", fontSize: 14, color: isActive ? "white" : "#8B5CF6" }}
-                        className={isActive ? "" : "dark:text-white"}>{lang.native}</Text>
-                      <Text style={{ fontSize: 11, marginTop: 2, color: isActive ? "rgba(255,255,255,0.7)" : "#64748B" }}
-                        className={isActive ? "" : "dark:text-[#94A3B8]"}>{lang.label}</Text>
+                      <Text style={{ fontWeight: "700", fontSize: 14,
+                        color: isActive ? "white" : isDark ? "#F1F5F9" : "#0F172A" }}>
+                        {lang.native}
+                      </Text>
+                      <Text style={{ fontSize: 11, marginTop: 2,
+                        color: isActive ? "rgba(255,255,255,0.7)" : isDark ? "#94A3B8" : "#64748B" }}>
+                        {lang.label}
+                      </Text>
                     </>
                   )}
                 </Pressable>
@@ -336,13 +355,13 @@ export default function Profile() {
           </View>
 
           {/* Accessibility */}
-          <SectionLabel label="Accessibility" />
+          <SectionLabel label={t.profile.accessibility} />
 
           {/* Dark/Light Mode — own loader, no bleed into sound row */}
           <SectionRow
             icon={theme === "dark" ? Moon : Sun}
-            title={theme === "dark" ? "Dark Mode" : "Light Mode"}
-            desc={theme === "dark" ? "Tap to switch to light theme" : "Tap to switch to dark theme"}
+            title={theme === "dark" ? t.profile.darkMode : t.profile.lightMode}
+            desc={theme === "dark" ? t.profile.tapToLight : t.profile.tapToDark}
             iconColor={theme === "dark" ? "#6366F1" : "#F59E0B"}
             delay={0}
             right={
@@ -357,8 +376,8 @@ export default function Profile() {
           {/* Click Sound — own loader, no bleed into theme row */}
           <SectionRow
             icon={soundEnabled ? Volume2 : VolumeX}
-            title="Click Sound"
-            desc={soundEnabled ? "Tap sounds are enabled" : "Tap sounds are disabled"}
+            title={t.profile.clickSound}
+            desc={soundEnabled ? t.profile.soundOn : t.profile.soundOff}
             iconColor={soundEnabled ? "#8B5CF6" : "#94A3B8"}
             delay={60}
             right={
@@ -371,7 +390,41 @@ export default function Profile() {
           />
 
           {/* Account */}
-          <SectionLabel label="Account" />
+          <SectionLabel label={t.profile.account} />
+
+          {/* ✅ Volunteer status badge */}
+          {volunteerReg && (
+            <View className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]"
+              style={{ borderRadius: 16, padding: 14, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: "#10B981",
+                shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: "#10B98118",
+                  borderWidth: 1, borderColor: "#10B98130", alignItems: "center", justifyContent: "center" }}>
+                  <Users size={18} color="#10B981" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text className="text-[#0F172A] dark:text-white font-bold text-sm">{t.volunteer.becomeVolunteer}</Text>
+                    <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 99, backgroundColor: "#D1FAE5" }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#065F46" }}>● {t.volunteer.available}</Text>
+                    </View>
+                  </View>
+                  <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs" style={{ marginTop: 2 }}>
+                    {volunteerReg.speciality && SPECIALITY_LABELS[volunteerReg.speciality]} · {volunteerReg.location || t.profile.noLocationSet}
+                  </Text>
+                </View>
+              </View>
+              {volunteerReg.helpedCount > 0 && (
+                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#E2E8F0" }}
+                  className="dark:border-[#334155]">
+                  <Text style={{ color: "#10B981", fontWeight: "700", fontSize: 13 }}>
+                    🌟 {volunteerReg.helpedCount} {t.profile.peopleHelped}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
           <SectionRow icon={User} title={t.profile.personalInfo} desc={t.profile.personalInfoDesc}
             onPress={() => router.push("/profile/personal-info")} iconColor="#8B5CF6" delay={120} />
           {accountSections.map((s, i) => (
@@ -397,7 +450,6 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      <NotificationsDialog open={notificationsOpen} onOpenChange={setNotificationsOpen} userId={user.uid} />
       <HelpSupportDialog open={helpSupportOpen} onOpenChange={setHelpSupportOpen} />
       <ProfileChatbot />
 

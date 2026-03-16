@@ -1,11 +1,8 @@
 // translations/index.ts
-// NEW KEYS ADDED (search "// NEW"):
-//   health.footerTitle, health.footerText, health.multilingualTitle, health.multilingualText
-//   health.heroSubtitle
-//   gAssist.footerTitle, gAssist.footerText, gAssist.heroSubtitle
-//   dangerAlerts.* (full section)
-//   stepGuides.* (full section)
-//   volunteer.* (full section)
+// UPDATED: Added new profile keys in this version:
+//   profile.darkMode, lightMode, tapToLight, tapToDark
+//   profile.clickSound, soundOn, soundOff
+//   profile.account, noLocationSet, peopleHelped
 
 export type Language = "en" | "hi" | "te";
 
@@ -166,6 +163,17 @@ export const t = {
       deletePhotoConfirm: "Remove your profile photo?",
       photoPermissionDenied: "Permission to access photos is required",
       photoDeleted: "Photo removed successfully",
+      // ── Accessibility & Account section labels ────────────────────────────
+      darkMode: "Dark Mode",
+      lightMode: "Light Mode",
+      tapToLight: "Tap to switch to light theme",
+      tapToDark: "Tap to switch to dark theme",
+      clickSound: "Click Sound",
+      soundOn: "Tap sounds are enabled",
+      soundOff: "Tap sounds are disabled",
+      account: "Account",
+      noLocationSet: "No location set",
+      peopleHelped: "people helped",
     },
     auth: {
       subtitle: "Your AI co-pilot for government access & health literacy",
@@ -189,12 +197,11 @@ export const t = {
     },
     health: {
       title: "Health Services",
-      // NEW
       heroSubtitle:
         "Verify medicines, read prescriptions, and find nearby clinics",
       footerTitle: "Why Health Literacy Matters",
       footerText:
-        "Understanding your medications and health information is crucial for your wellbeing. JanSathi helps you verify medicine authenticity, understand doctor's prescriptions, and make informed health decisions. Our tools are designed to be accessible to everyone, regardless of literacy level or language.",
+        "Understanding your medications and health information is crucial for your wellbeing. JanSathi helps you verify medicine authenticity, understand doctor's prescriptions, and make informed health decisions.",
       multilingualTitle: "Multilingual Support",
       multilingualText:
         "Available in Hindi, English, Tamil, Telugu, Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and more Indian languages.",
@@ -211,12 +218,11 @@ export const t = {
     },
     gAssist: {
       title: "Government Assist",
-      // NEW
       heroSubtitle:
         "AI-powered tools to navigate government services, fill forms, and discover benefits",
       footerTitle: "Making Government Services Accessible",
       footerText:
-        "Navigating government services can be complex. JanSathi simplifies the process with AI-powered tools that understand your needs, speak your language, and guide you through every step. From form filling to scheme discovery, we're here to ensure you get the support you deserve.",
+        "Navigating government services can be complex. JanSathi simplifies the process with AI-powered tools that understand your needs, speak your language, and guide you through every step.",
       photoForm: "Photo-to-Form AI",
       photoFormDesc: "Upload documents and auto-fill forms",
       voiceChat: "Voice Chatbot",
@@ -228,7 +234,6 @@ export const t = {
       volunteer: "Volunteer Network",
       volunteerDesc: "Get help from NGOs and volunteers",
     },
-    // NEW — Danger Alerts screen
     dangerAlerts: {
       title: "Danger Alerts",
       subtitle: "Drug interactions & safety warnings",
@@ -258,7 +263,6 @@ export const t = {
       lowRisk: "Low Risk",
       noRisk: "No Significant Interactions Found",
     },
-    // NEW — Step Guides screen
     stepGuides: {
       title: "Step-by-Step Guides",
       subtitle: "Visual guides for government procedures",
@@ -277,7 +281,6 @@ export const t = {
       helpline: "Helpline",
       noGuides: "No guides found for",
     },
-    // NEW — Volunteer Network screen
     volunteer: {
       title: "Volunteer Network",
       subtitle: "Connect with verified NGOs & volunteers",
@@ -289,7 +292,6 @@ export const t = {
       available: "Available",
       busy: "Busy",
       helped: "helped",
-      // Request form
       requestTitle: "Request Volunteer Help",
       requestDesc:
         "Fill in your details and a verified volunteer will reach out to you.",
@@ -309,7 +311,6 @@ export const t = {
       requestSubmittedDesc:
         "A volunteer matching your needs will contact you within 24–48 hours on your provided phone number.",
       submitAnother: "Submit Another",
-      // Register form
       becomeVolunteer: "Become a Volunteer",
       becomeVolunteerDesc:
         "Join our verified network of volunteers and help rural communities access government services and healthcare.",
@@ -322,16 +323,14 @@ export const t = {
         "Your background, experience, and how you can help...",
       idProof: "ID Proof Number (Aadhaar / PAN)",
       verificationNote:
-        "Your application will be verified by our team within 3–5 working days. ID verification is required for the safety of beneficiaries.",
+        "Your application will be verified by our team within 3–5 working days.",
       submitApplication: "Submit Application",
       applicationReceived: "Application Received!",
       applicationReceivedDesc:
         "Our team will verify your details and contact you within 3–5 working days. Thank you for volunteering!",
       applyAgain: "Apply Again",
-      // Save to DB errors
       saveFailed: "Failed to submit. Please try again.",
       loadFailed: "Failed to load volunteers.",
-      // Speciality labels
       legalAid: "Legal Aid",
       healthcare: "Healthcare",
       education: "Education",
@@ -711,6 +710,17 @@ export const t = {
       deletePhotoConfirm: "अपनी प्रोफ़ाइल फ़ोटो हटाएं?",
       photoPermissionDenied: "फ़ोटो एक्सेस करने की अनुमति आवश्यक है",
       photoDeleted: "फ़ोटो सफलतापूर्वक हटाई गई",
+      // ── NEW ──────────────────────────────────────────────────────────────
+      darkMode: "डार्क मोड",
+      lightMode: "लाइट मोड",
+      tapToLight: "लाइट थीम पर स्विच करें",
+      tapToDark: "डार्क थीम पर स्विच करें",
+      clickSound: "क्लिक ध्वनि",
+      soundOn: "टैप ध्वनि सक्षम है",
+      soundOff: "टैप ध्वनि अक्षम है",
+      account: "खाता",
+      noLocationSet: "कोई स्थान नहीं",
+      peopleHelped: "लोगों की मदद की",
     },
     auth: {
       subtitle: "सरकारी सेवाओं और स्वास्थ्य के लिए आपका AI सहायक",
@@ -759,7 +769,7 @@ export const t = {
         "सरकारी सेवाओं में नेविगेट करने, फॉर्म भरने और लाभ खोजने के लिए AI उपकरण",
       footerTitle: "सरकारी सेवाओं को सुलभ बनाना",
       footerText:
-        "सरकारी सेवाओं में नेविगेट करना जटिल हो सकता है। जनसाथी AI-संचालित उपकरणों से इस प्रक्रिया को सरल बनाता है जो आपकी जरूरतें समझते हैं, आपकी भाषा बोलते हैं।",
+        "सरकारी सेवाओं में नेविगेट करना जटिल हो सकता है। जनसाथी AI-संचालित उपकरणों से इस प्रक्रिया को सरल बनाता है।",
       photoForm: "फोटो से फॉर्म AI",
       photoFormDesc: "दस्तावेज़ अपलोड करें और फॉर्म अपने आप भरें",
       voiceChat: "आवाज़ चैटबॉट",
@@ -863,7 +873,7 @@ export const t = {
       submitApplication: "आवेदन जमा करें",
       applicationReceived: "आवेदन प्राप्त हुआ!",
       applicationReceivedDesc:
-        "हमारी टीम 3-5 कार्य दिवसों में आपसे संपर्क करेगी। स्वयंसेवा के लिए धन्यवाद!",
+        "हमारी टीम 3-5 कार्य दिवसों में आपसे संपर्क करेगी।",
       applyAgain: "फिर आवेदन करें",
       saveFailed: "जमा करने में विफल। कृपया पुनः प्रयास करें।",
       loadFailed: "स्वयंसेवक लोड करने में विफल।",
@@ -890,7 +900,7 @@ export const t = {
       generateForm: "भरा हुआ फॉर्म बनाएं",
       uploadDifferent: "← अलग फॉर्म अपलोड करें",
       formFilled: "फॉर्म भर गया!",
-      formFilledDesc: "आपका फॉर्म सफलतापूर्वक भर गया। नीचे PDF डाउनलोड करें।",
+      formFilledDesc: "आपका फॉर्म सफलतापूर्वक भर गया।",
       download: "भरा हुआ PDF डाउनलोड करें",
       fillAnother: "दूसरा फॉर्म भरें",
       requiredFields: "आवश्यक फील्ड",
@@ -917,7 +927,7 @@ export const t = {
         "जनसाथी स्वास्थ्य और सरकारी सेवाओं तक पहुंच में बाधाओं को दूर करने के लिए समर्पित है।",
       healthLiteracy: "स्वास्थ्य साक्षरता",
       healthLiteracyDesc:
-        "हम दवाइयां सत्यापित करने, पर्चियां समझने और स्थानीय भाषाओं में स्वास्थ्य जानकारी प्रदान करने में मदद करते हैं।",
+        "हम दवाइयां सत्यापित करने और स्थानीय भाषाओं में स्वास्थ्य जानकारी प्रदान करने में मदद करते हैं।",
       govAccess: "सरकारी पहुंच",
       govAccessDesc:
         "हमारा AI फॉर्म भरने से लेकर योजनाएं खोजने तक सरकारी सेवाओं को सरल बनाता है।",
@@ -1242,6 +1252,17 @@ export const t = {
       deletePhotoConfirm: "మీ ప్రొఫైల్ ఫోటో తొలగించాలా?",
       photoPermissionDenied: "ఫోటోలు యాక్సెస్ చేయడానికి అనుమతి అవసరం",
       photoDeleted: "ఫోటో విజయవంతంగా తొలగించబడింది",
+      // ── NEW ──────────────────────────────────────────────────────────────
+      darkMode: "డార్క్ మోడ్",
+      lightMode: "లైట్ మోడ్",
+      tapToLight: "లైట్ థీమ్‌కి మారండి",
+      tapToDark: "డార్క్ థీమ్‌కి మారండి",
+      clickSound: "క్లిక్ సౌండ్",
+      soundOn: "ట్యాప్ సౌండ్లు ఆన్ ఉన్నాయి",
+      soundOff: "ట్యాప్ సౌండ్లు ఆఫ్ ఉన్నాయి",
+      account: "ఖాతా",
+      noLocationSet: "స్థానం సెట్ చేయబడలేదు",
+      peopleHelped: "మందికి సహాయపడ్డారు",
     },
     auth: {
       subtitle: "ప్రభుత్వ సేవలు మరియు ఆరోగ్యం కోసం మీ AI సహాయకుడు",
@@ -1391,8 +1412,7 @@ export const t = {
       verificationNote: "మా బృందం 3-5 పని దినాలలో మీ వివరాలను ధృవీకరిస్తుంది.",
       submitApplication: "దరఖాస్తు సమర్పించండి",
       applicationReceived: "దరఖాస్తు స్వీకరించబడింది!",
-      applicationReceivedDesc:
-        "మా బృందం 3-5 పని దినాలలో మీతో సంప్రదిస్తుంది. స్వచ్ఛందంగా పాల్గొన్నందుకు ధన్యవాదాలు!",
+      applicationReceivedDesc: "మా బృందం 3-5 పని దినాలలో మీతో సంప్రదిస్తుంది.",
       applyAgain: "మళ్ళీ దరఖాస్తు చేయండి",
       saveFailed: "సమర్పించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి.",
       loadFailed: "వాలంటీర్లను లోడ్ చేయడం విఫలమైంది.",

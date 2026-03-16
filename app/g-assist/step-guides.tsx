@@ -14,6 +14,7 @@ import { AnimatedPressable } from "@/components/AnimatedPressable";
 import { HeroSection } from "@/components/HeroSection";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useRouter } from "expo-router";
+import { apiRequest } from "@/integrations/api/client";
 
 type Tab      = "guides" | "ai";
 type Category = "identity" | "health" | "education" | "property" | "business" | "welfare";
@@ -148,6 +149,7 @@ const useFadeSlideIn = (delay = 0) => {
 };
 
 const GuideCard = memo(({ guide, index, onOpen }: { guide: Guide; index: number; onOpen: () => void }) => {
+  const { t } = useTranslation();
   const anim     = useFadeSlideIn(index * 70);
   const scale    = useRef(new Animated.Value(1)).current;
   const cfg      = CATEGORY_CONFIG[guide.category];
@@ -178,7 +180,7 @@ const GuideCard = memo(({ guide, index, onOpen }: { guide: Guide; index: number;
               <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, backgroundColor: DIFF_COLOR[guide.difficulty] + "20" }}>
                 <Text style={{ color: DIFF_COLOR[guide.difficulty], fontSize: 10, fontWeight: "700" }}>{guide.difficulty}</Text>
               </View>
-              <Text style={{ color: "#94A3B8", fontSize: 11 }}>{guide.steps.length} steps</Text>
+              <Text style={{ color: "#94A3B8", fontSize: 11 }}>{guide.steps.length} {t.stepGuides?.steps ?? "steps"}</Text>
             </View>
           </View>
           <ChevronRight size={16} color="#94A3B8" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -230,6 +232,7 @@ const StepRow = memo(({ step, done, color, onToggle }: { step: Step; done: boole
 });
 
 const GuideDetail = memo(({ guide, onClose }: { guide: Guide; onClose: () => void }) => {
+  const { t } = useTranslation();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const cfg      = CATEGORY_CONFIG[guide.category];
   const IconComp = cfg.icon;
@@ -242,7 +245,7 @@ const GuideDetail = memo(({ guide, onClose }: { guide: Guide; onClose: () => voi
       <AnimatedPressable onPress={onClose} soundType="soft"
         style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 20 }}>
         <ArrowLeft size={16} color="#8B5CF6" />
-        <Text style={{ color: "#8B5CF6", fontWeight: "600", fontSize: 14 }}>Back to Guides</Text>
+        <Text style={{ color: "#8B5CF6", fontWeight: "600", fontSize: 14 }}>{t.stepGuides ? `← ${t.stepGuides.tabGuides}` : "Back to Guides"}</Text>
       </AnimatedPressable>
       <View style={{ borderRadius: 20, padding: 20, marginBottom: 16, backgroundColor: cfg.color, overflow: "hidden",
         shadowColor: cfg.color, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 6 }}>
@@ -264,13 +267,13 @@ const GuideDetail = memo(({ guide, onClose }: { guide: Guide; onClose: () => voi
           <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.25)" }}>
             <Text style={{ color: "white", fontSize: 11, fontWeight: "700" }}>{guide.difficulty}</Text>
           </View>
-          <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>{completedSteps.length}/{guide.steps.length} done</Text>
+          <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>{completedSteps.length}/{guide.steps.length} {t.common?.found ?? "done"}</Text>
         </View>
       </View>
       <View style={{ borderRadius: 16, padding: 16, marginBottom: 16, backgroundColor: "#FFF7ED", borderWidth: 1, borderColor: "#FED7AA" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <AlertCircle size={15} color="#F59E0B" />
-          <Text style={{ color: "#92400E", fontWeight: "700", fontSize: 13 }}>What You Need</Text>
+          <Text style={{ color: "#92400E", fontWeight: "700", fontSize: 13 }}>{t.stepGuides?.whatYouNeed ?? "What You Need"}</Text>
         </View>
         {guide.requirements.map((r, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
@@ -279,15 +282,15 @@ const GuideDetail = memo(({ guide, onClose }: { guide: Guide; onClose: () => voi
           </View>
         ))}
       </View>
-      <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1.2, color: "#8B5CF6", marginBottom: 12, marginLeft: 4 }}>STEPS</Text>
+      <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1.2, color: "#8B5CF6", marginBottom: 12, marginLeft: 4 }}>{t.stepGuides?.steps?.toUpperCase() ?? "STEPS"}</Text>
       {guide.steps.map((step) => (
         <StepRow key={step.number} step={step} done={completedSteps.includes(step.number)} color={cfg.color} onToggle={toggleStep} />
       ))}
       {completedSteps.length === guide.steps.length && (
         <View style={{ marginTop: 8, padding: 20, borderRadius: 16, backgroundColor: "#F0FDF4", borderWidth: 1, borderColor: "#BBF7D0", alignItems: "center" }}>
           <Text style={{ fontSize: 28, marginBottom: 8 }}>🎉</Text>
-          <Text style={{ color: "#065F46", fontWeight: "800", fontSize: 16, marginBottom: 4 }}>All Steps Completed!</Text>
-          <Text style={{ color: "#374151", fontSize: 13, textAlign: "center" }}>You've completed all steps for {guide.title}.</Text>
+          <Text style={{ color: "#065F46", fontWeight: "800", fontSize: 16, marginBottom: 4 }}>{t.stepGuides?.allDone ?? "All Steps Completed!"}</Text>
+          <Text style={{ color: "#374151", fontSize: 13, textAlign: "center" }}>{t.stepGuides?.allDoneDesc ?? "You've completed all steps"} {guide.title}.</Text>
         </View>
       )}
     </Animated.View>
@@ -301,33 +304,32 @@ const SUGGESTIONS = [
 ];
 
 const AIGuideGenerator = memo(() => {
+  const { t } = useTranslation();
   const [query,          setQuery]          = useState("");
   const [loading,        setLoading]        = useState(false);
   const [result,         setResult]         = useState<any>(null);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const anim = useFadeSlideIn(0);
 
+  const [error, setError] = useState<string | null>(null);
+
   const generate = useCallback(async (q: string) => {
     const question = q || query;
     if (!question.trim()) return;
-    setLoading(true); setResult(null); setCompletedSteps([]);
+    setLoading(true); setResult(null); setCompletedSteps([]); setError(null);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 1000,
-          system: `You are a government services guide assistant for rural India. Generate clear, simple step-by-step guides.
-Respond ONLY with valid JSON in this exact shape:
-{"title":"procedure name","description":"1 sentence description","totalTime":"estimated time","difficulty":"Easy"|"Medium"|"Hard","requirements":["item1"],"steps":[{"number":1,"title":"step title","description":"what to do","tip":"optional tip","duration":"time estimate"}],"helpline":"helpline number if any","website":"official URL if any"}
-Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
-          messages: [{ role: "user", content: question }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
-      setResult(JSON.parse(text.replace(/```json|```/g, "").trim()));
-    } catch { setResult(null); }
-    finally { setLoading(false); }
+      // ✅ Calls your backend — Gemini primary, Groq fallback, no API key in client
+      const data = await apiRequest("/guide/generate", "POST", { query: question });
+      if (data.success && data.guide) {
+        setResult(data.guide);
+      } else {
+        setError(data.message || (t.stepGuides ? `${t.common.error}. ${t.common.retry}.` : "Failed to generate guide. Please try again."));
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to generate guide. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }, [query]);
 
   const toggleStep = useCallback((n: number) =>
@@ -340,14 +342,14 @@ Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
         style={{ borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <Sparkles size={16} color="#8B5CF6" />
-          <Text className="text-[#0F172A] dark:text-white font-semibold text-sm">Ask about any government procedure</Text>
+          <Text className="text-[#0F172A] dark:text-white font-semibold text-sm">{t.stepGuides?.tabAskAI ?? "Ask about any government procedure"}</Text>
         </View>
         <Text className="text-[#64748B] dark:text-[#94A3B8] text-xs" style={S.mb12}>
-          Type a procedure name and AI will generate step-by-step instructions
+          {t.stepGuides?.askDesc ?? "Type a procedure name and AI will generate step-by-step instructions"}
         </Text>
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
           <TextInput value={query} onChangeText={setQuery} onSubmitEditing={() => generate(query)}
-            placeholder="e.g. How to get a birth certificate..." placeholderTextColor="#94A3B8"
+            placeholder={t.stepGuides?.askPlaceholder ?? "e.g. How to get a birth certificate..."} placeholderTextColor="#94A3B8"
             returnKeyType="search"
             className="bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-white text-sm"
             style={{ flex: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11 }} />
@@ -358,7 +360,7 @@ Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
             {loading ? <ActivityIndicator color="white" size="small" /> : <ArrowRight size={18} color={!query.trim() ? "#94A3B8" : "white"} />}
           </AnimatedPressable>
         </View>
-        <Text style={{ color: "#94A3B8", fontSize: 11, marginBottom: 8 }}>Try asking:</Text>
+        <Text style={{ color: "#94A3B8", fontSize: 11, marginBottom: 8 }}>{t.stepGuides?.tryAsking ?? "Try asking:"}</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {SUGGESTIONS.map((s) => (
             <AnimatedPressable key={s} onPress={() => { setQuery(s); generate(s); }} soundType="soft"
@@ -368,6 +370,15 @@ Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
           ))}
         </View>
       </View>
+
+      {/* Error state */}
+      {error && (
+        <View style={{ borderRadius: 14, padding: 14, marginBottom: 16,
+          backgroundColor: "#FEF2F2", borderWidth: 1, borderColor: "#FECACA" }}>
+          <Text style={{ color: "#EF4444", fontSize: 13 }}>{error}</Text>
+        </View>
+      )}
+
       {result && (
         <View>
           <View style={{ borderRadius: 16, padding: 16, marginBottom: 14, backgroundColor: "#8B5CF6", overflow: "hidden",
@@ -388,7 +399,7 @@ Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
             <View style={{ borderRadius: 16, padding: 16, marginBottom: 14, backgroundColor: "#FFF7ED", borderWidth: 1, borderColor: "#FED7AA" }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <AlertCircle size={14} color="#F59E0B" />
-                <Text style={{ color: "#92400E", fontWeight: "700", fontSize: 13 }}>What You Need</Text>
+                <Text style={{ color: "#92400E", fontWeight: "700", fontSize: 13 }}>{t.stepGuides?.whatYouNeed ?? "What You Need"}</Text>
               </View>
               {result.requirements.map((r: string, i: number) => (
                 <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
@@ -403,8 +414,8 @@ Keep language very simple. Max 8 steps. Return ONLY the JSON.`,
           ))}
           {(result.helpline || result.website) && (
             <View style={{ borderRadius: 16, padding: 16, marginTop: 4, backgroundColor: "#EFF6FF", borderWidth: 1, borderColor: "#BFDBFE" }}>
-              <Text style={{ color: "#1E40AF", fontWeight: "700", fontSize: 13, marginBottom: 8 }}>Useful Resources</Text>
-              {result.helpline && <Text style={{ color: "#1D4ED8", fontSize: 13, marginBottom: 4 }}>📞 Helpline: {result.helpline}</Text>}
+              <Text style={{ color: "#1E40AF", fontWeight: "700", fontSize: 13, marginBottom: 8 }}>{t.stepGuides?.usefulResources ?? "Useful Resources"}</Text>
+              {result.helpline && <Text style={{ color: "#1D4ED8", fontSize: 13, marginBottom: 4 }}>📞 {t.stepGuides?.helpline ?? "Helpline"}: {result.helpline}</Text>}
               {result.website && <Text style={{ color: "#1D4ED8", fontSize: 13 }}>🌐 {result.website}</Text>}
             </View>
           )}

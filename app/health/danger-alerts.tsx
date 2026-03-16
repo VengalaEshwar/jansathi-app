@@ -1,17 +1,17 @@
 // app/health/danger-alerts.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, Pressable, Animated,
   TextInput, ActivityIndicator, useWindowDimensions, Platform,
 } from "react-native";
 import {
   AlertTriangle, Zap, History, Search, ChevronDown,
-  ChevronUp, X, ShieldAlert, Info, CheckCircle, ArrowLeft,
+  ChevronUp, X, ShieldAlert, Info, CheckCircle, ArrowLeft, RefreshCw,
 } from "lucide-react-native";
-import { useAppSelector } from "@/store/hooks";
 import { useRouter } from "expo-router";
 import { AnimatedPressable } from "@/components/AnimatedPressable";
 import { useTranslation } from "@/hooks/useTranslation";
+import { apiRequest } from "@/integrations/api/client";
 
 type Severity = "high" | "medium" | "low";
 type Tab      = "static" | "ai" | "history";
@@ -34,7 +34,7 @@ const STATIC_WARNINGS: Warning[] = [
   { id:"10", drugs:["Simvastatin","Amiodarone"],   severity:"high",   title:"Simvastatin + Amiodarone",         description:"Amiodarone inhibits the enzyme that breaks down Simvastatin, causing dangerous muscle damage (rhabdomyolysis).",                        whatToDo:"Dose of Simvastatin must not exceed 20mg if taking Amiodarone. Doctor adjustment required." },
 ];
 
-const SEV: Record<Severity, {
+let SEV: Record<Severity, {
   cardBg:string; cardBorder:string; iconBg:string; iconBorder:string;
   pillBg:string; pillText:string; titleText:string; bodyText:string;
   whatBg:string; whatText:string; statBg:string; statBorder:string;
@@ -100,6 +100,7 @@ const TabBtn = ({ label, icon: Icon, active, onPress }: { label: string; icon: a
 };
 
 const WarningCard = ({ warning, delay = 0 }: { warning: Warning; delay?: number }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const anim  = useFadeIn(delay);
@@ -133,7 +134,7 @@ const WarningCard = ({ warning, delay = 0 }: { warning: Warning; delay?: number 
               <View className={`mt-3 p-3 rounded-xl ${cfg.whatBg}`}>
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <CheckCircle size={13} color={cfg.color} />
-                  <Text className={`font-bold text-xs ${cfg.whatText}`}>What to do</Text>
+                  <Text className={`font-bold text-xs ${cfg.whatText}`}>{t.dangerAlerts.whatToDo}</Text>
                 </View>
                 <Text className={`text-[13px] leading-5 ${cfg.whatText}`}>{warning.whatToDo}</Text>
               </View>
@@ -148,52 +149,62 @@ const WarningCard = ({ warning, delay = 0 }: { warning: Warning; delay?: number 
   );
 };
 
+// ── AI Checker — calls backend /ocr/check-interactions ───────────────────────
 const AIChecker = ({ wide }: { wide: boolean }) => {
+  const { t } = useTranslation();
   const [medicines, setMedicines] = useState<string[]>([]);
-  const [input, setInput]         = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [result, setResult]       = useState<any>(null);
+  const [input,     setInput]     = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [result,    setResult]    = useState<any>(null);
+  const [error,     setError]     = useState<string | null>(null);
 
-  const addMedicine = () => { const t = input.trim(); if (t && !medicines.includes(t)) { setMedicines(p => [...p, t]); setResult(null); } setInput(""); };
-  const removeMedicine = (m: string) => { setMedicines(p => p.filter(x => x !== m)); setResult(null); };
+  const addMedicine = useCallback(() => {
+    const t = input.trim();
+    if (t && !medicines.includes(t)) { setMedicines(p => [...p, t]); setResult(null); setError(null); }
+    setInput("");
+  }, [input, medicines]);
 
-  const checkInteractions = async () => {
+  const removeMedicine = useCallback((m: string) => {
+    setMedicines(p => p.filter(x => x !== m)); setResult(null); setError(null);
+  }, []);
+
+  const checkInteractions = useCallback(async () => {
     if (medicines.length < 2) return;
-    setLoading(true); setResult(null);
+    setLoading(true); setResult(null); setError(null);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 1000,
-          system: `You are a clinical pharmacist assistant for rural India. Analyze drug interactions. Respond ONLY as valid JSON with no markdown:
-{"safe":boolean,"riskLevel":"high"|"medium"|"low"|"none","summary":"plain language 1-2 sentences","interactions":[{"pair":"Drug A + Drug B","risk":"high|medium|low","effect":"what happens","advice":"what to do"}],"generalAdvice":"overall recommendation"}`,
-          messages: [{ role: "user", content: `Check drug interactions: ${medicines.join(", ")}` }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find((b: any) => b.type === "text")?.text ?? "";
-      setResult(JSON.parse(text.replace(/```json|```/g, "").trim()));
-    } catch {
-      setResult({ safe: false, riskLevel: "none", summary: "Unable to check right now. Please try again.", interactions: [], generalAdvice: "Consult your doctor or pharmacist." });
-    } finally { setLoading(false); }
-  };
+      // ✅ Calls YOUR backend — Gemini primary, Groq fallback handled server-side
+      const data = await apiRequest("/ocr/check-interactions", "POST", { medicines });
+      if (data.success) {
+        setResult(data);
+      } else {
+        setError(data.message || "Unable to check interactions. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Unable to check interactions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [medicines]);
 
   const rCfg = result && !result.safe && result.riskLevel !== "none" ? SEV[result.riskLevel as Severity] : null;
 
   return (
-    <View className="gap-4">
+    <View style={{ gap: 16 }}>
       <View className="rounded-2xl bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-5"
         style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
-        <Text className="text-[#0F172A] dark:text-white font-bold text-base mb-1">Enter Medicine Names</Text>
-        <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm mb-4">Add at least 2 medicines to check interactions</Text>
+        <Text className="text-[#0F172A] dark:text-white font-bold text-base mb-1">{t.dangerAlerts.enterMedicines}</Text>
+        <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm mb-4">{t.dangerAlerts.enterMedicinesDesc}</Text>
+
         <View className="flex-row gap-2 mb-4">
           <TextInput value={input} onChangeText={setInput} onSubmitEditing={addMedicine}
-            placeholder="e.g. Aspirin, Metformin..." placeholderTextColor="#94A3B8" returnKeyType="done"
+            placeholder={t.dangerAlerts.medicinePlaceholder} placeholderTextColor="#94A3B8" returnKeyType="done"
             className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-4 py-3 text-[#0F172A] dark:text-white text-sm" />
-          <AnimatedPressable onPress={addMedicine} soundType="soft" className="bg-primary px-5 rounded-xl items-center justify-center">
-            <Text className="text-white font-extrabold text-xl">+</Text>
+          <AnimatedPressable onPress={addMedicine} soundType="soft"
+            style={{ paddingHorizontal: 20, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "#8B5CF6" }}>
+            <Text style={{ color: "white", fontWeight: "800", fontSize: 20 }}>+</Text>
           </AnimatedPressable>
         </View>
+
         {medicines.length > 0 && (
           <View className="flex-row flex-wrap gap-2 mb-4">
             {medicines.map(m => (
@@ -204,24 +215,52 @@ const AIChecker = ({ wide }: { wide: boolean }) => {
             ))}
           </View>
         )}
+
         <AnimatedPressable onPress={checkInteractions} disabled={medicines.length < 2 || loading} soundType="mechanical"
-          className={`rounded-xl py-3.5 flex-row items-center justify-center gap-2 ${medicines.length < 2 ? "bg-[#E2E8F0] dark:bg-[#334155]" : "bg-red-500"}`}>
+          style={{
+            borderRadius: 12, paddingVertical: 14, flexDirection: "row" as const,
+            alignItems: "center" as const, justifyContent: "center" as const, gap: 8,
+            backgroundColor: medicines.length < 2 ? "#E2E8F0" : "#EF4444",
+          }}
+          className={medicines.length < 2 ? "dark:bg-[#334155]" : ""}>
           {loading ? <ActivityIndicator color="white" size="small" /> : <>
             <Zap size={16} color={medicines.length < 2 ? "#94A3B8" : "white"} />
-            <Text className={`font-bold text-sm ${medicines.length < 2 ? "text-[#94A3B8]" : "text-white"}`}>Check Interactions</Text>
+            <Text style={{ fontWeight: "700", fontSize: 14, color: medicines.length < 2 ? "#94A3B8" : "white" }}>
+              {t.dangerAlerts.checkBtn}
+            </Text>
           </>}
         </AnimatedPressable>
+
+        {error && (
+          <View className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800">
+            <Text className="text-red-600 dark:text-red-400 text-sm">{error}</Text>
+          </View>
+        )}
       </View>
+
       {result && (
-        <View className={`rounded-2xl border overflow-hidden ${result.safe || result.riskLevel === "none" ? "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800" : `${rCfg?.cardBg ?? ""} ${rCfg?.cardBorder ?? ""}`}`}>
+        <View className={`rounded-2xl border overflow-hidden ${
+          result.safe || result.riskLevel === "none"
+            ? "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800"
+            : `${rCfg?.cardBg ?? ""} ${rCfg?.cardBorder ?? ""}`
+        }`}>
           <View className="p-5">
             <View className="flex-row items-center gap-2.5 mb-3">
-              {result.safe || result.riskLevel === "none" ? <CheckCircle size={22} color="#10B981" /> : <ShieldAlert size={22} color={rCfg?.color} />}
-              <Text className={`font-bold text-base flex-1 ${result.safe || result.riskLevel === "none" ? "text-green-700 dark:text-green-300" : rCfg?.titleText ?? ""}`}>
-                {result.safe || result.riskLevel === "none" ? "No Significant Interactions Found" : `${rCfg?.label ?? "Risk"} Detected`}
+              {result.safe || result.riskLevel === "none"
+                ? <CheckCircle size={22} color="#10B981" />
+                : <ShieldAlert size={22} color={rCfg?.color} />}
+              <Text className={`font-bold text-base flex-1 ${
+                result.safe || result.riskLevel === "none"
+                  ? "text-green-700 dark:text-green-300"
+                  : rCfg?.titleText ?? ""
+              }`}>
+                {result.safe || result.riskLevel === "none"
+                  ? t.dangerAlerts.noRisk
+                  : `${rCfg?.label ?? t.dangerAlerts.highRisk} Detected`}
               </Text>
             </View>
             <Text className="text-[#374151] dark:text-[#CBD5E1] text-sm leading-5 mb-4">{result.summary}</Text>
+
             {result.interactions?.map((inter: any, i: number) => {
               const ic = SEV[inter.risk as Severity] ?? SEV.medium;
               return (
@@ -237,6 +276,7 @@ const AIChecker = ({ wide }: { wide: boolean }) => {
                 </View>
               );
             })}
+
             <View className="mt-2 p-3.5 rounded-xl bg-white/50 dark:bg-white/5">
               <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm italic">💡 {result.generalAdvice}</Text>
             </View>
@@ -247,44 +287,102 @@ const AIChecker = ({ wide }: { wide: boolean }) => {
   );
 };
 
+// ── History Alerts — loads from backend /ocr/my-medicines ────────────────────
 const HistoryAlerts = () => {
-  const dbUser  = useAppSelector(s => s.auth.dbUser);
-  const history: string[] = dbUser?.prescriptionHistory?.map((p: any) => p.medicines ?? []).flat() ?? [];
-  const triggered = STATIC_WARNINGS.filter(w =>
-    w.drugs.every(d => history.some((h: string) => h.toLowerCase().includes(d.toLowerCase())))
+  const { t } = useTranslation();
+  const [medicines,  setMedicines]  = useState<string[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState<string | null>(null);
+  const [triggered,  setTriggered]  = useState<Warning[]>([]);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      // ✅ Fetches medicine names extracted from medicine scanner + prescription history
+      const data = await apiRequest("/ocr/my-medicines");
+      const names: string[] = data.medicines ?? [];
+      setMedicines(names);
+
+      // Cross-check against static warnings
+      const found = STATIC_WARNINGS.filter(w =>
+        w.drugs.every(d =>
+          names.some(n => n.toLowerCase().includes(d.toLowerCase()) ||
+                          d.toLowerCase().includes(n.toLowerCase()))
+        )
+      );
+      setTriggered(found);
+    } catch (err: any) {
+      setError(err.message || "Failed to load your medicines");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return (
+    <View className="rounded-2xl p-8 items-center bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]">
+      <ActivityIndicator size="large" color="#8B5CF6" />
+      <Text className="text-[#94A3B8] mt-3 text-sm">{t.common.loading}</Text>
+    </View>
   );
-  if (history.length === 0) return (
+
+  if (error) return (
+    <View className="rounded-2xl p-6 items-center bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800">
+      <Text className="text-red-600 dark:text-red-400 text-sm text-center mb-3">{error}</Text>
+      <AnimatedPressable onPress={load} soundType="soft"
+        style={{ flexDirection: "row", alignItems: "center", gap: 6,
+          paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: "#EF4444" }}>
+        <RefreshCw size={14} color="white" />
+        <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>Retry</Text>
+      </AnimatedPressable>
+    </View>
+  );
+
+  if (medicines.length === 0) return (
     <View className="rounded-2xl p-8 items-center bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]"
       style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
       <View className="w-16 h-16 rounded-2xl bg-primary/10 items-center justify-center mb-4">
         <History size={30} color="#8B5CF6" />
       </View>
-      <Text className="text-[#0F172A] dark:text-white font-bold text-lg mb-2">No Scan History</Text>
+      <Text className="text-[#0F172A] dark:text-white font-bold text-lg mb-2">{t.dangerAlerts.noHistory}</Text>
       <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm text-center leading-5" style={{ maxWidth: 300 }}>
-        Scan your prescriptions in Health Services to get personalised danger alerts based on your medicines.
+        {t.dangerAlerts.noHistoryDesc}
       </Text>
     </View>
   );
+
   return (
-    <View className="gap-3">
+    <View style={{ gap: 12 }}>
+      {/* Medicines list from scans */}
       <View className="rounded-2xl p-4 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]">
-        <Text className="text-[#0F172A] dark:text-white font-semibold text-sm mb-2.5">Your Scanned Medicines</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <Text className="text-[#0F172A] dark:text-white font-semibold text-sm">
+            {t.dangerAlerts.scannedMeds} ({medicines.length})
+          </Text>
+          <AnimatedPressable onPress={load} soundType="soft"
+            style={{ padding: 6, borderRadius: 8, backgroundColor: "#8B5CF610" }}>
+            <RefreshCw size={13} color="#8B5CF6" />
+          </AnimatedPressable>
+        </View>
         <View className="flex-row flex-wrap gap-2">
-          {[...new Set(history)].map((m: string, i: number) => (
+          {medicines.map((m, i) => (
             <View key={i} className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25">
               <Text className="text-primary text-sm font-semibold">{m}</Text>
             </View>
           ))}
         </View>
       </View>
+
+      {/* Interaction results */}
       {triggered.length === 0 ? (
         <View className="rounded-2xl p-5 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800">
           <View className="flex-row items-center gap-2.5 mb-2">
             <CheckCircle size={20} color="#10B981" />
-            <Text className="text-green-700 dark:text-green-300 font-bold text-sm">No Known Interactions Detected</Text>
+            <Text className="text-green-700 dark:text-green-300 font-bold text-sm">{t.dangerAlerts.noInteractions}</Text>
           </View>
           <Text className="text-green-800/75 dark:text-green-100/70 text-sm leading-5">
-            No dangerous combinations found. Always consult your doctor before combining medications.
+            No dangerous combinations found among your scanned medicines. Always consult your doctor before combining medications.
           </Text>
         </View>
       ) : (
@@ -293,23 +391,33 @@ const HistoryAlerts = () => {
             <View className="flex-row items-center gap-2">
               <ShieldAlert size={18} color="#EF4444" />
               <Text className="text-red-600 dark:text-red-400 font-bold text-sm">
-                {triggered.length} Interaction{triggered.length > 1 ? "s" : ""} Found in Your History
+                ⚠️ {triggered.length} {triggered.length > 1 ? t.dangerAlerts.interactionsFoundPlural : t.dangerAlerts.interactionsFound}
               </Text>
             </View>
           </View>
-          {triggered.map((w, i) => <View key={w.id} className="mt-0"><WarningCard warning={w} delay={i * 60} /></View>)}
+          {triggered.map((w, i) => (
+            <View key={w.id} style={{ marginTop: 0 }}>
+              <WarningCard warning={w} delay={i * 60} />
+            </View>
+          ))}
         </>
       )}
     </View>
   );
 };
 
+// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function DangerAlerts() {
   const router    = useRouter();
   const { t }     = useTranslation();
   const { width } = useWindowDimensions();
   const isWide    = width >= 700;
   const isLarge   = width >= 1100;
+
+  // Update severity labels with current language on every render
+  SEV.high.label   = t.dangerAlerts.highRisk;
+  SEV.medium.label = t.dangerAlerts.mediumRisk;
+  SEV.low.label    = t.dangerAlerts.lowRisk;
 
   const [tab,    setTab]    = useState<Tab>("static");
   const [search, setSearch] = useState("");
@@ -328,7 +436,6 @@ export default function DangerAlerts() {
   const pairs: Warning[][] = [];
   for (let i = 0; i < sorted.length; i += 2) pairs.push(sorted.slice(i, i + 2));
 
-  // ── Correct width formula ──────────────────────────────────────────────────
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 20;
 
@@ -339,13 +446,11 @@ export default function DangerAlerts() {
       {/* ── FULL WIDTH: back + header ── */}
       <View style={{ paddingHorizontal: sidePad, paddingTop: 20 }}>
         {Platform.OS === "web" && <View style={{ height: 8 }} />}
-
         <AnimatedPressable onPress={() => router.back()} soundType="soft"
           style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 20 }}>
           <ArrowLeft size={18} color="#8B5CF6" />
-          <Text className="text-[#8B5CF6] font-semibold text-sm">{t.medicine.backToHealth}</Text>
+          <Text className="text-[#8B5CF6] font-semibold text-sm">{t.common.back}</Text>
         </AnimatedPressable>
-
         <Animated.View style={headerAnim} className="flex-row items-center gap-4 mb-7">
           <View className="w-14 h-14 rounded-2xl bg-red-500 items-center justify-center"
             style={{ shadowColor: "#EF4444", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 14, elevation: 8 }}>
@@ -353,7 +458,7 @@ export default function DangerAlerts() {
           </View>
           <View>
             <Text className="font-extrabold text-[#0F172A] dark:text-white"
-              style={{ fontSize: isWide ? 28 : 22, letterSpacing: -0.5 }}>Danger Alerts</Text>
+              style={{ fontSize: isWide ? 28 : 22, letterSpacing: -0.5 }}>{t.dangerAlerts.title}</Text>
             <Text className="text-[#64748B] dark:text-[#94A3B8] mt-0.5" style={{ fontSize: isWide ? 15 : 13 }}>
               Drug interactions & safety warnings
             </Text>
@@ -370,24 +475,25 @@ export default function DangerAlerts() {
         <Animated.View style={tabAnim}
           className="flex-row bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-1 mb-6"
           style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
-          <TabBtn label="Warnings" icon={ShieldAlert} active={tab === "static"}  onPress={() => setTab("static")} />
-          <TabBtn label="AI Check" icon={Zap}         active={tab === "ai"}      onPress={() => setTab("ai")} />
-          <TabBtn label="My Meds"  icon={History}     active={tab === "history"} onPress={() => setTab("history")} />
+          <TabBtn label={t.dangerAlerts.tabWarnings} icon={ShieldAlert} active={tab === "static"}  onPress={() => setTab("static")} />
+          <TabBtn label={t.dangerAlerts.tabAiCheck} icon={Zap}         active={tab === "ai"}      onPress={() => setTab("ai")} />
+          <TabBtn label={t.dangerAlerts.tabMyMeds}  icon={History}     active={tab === "history"} onPress={() => setTab("history")} />
         </Animated.View>
 
         {/* Warnings Tab */}
         {tab === "static" && (
           <Animated.View style={bodyAnim}>
             <View className="flex-row items-center gap-2 mb-5 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-4"
-              style={{ paddingVertical: isWide ? 14 : 10, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}>
+              style={{ paddingVertical: isWide ? 14 : 10 }}>
               <Search size={17} color="#94A3B8" />
-              <TextInput value={search} onChangeText={setSearch} placeholder="Search medicines or drug names..."
-                placeholderTextColor="#94A3B8" className="flex-1 text-[#0F172A] dark:text-white" style={{ fontSize: isWide ? 15 : 13 }} />
+              <TextInput value={search} onChangeText={setSearch} placeholder={t.dangerAlerts.searchPlaceholder}
+                placeholderTextColor="#94A3B8" className="flex-1 text-[#0F172A] dark:text-white"
+                style={{ fontSize: isWide ? 15 : 13 }} />
               {search ? <Pressable onPress={() => setSearch("")}><X size={15} color="#94A3B8" /></Pressable> : null}
             </View>
             <View className="flex-row gap-3 mb-6">
               {(["high","medium","low"] as Severity[]).map(s => {
-                const cfg = SEV[s];
+                const cfg   = SEV[s];
                 const count = sorted.filter(w => w.severity === s).length;
                 return (
                   <View key={s} className={`flex-1 rounded-2xl border items-center ${cfg.statBg} ${cfg.statBorder}`}
@@ -427,11 +533,10 @@ export default function DangerAlerts() {
         <View className="mt-6 p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
           <View className="flex-row items-center gap-2 mb-1.5">
             <Info size={15} color="#F59E0B" />
-            <Text className="text-amber-800 dark:text-amber-300 font-bold text-sm">Medical Disclaimer</Text>
+            <Text className="text-amber-800 dark:text-amber-300 font-bold text-sm">{t.dangerAlerts.disclaimer}</Text>
           </View>
           <Text className="text-amber-900/75 dark:text-amber-100/70 leading-5" style={{ fontSize: isWide ? 14 : 12 }}>
-            This information is for awareness only and does not replace professional medical advice.
-            Always consult a licensed doctor or pharmacist before making any changes to your medication.
+            {t.dangerAlerts.disclaimerText}
           </Text>
         </View>
       </View>

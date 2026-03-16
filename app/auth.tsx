@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, memo } from "react";
 import {
   View, Text, TextInput, Pressable, ActivityIndicator,
   Animated, KeyboardAvoidingView, Platform, ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -45,7 +46,7 @@ const useFadeSlideIn = (delay = 0) => {
   return { opacity, transform: [{ translateY }] };
 };
 
-// ── LangPill — extracted so useRef is at component level ──────────────────────
+// ── LangPill ──────────────────────────────────────────────────────────────────
 const LangPill = memo(({ label, active, onPress, isDark }: {
   label: string; active: boolean; onPress: () => void; isDark: boolean;
 }) => {
@@ -66,7 +67,7 @@ const LangPill = memo(({ label, active, onPress, isDark }: {
   );
 });
 
-// ── ThemeToggle — next to language pills ──────────────────────────────────────
+// ── ThemeToggle ───────────────────────────────────────────────────────────────
 const ThemeToggle = memo(({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) => {
   const scale = useRef(new Animated.Value(1)).current;
   return (
@@ -88,7 +89,7 @@ const ThemeToggle = memo(({ isDark, onToggle }: { isDark: boolean; onToggle: () 
   );
 });
 
-// ── ModeTab — extracted so useRef is at component level ───────────────────────
+// ── ModeTab ───────────────────────────────────────────────────────────────────
 const ModeTab = memo(({ label, active, onPress, isDark }: {
   label: string; active: boolean; onPress: () => void; isDark: boolean;
 }) => {
@@ -117,9 +118,7 @@ const AnimInput = ({ icon: Icon, placeholder, value, onChangeText, secureTextEnt
         borderWidth: 1.5,
         borderColor: focused ? "#8B5CF6" : isDark ? "#334155" : "#E2E8F0",
         borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13,
-        backgroundColor: focused
-          ? "#8B5CF615"
-          : isDark ? "#1E293B" : "white",
+        backgroundColor: focused ? "#8B5CF615" : isDark ? "#1E293B" : "white",
       }}>
         <Icon size={18} color={focused ? "#8B5CF6" : isDark ? "#64748B" : "#94A3B8"} />
         <TextInput
@@ -136,7 +135,9 @@ const AnimInput = ({ icon: Icon, placeholder, value, onChangeText, secureTextEnt
         />
         {secureTextEntry && (
           <Pressable onPress={() => setSecure((v: boolean) => !v)} hitSlop={8}>
-            {secure ? <Eye size={16} color={isDark ? "#64748B" : "#94A3B8"} /> : <EyeOff size={16} color={isDark ? "#64748B" : "#94A3B8"} />}
+            {secure
+              ? <Eye    size={16} color={isDark ? "#64748B" : "#94A3B8"} />
+              : <EyeOff size={16} color={isDark ? "#64748B" : "#94A3B8"} />}
           </Pressable>
         )}
       </View>
@@ -161,15 +162,23 @@ const SpringBtn = ({ children, onPress, style }: any) => {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Auth() {
-  const router = useRouter();
-  const { t, language } = useTranslation();
-  const dispatch = useAppDispatch();
-  const toast    = useToast();
-  const { playClick } = useSound();
+  const router            = useRouter();
+  const { t, language }   = useTranslation();
+  const dispatch          = useAppDispatch();
+  const toast             = useToast();
+  const { playClick }     = useSound();
+  const { width }         = useWindowDimensions();
 
-  // Read theme from Redux (same as rest of app)
+  // ── Width / container formula (same as all other screens) ─────────────────
+  const isWide         = width >= 700;
+  const isLarge        = width >= 1100;
+  const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
+  const sidePad        = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 24;
+  // Auth form itself should be max 480px wide (looks better than full 860/1100)
+  const formMaxWidth   = isWide ? 480 : undefined;
+
   const colorScheme = useAppSelector((s: any) => s.app?.theme ?? "dark");
-  const isDark = colorScheme === "dark";
+  const isDark      = colorScheme === "dark";
 
   const [mode,          setMode]          = useState<"signin" | "signup">("signin");
   const [loading,       setLoading]       = useState(false);
@@ -234,14 +243,17 @@ export default function Auth() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: bg }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
-        showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
 
-        {/* ── Top-right: Language pills + Theme toggle ── */}
+        {/* ── Language pills + Theme toggle — pinned top-right, respects sidePad ── */}
         <View style={{
-          position: "absolute", top: 52, right: 16,
+          position: "absolute", top: 52, right: sidePad,
           flexDirection: "row", alignItems: "center", gap: 6, zIndex: 10,
         }}>
           {LANGUAGES.map((lang) => (
@@ -253,90 +265,133 @@ export default function Auth() {
               onPress={() => { playClick("soft"); dispatch(setAppLanguage(lang.code)); }}
             />
           ))}
-          {/* Thin divider */}
           <View style={{ width: 1, height: 20, backgroundColor: border }} />
-          {/* Theme toggle — right beside language pills */}
           <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
         </View>
 
-        {/* ── Logo ── */}
-        <Animated.View style={[logoAnim, { alignItems: "center", marginBottom: 28 }]}>
-          <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: "#8B5CF6",
-            alignItems: "center", justifyContent: "center", marginBottom: 14,
-            shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 }}>
-            <Sparkles size={32} color="white" />
-          </View>
-          <Text style={{ fontSize: 26, fontWeight: "800", color: textPri, letterSpacing: -0.5 }}>JanSathi</Text>
-          <Text style={{ color: textMuted, fontSize: 13, marginTop: 4, textAlign: "center", maxWidth: 260 }}>{t.auth.subtitle}</Text>
-        </Animated.View>
+        {/* ── Centered content column ── */}
+        <View style={{
+          paddingHorizontal: sidePad,
+          paddingTop: isWide ? 80 : 100,
+          // On wide screens, center content using the same container logic
+          ...(containerWidth
+            ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" }
+            : {}),
+        }}>
 
-        {/* ── Tab toggle ── */}
-        <Animated.View style={[tabAnim, {
-          flexDirection: "row", backgroundColor: cardBg, borderRadius: 16, padding: 4,
-          marginBottom: 20, borderWidth: 1, borderColor: border,
-          shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDark ? 0.3 : 0.05, shadowRadius: 8, elevation: 2,
-        }]}>
-          {(["signin", "signup"] as const).map((m) => (
-            <ModeTab
-              key={m}
-              label={m === "signin" ? t.auth.signIn : t.auth.signUp}
-              active={mode === m}
-              isDark={isDark}
-              onPress={() => { playClick("soft"); setMode(m); }}
-            />
-          ))}
-        </Animated.View>
+          {/* ── On wide screens, card-style wrapper ── */}
+          <View style={isWide ? {
+            alignSelf: "center" as const,
+            width: formMaxWidth,
+            backgroundColor: isDark ? "#1E293B" : "white",
+            borderRadius: 28,
+            padding: 36,
+            borderWidth: 1,
+            borderColor: border,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.4 : 0.08,
+            shadowRadius: 24,
+            elevation: 8,
+          } : {}}>
 
-        {/* ── Form ── */}
-        {mode === "signup" && (
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <AnimInput icon={User} placeholder={t.auth.firstName} value={firstName} onChangeText={setFirstName} autoCapitalize="words" delay={200} isDark={isDark} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <AnimInput icon={User} placeholder={t.auth.lastName}  value={lastName}  onChangeText={setLastName}  autoCapitalize="words" delay={240} isDark={isDark} />
-            </View>
-          </View>
-        )}
-        <AnimInput icon={Mail} placeholder={t.auth.email}    value={email}    onChangeText={setEmail}    keyboardType="email-address" delay={280} isDark={isDark} />
-        <AnimInput icon={Lock} placeholder={t.auth.password} value={password} onChangeText={setPassword} secureTextEntry delay={320} isDark={isDark} />
+            {/* ── Logo ── */}
+            <Animated.View style={[logoAnim, { alignItems: "center", marginBottom: 28 }]}>
+              <View style={{
+                width: 72, height: 72, borderRadius: 22, backgroundColor: "#8B5CF6",
+                alignItems: "center", justifyContent: "center", marginBottom: 14,
+                shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
+              }}>
+                <Sparkles size={32} color="white" />
+              </View>
+              <Text style={{ fontSize: 26, fontWeight: "800", color: textPri, letterSpacing: -0.5 }}>JanSathi</Text>
+              <Text style={{ color: textMuted, fontSize: 13, marginTop: 4, textAlign: "center", maxWidth: 260 }}>
+                {t.auth.subtitle}
+              </Text>
+            </Animated.View>
 
-        {/* ── Submit + Google ── */}
-        <Animated.View style={bottomAnim}>
-          <SpringBtn onPress={handleSubmit}
-            style={{ backgroundColor: "#8B5CF6", borderRadius: 14, paddingVertical: 14,
-              alignItems: "center", marginTop: 4, marginBottom: 16,
-              shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.38, shadowRadius: 12, elevation: 6,
-              opacity: loading ? 0.8 : 1 }}>
-            {loading
-              ? <ActivityIndicator color="white" />
-              : <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-                  {mode === "signin" ? t.auth.signIn : t.auth.createAccount}
-                </Text>}
-          </SpringBtn>
-
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: divider }} />
-            <Text style={{ color: textMuted, fontSize: 12, marginHorizontal: 12 }}>{t.auth.orContinueWith}</Text>
-            <View style={{ flex: 1, height: 1, backgroundColor: divider }} />
-          </View>
-
-          <SpringBtn onPress={handleGoogleSignIn}
-            style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-              borderWidth: 1.5, borderColor: border, borderRadius: 14, paddingVertical: 13,
-              backgroundColor: cardBg,
+            {/* ── Sign In / Sign Up tabs ── */}
+            <Animated.View style={[tabAnim, {
+              flexDirection: "row",
+              backgroundColor: isWide ? (isDark ? "#0F172A" : "#F8FAFC") : cardBg,
+              borderRadius: 16, padding: 4, marginBottom: 20,
+              borderWidth: 1, borderColor: border,
               shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.3 : 0.06, shadowRadius: 8, elevation: 2,
-              opacity: googleLoading ? 0.75 : 1 }}>
-            {googleLoading
-              ? <ActivityIndicator color="#8B5CF6" />
-              : <>
-                  <Text style={{ fontSize: 18, fontWeight: "900", color: "#4285F4" }}>G</Text>
-                  <Text style={{ color: textPri, fontWeight: "600", fontSize: 14 }}>{t.auth.continueWithGoogle}</Text>
-                </>}
-          </SpringBtn>
-        </Animated.View>
+              shadowOpacity: isDark ? 0.3 : 0.05, shadowRadius: 8, elevation: 2,
+            }]}>
+              {(["signin", "signup"] as const).map((m) => (
+                <ModeTab
+                  key={m}
+                  label={m === "signin" ? t.auth.signIn : t.auth.signUp}
+                  active={mode === m}
+                  isDark={isDark}
+                  onPress={() => { playClick("soft"); setMode(m); }}
+                />
+              ))}
+            </Animated.View>
+
+            {/* ── Form fields ── */}
+            {mode === "signup" && (
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <AnimInput icon={User} placeholder={t.auth.firstName} value={firstName} onChangeText={setFirstName}
+                    autoCapitalize="words" delay={200} isDark={isDark} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AnimInput icon={User} placeholder={t.auth.lastName}  value={lastName}  onChangeText={setLastName}
+                    autoCapitalize="words" delay={240} isDark={isDark} />
+                </View>
+              </View>
+            )}
+            <AnimInput icon={Mail} placeholder={t.auth.email}    value={email}    onChangeText={setEmail}
+              keyboardType="email-address" delay={280} isDark={isDark} />
+            <AnimInput icon={Lock} placeholder={t.auth.password} value={password} onChangeText={setPassword}
+              secureTextEntry delay={320} isDark={isDark} />
+
+            {/* ── Submit + Google ── */}
+            <Animated.View style={bottomAnim}>
+              <SpringBtn onPress={handleSubmit}
+                style={{
+                  backgroundColor: "#8B5CF6", borderRadius: 14, paddingVertical: 14,
+                  alignItems: "center", marginTop: 4, marginBottom: 16,
+                  shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.38, shadowRadius: 12, elevation: 6,
+                  opacity: loading ? 0.8 : 1,
+                }}>
+                {loading
+                  ? <ActivityIndicator color="white" />
+                  : <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                      {mode === "signin" ? t.auth.signIn : t.auth.createAccount}
+                    </Text>}
+              </SpringBtn>
+
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: divider }} />
+                <Text style={{ color: textMuted, fontSize: 12, marginHorizontal: 12 }}>{t.auth.orContinueWith}</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: divider }} />
+              </View>
+
+              <SpringBtn onPress={handleGoogleSignIn}
+                style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+                  borderWidth: 1.5, borderColor: border, borderRadius: 14, paddingVertical: 13,
+                  backgroundColor: isWide ? (isDark ? "#0F172A" : "#F8FAFC") : cardBg,
+                  shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.3 : 0.06, shadowRadius: 8, elevation: 2,
+                  opacity: googleLoading ? 0.75 : 1,
+                }}>
+                {googleLoading
+                  ? <ActivityIndicator color="#8B5CF6" />
+                  : <>
+                      <Text style={{ fontSize: 18, fontWeight: "900", color: "#4285F4" }}>G</Text>
+                      <Text style={{ color: textPri, fontWeight: "600", fontSize: 14 }}>{t.auth.continueWithGoogle}</Text>
+                    </>}
+              </SpringBtn>
+            </Animated.View>
+
+          </View>{/* end card wrapper */}
+        </View>{/* end centered column */}
       </ScrollView>
     </KeyboardAvoidingView>
   );

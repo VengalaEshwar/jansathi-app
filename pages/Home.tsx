@@ -5,9 +5,11 @@ import {
   useWindowDimensions, Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Heart, Sparkles, User, Info, ArrowRight } from "lucide-react-native";
+import { Heart, Sparkles, User, Info, ArrowRight, LogIn } from "lucide-react-native";
 import { Card } from "@/components/Card";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppSelector } from "@/store/hooks";
 import { AnimatedPressable } from "@/components/AnimatedPressable";
 import { HeroSlideshow } from "@/components/HeroSlideshow";
 import * as Notifications from "expo-notifications";
@@ -32,7 +34,7 @@ const TestNotificationButton = () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== "granted") { toast.error("Enable notifications in your phone settings."); return; }
     await Notifications.scheduleNotificationAsync({
-      content: { title: "💊 Medicine Reminder", body: "Time to take Paracetamol - 500mg", data: { test: true } },
+      content: { title: "Medicine Reminder", body: "Time to take Paracetamol - 500mg", data: { test: true } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10 },
     });
     toast.success("Notification in 10s — background the app now!");
@@ -40,26 +42,32 @@ const TestNotificationButton = () => {
   return (
     <Animated.View style={anim}>
       <AnimatedPressable onPress={handleTest} soundType="mechanical" className="mb-4 rounded-2xl bg-primary items-center py-4">
-        <Text className="text-white font-bold text-base">🔔 Test Notification (10s)</Text>
+        <Text className="text-white font-bold text-base">Test Notification (10s)</Text>
       </AnimatedPressable>
     </Animated.View>
   );
 };
 
 const Home = () => {
-  const router    = useRouter();
-  const { t }     = useTranslation();
-  const { width } = useWindowDimensions();
-  const isWide    = width >= 700;
-  const isLarge   = width >= 1100;
+  const router            = useRouter();
+  const { t }             = useTranslation();
+  const { user, loading } = useAuth();
+  const dbUser            = useAppSelector((s) => s.auth.dbUser);
+  const { width }         = useWindowDimensions();
+  const isWide            = width >= 700;
+  const isLarge           = width >= 1100;
 
   const slideshowAnim = useFadeSlideIn(0);
   const greetingAnim  = useFadeSlideIn(80);
   const cardsAnim     = useFadeSlideIn(200);
 
-  // ── Correct width formula ──────────────────────────────────────────────────
+  // Width formula
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 16;
+
+  // Auth state — show greeting when logged in, Get Started when not
+  const isLoggedIn = !loading && !!user;
+  const firstName  = (dbUser?.name || user?.displayName || "").trim().split(" ")[0];
 
   const quickLinks = [
     { icon: Heart,    title: t.home.healthServices, description: t.home.healthDesc,  path: "/health",   gradient: true  },
@@ -88,23 +96,44 @@ const Home = () => {
           <HeroSlideshow />
         </Animated.View>
 
-        {/* Greeting + CTA */}
+        {/* Greeting / CTA */}
         <Animated.View style={[greetingAnim, { marginBottom: 28 }]}>
-          <Text className="text-2xl font-bold text-[#0F172A] dark:text-white mb-1" style={{ letterSpacing: -0.4 }}>
-            {t.home.welcome}
-          </Text>
-          <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm mb-5">
-            {t.home.subtitle}
-          </Text>
-          <AnimatedPressable
-            onPress={() => router.push("/health")}
-            soundType="mechanical"
-            className="self-start flex-row items-center bg-primary px-5 py-3 rounded-xl"
-            style={{ shadowColor: "#8B5CF6"}}
-          >
-            <Text className="text-white font-semibold mr-2">{t.home.getStarted}</Text>
-            <ArrowRight size={16} color="white" />
-          </AnimatedPressable>
+          {isLoggedIn ? (
+            // ── Logged in: personalised greeting, no button ──────────────────
+            <>
+              <Text
+                className="text-2xl font-bold text-[#0F172A] dark:text-white mb-1"
+                style={{ letterSpacing: -0.4 }}
+              >
+                {t.home.greeting}{firstName ? `, ${firstName}` : ""}! 👋
+              </Text>
+              <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm">
+                {t.home.subtitle}
+              </Text>
+            </>
+          ) : (
+            // ── Logged out: welcome + Get Started → /auth ────────────────────
+            <>
+              <Text
+                className="text-2xl font-bold text-[#0F172A] dark:text-white mb-1"
+                style={{ letterSpacing: -0.4 }}
+              >
+                {t.home.welcome}
+              </Text>
+              <Text className="text-[#64748B] dark:text-[#94A3B8] text-sm mb-5">
+                {t.home.subtitle}
+              </Text>
+              <AnimatedPressable
+                onPress={() => router.push("/auth")}
+                soundType="mechanical"
+                className="self-start flex-row items-center bg-primary px-5 py-3 rounded-xl"
+              >
+                <LogIn size={16} color="white" style={{ marginRight: 8 }} />
+                <Text className="text-white font-semibold mr-2">{t.home.getStarted}</Text>
+                <ArrowRight size={16} color="white" />
+              </AnimatedPressable>
+            </>
+          )}
         </Animated.View>
 
         {/* Quick Access */}
