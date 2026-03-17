@@ -25,8 +25,8 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
-        foregroundImage: "./assets/images/logo_bg.png"
+        backgroundColor: "#000000",
+        foregroundImage: "./assets/images/icon.png"
       },
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
       edgeToEdgeEnabled: true,
