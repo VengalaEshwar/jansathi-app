@@ -114,13 +114,12 @@ function HoverCard({
 
   return (
     <Animated.View
-      style={[
-        anim,
-        {
-          marginBottom: 12,
-          transform: [{ scale }, { translateX: tx }, { translateY: ty }],
-        },
-      ]}
+      style={{
+        opacity: anim.opacity,
+        marginBottom: 12,
+        // PROPERLY MERGED TRANSFORMS FOR PRODUCTION HERMES ENGINE
+        transform: [...anim.transform, { scale }, { translateX: tx }, { translateY: ty }],
+      }}
     >
       <Pressable
         // @ts-ignore web
@@ -201,8 +200,14 @@ function ValueBox({
   const anim = useFadeSlideIn(delay);
   const { playClick } = useSound();
   return (
-    // Moved transform: [{ scale }] up to Animated.View here!
-    <Animated.View style={[anim, { flex: 1, transform: [{ scale }] }]}>
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: anim.opacity,
+        // PROPERLY MERGED TRANSFORMS
+        transform: [...anim.transform, { scale }],
+      }}
+    >
       <Pressable
         onPressIn={() => {
           playClick("soft");
@@ -303,8 +308,14 @@ function StatBox({ value, label, color = "#8B5CF6", delay = 0 }: any) {
   const scale = useRef(new Animated.Value(1)).current;
   const anim = useFadeSlideIn(delay);
   return (
-    // Moved transform: [{ scale }] up to Animated.View here!
-    <Animated.View style={[anim, { flex: 1, transform: [{ scale }] }]}>
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: anim.opacity,
+        // PROPERLY MERGED TRANSFORMS
+        transform: [...anim.transform, { scale }],
+      }}
+    >
       <Pressable
         onPressIn={() =>
           Animated.spring(scale, {
@@ -381,7 +392,6 @@ export default function AboutUs() {
   const statsAnim = useFadeSlideIn(440);
   const ctaAnim = useFadeSlideIn(520);
 
-  // ── Correct width formula ──────────────────────────────────────────────────
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth
     ? Math.max(24, (width - containerWidth) / 2)
@@ -393,13 +403,12 @@ export default function AboutUs() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 100 }}
     >
-      {/* ── FULL WIDTH: HeroSection ── */}
       <View style={{ paddingHorizontal: sidePad, paddingTop: 20 }}>
         {Platform.OS === "web" && <View style={{ height: 8 }} />}
         <HeroSection
           icon={Heart}
-          title={t.about.title}
-          subtitle={t.about.subtitle}
+          title={t.about?.title || "About JanSathi"}
+          subtitle={t.about?.subtitle || "Our Mission & Vision"}
           gradientColors={["#EC4899", "#F97316"]}
           badge="Open Source"
           delay={0}
@@ -407,19 +416,21 @@ export default function AboutUs() {
         {Platform.OS === "web" && <View style={{ height: 8 }} />}
       </View>
 
-      {/* ── App Logo ── */}
       <Animated.View
-        style={[
-          logoAnim,
-          { alignItems: "center", marginTop: 20, marginBottom: 32 },
-        ]}
+        style={{
+          opacity: logoAnim.opacity,
+          transform: logoAnim.transform,
+          alignItems: "center",
+          marginTop: 20,
+          marginBottom: 32,
+        }}
       >
         <View
           style={{
-            width: "35%", // Scales with the screen
-            minWidth: 120, // Never shrinks below 120px on tiny phones
-            maxWidth: 180, // Locks at 180px on tablets/desktop
-            aspectRatio: 1, // Keeps it a perfect square automatically
+            width: "35%",
+            minWidth: 120,
+            maxWidth: 180,
+            aspectRatio: 1,
             borderRadius: 36,
             backgroundColor: "white",
             padding: 6,
@@ -462,7 +473,7 @@ export default function AboutUs() {
           VERSION 1.0.0
         </Text>
       </Animated.View>
-      {/* ── CENTERED CONTENT ── */}
+
       <View
         style={{
           paddingHorizontal: sidePad,
@@ -475,8 +486,7 @@ export default function AboutUs() {
             : {}),
         }}
       >
-        {/* Mission */}
-        <Animated.View style={[missionAnim, S.mb20]}>
+        <Animated.View style={[{ opacity: missionAnim.opacity, transform: missionAnim.transform }, S.mb20]}>
           <View
             style={{
               backgroundColor: "#8B5CF6",
@@ -511,7 +521,7 @@ export default function AboutUs() {
             >
               <Target size={22} color="white" />
               <Text style={{ color: "white", fontWeight: "800", fontSize: 16 }}>
-                {t.about.mission}
+                {t.about?.mission || "Our Mission"}
               </Text>
             </View>
             <Text
@@ -521,12 +531,11 @@ export default function AboutUs() {
                 lineHeight: 20,
               }}
             >
-              {t.about.missionText}
+              {t.about?.missionText || "Empowering users with AI tools."}
             </Text>
           </View>
         </Animated.View>
 
-        {/* Features */}
         <Text
           style={{
             fontSize: 11,
@@ -540,14 +549,13 @@ export default function AboutUs() {
           WHAT WE DO
         </Text>
 
-        {/* 2-col on wide */}
         {isWide ? (
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 0 }}>
             <View style={{ flex: 1 }}>
               <HoverCard
                 icon={Heart}
-                title={t.about.healthLiteracy}
-                desc={t.about.healthLiteracyDesc}
+                title={t.about?.healthLiteracy || "Health Literacy"}
+                desc={t.about?.healthLiteracyDesc || "Read prescriptions easily."}
                 color="#EF4444"
                 delay={200}
               />
@@ -555,8 +563,8 @@ export default function AboutUs() {
             <View style={{ flex: 1 }}>
               <HoverCard
                 icon={Sparkles}
-                title={t.about.govAccess}
-                desc={t.about.govAccessDesc}
+                title={t.about?.govAccess || "Gov Access"}
+                desc={t.about?.govAccessDesc || "Government forms made simple."}
                 color="#6366F1"
                 delay={260}
               />
@@ -566,23 +574,22 @@ export default function AboutUs() {
           <>
             <HoverCard
               icon={Heart}
-              title={t.about.healthLiteracy}
-              desc={t.about.healthLiteracyDesc}
+              title={t.about?.healthLiteracy || "Health Literacy"}
+              desc={t.about?.healthLiteracyDesc || "Read prescriptions easily."}
               color="#EF4444"
               delay={200}
             />
             <HoverCard
               icon={Sparkles}
-              title={t.about.govAccess}
-              desc={t.about.govAccessDesc}
+              title={t.about?.govAccess || "Gov Access"}
+              desc={t.about?.govAccessDesc || "Government forms made simple."}
               color="#6366F1"
               delay={260}
             />
           </>
         )}
 
-        {/* Values */}
-        <Animated.View style={valuesAnim}>
+        <Animated.View style={{ opacity: valuesAnim.opacity, transform: valuesAnim.transform }}>
           <Text
             style={{
               fontSize: 11,
@@ -594,35 +601,34 @@ export default function AboutUs() {
               marginLeft: 4,
             }}
           >
-            {t.about.ourValues.toUpperCase()}
+            {(t.about?.ourValues || "Our Values").toUpperCase()}
           </Text>
           <View style={[{ flexDirection: "row" }, S.gap12, S.mb24]}>
             <ValueBox
               icon={Globe}
-              title={t.about.accessibility}
-              text={t.about.accessibilityText}
+              title={t.about?.accessibility || "Accessibility"}
+              text={t.about?.accessibilityText || "For everyone."}
               color="#3B82F6"
               delay={340}
             />
             <ValueBox
               icon={Heart}
-              title={t.about.compassion}
-              text={t.about.compassionText}
+              title={t.about?.compassion || "Compassion"}
+              text={t.about?.compassionText || "We care."}
               color="#EC4899"
               delay={380}
             />
             <ValueBox
               icon={Users}
-              title={t.about.community}
-              text={t.about.communityText}
+              title={t.about?.community || "Community"}
+              text={t.about?.communityText || "Together."}
               color="#10B981"
               delay={420}
             />
           </View>
         </Animated.View>
 
-        {/* Stats */}
-        <Animated.View style={statsAnim}>
+        <Animated.View style={{ opacity: statsAnim.opacity, transform: statsAnim.transform }}>
           <Text
             style={{
               fontSize: 11,
@@ -638,33 +644,32 @@ export default function AboutUs() {
           <View style={[{ flexDirection: "row" }, S.gap10, S.mb24]}>
             <StatBox
               value="10+"
-              label={t.about.languages}
+              label={t.about?.languages || "Languages"}
               color="#8B5CF6"
               delay={460}
             />
             <StatBox
               value="5"
-              label={t.about.healthTools}
+              label={t.about?.healthTools || "Tools"}
               color="#EF4444"
               delay={490}
             />
             <StatBox
               value="5"
-              label={t.about.gAssistFeatures}
+              label={t.about?.gAssistFeatures || "Features"}
               color="#6366F1"
               delay={520}
             />
             <StatBox
               value="24/7"
-              label={t.about.aiSupport}
+              label={t.about?.aiSupport || "Support"}
               color="#10B981"
               delay={550}
             />
           </View>
         </Animated.View>
 
-        {/* Contact CTA */}
-        <Animated.View style={ctaAnim}>
+        <Animated.View style={{ opacity: ctaAnim.opacity, transform: ctaAnim.transform }}>
           <View
             style={{
               backgroundColor: "white",
@@ -703,7 +708,7 @@ export default function AboutUs() {
               }}
               className="dark:text-white"
             >
-              {t.about.getInTouch}
+              {t.about?.getInTouch || "Get in Touch"}
             </Text>
             <Text
               style={{
@@ -714,7 +719,7 @@ export default function AboutUs() {
               }}
               className="dark:text-[#94A3B8]"
             >
-              {t.about.getInTouchDesc}
+              {t.about?.getInTouchDesc || "We'd love to hear from you."}
             </Text>
             <AnimatedPressable
               onPress={() => Linking.openURL("mailto:jansathi.service@gmail.com")}
@@ -732,7 +737,7 @@ export default function AboutUs() {
               }}
             >
               <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
-                {t.about.contactUs}
+                {t.about?.contactUs || "Contact Us"}
               </Text>
             </AnimatedPressable>
           </View>
