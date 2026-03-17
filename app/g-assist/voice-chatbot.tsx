@@ -285,7 +285,7 @@ export default function VoiceChatbot() {
   const canSend = !!textInput.trim() && !isThinking;
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]"
+    <KeyboardAvoidingView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A] py-14"
       behavior={Platform.OS === "ios" ? "padding" : "height"}>
 
       {/* ── Header ── */}

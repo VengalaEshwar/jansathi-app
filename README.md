@@ -9,15 +9,21 @@
 <!-- Add your screenshots here -->
 | Home | Health Services | Government Assist |
 |------|----------------|-------------------|
-| ![Home]() | ![Health]() | ![G-Assist]() |
+| ![Home](./assets/images/screenshots/home.jpeg) | ![Health](./assets/images/screenshots/health.jpeg) | ![G-Assist](./assets/images/screenshots/g-assist.jpeg) |
 
 | Danger Alerts | Step Guides | Volunteer Network |
 |---------------|-------------|-------------------|
-| ![Danger Alerts]() | ![Step Guides]() | ![Volunteer]() |
+| ![Danger Alerts](./assets/images/screenshots/danger.jpeg) | ![Step Guides](./assets/images/screenshots/steps-guide.jpeg) | ![Volunteer](./assets/images/screenshots/vlounteer.jpeg) |
 
-| Profile | Auth | Medicine Scanner |
+| Profile | Health Notifications | Medicine Scanner |
 |---------|------|-----------------|
-| ![Profile]() | ![Auth]() | ![Medicine]() |
+| ![Profile](./assets/images/screenshots/profile.jpeg) | ![Auth](./assets/images/screenshots/health-notify.jpeg) | ![Medicine](./assets/images/screenshots/medicine-scanner.jpeg) |
+| Near By Clinics | prescription Reader | Medicine Scanner |
+|---------|------|-----------------|
+| ![clinics](./assets/images/screenshots/clinics.jpeg) | ![prescription](./assets/images/screenshots/prescription.jpeg) | ![Medicine](./assets/images/screenshots/ai-assist.jpeg) |
+| Schemes Finder | photo to form | Auth Page |
+|---------|------|-----------------|
+| ![Schemes](./assets/images/screenshots/schemes.jpeg) | ![prescription](./assets/images/screenshots/photoform.jpeg) | ![Auth](./assets/images/screenshots/auth.jpeg) |
 
 ---
 
@@ -52,7 +58,7 @@ JanSathi ("People's Companion" in Hindi) is a React Native mobile app — also u
 - **Connect with volunteers** for in-person help with government services
 - **Talk to an AI assistant** in their own language (Hindi, Telugu, English)
 - **Set medication reminders** via app, SMS, or email
-- **Find Near by Clinics** within 2km or 5km or 10 or 20km range
+
 
 The app works across **mobile (iOS/Android)**, **web**, and **tablet**, adapting its layout for each screen size with a consistent dark/light theme and full multilingual support.
 
@@ -78,7 +84,7 @@ The app works across **mobile (iOS/Android)**, **web**, and **tablet**, adapting
 | **Photo-to-Form AI** | Upload a photo of any government form. AI detects all fillable fields, lets you fill them in, then generates a completed PDF for download. |
 | **Scheme Finder** | Browse 100+ government schemes. Filter by state, category, eligibility. Built-in eligibility checker — enter your age, gender, state, occupation, income to find matching schemes. |
 | **Step Guides** | Pre-built visual guides for common procedures (Aadhaar, voter ID, ration card, PAN card, etc.) with step-by-step checklists. AI guide generator for any procedure not in the list. |
-| **Volunteer Network** | Find verified volunteers . Submit help requests. Register as a volunteer. Contact details (phone) only visible to registered volunteers — gated server-side. |
+| **Volunteer Network** | Find verified volunteers and NGOs. Submit help requests. Register as a volunteer. Contact details (phone) only visible to registered volunteers — gated server-side. |
 
 ### 👤 Profile & Accessibility
 
@@ -107,7 +113,6 @@ The app works across **mobile (iOS/Android)**, **web**, and **tablet**, adapting
 | Icons | `lucide-react-native` |
 | Compiler | **React Compiler** (`transform.reactCompiler: true`) |
 | Storage | `AsyncStorage` (theme, language persistence) |
-| Hosting | **Expo Build** and **Netlify** |
 
 ### Backend
 
@@ -122,7 +127,7 @@ The app works across **mobile (iOS/Android)**, **web**, and **tablet**, adapting
 | OCR | `tesseract.js` + Gemini Vision |
 | Email | **Nodemailer** + Gmail App Password |
 | SMS | **Twilio** (verified numbers) + **Fast2SMS** (fallback) |
-| Cron | MongoDB Atlas Trigger (every 15 min) → hits vercel server at production|
+| Cron | cron-job.org (every 15 min) → hits Vercel endpoint |
 | Auth | Firebase Admin SDK (token verification) |
 
 ---
@@ -210,30 +215,51 @@ jansathi-app/                    # Frontend (Expo)
 └── nativewind-env.d.ts
 
 jansathi-server/                 # Backend (Express on Vercel)
-├── routes/
-│   ├── auth.routes.js
-│   ├── ocr.routes.js            # /ocr/scan, /ocr/my-medicines, /ocr/check-interactions
-│   ├── chat.routes.js
-│   ├── guide.routes.js          # /guide/generate
-│   ├── volunteer.routes.js      # Full volunteer CRUD
-│   ├── scheme.routes.js
-│   ├── notification.routes.js
-│   └── form.routes.js
-├── controllers/
-│   ├── auth.controller.js
-│   ├── ocr.controller.js        # Tesseract + Gemini + Groq medicine extraction
+├── configs/                     # Configuration and setup
+│   ├── cloudinary.config.js
+│   ├── db.config.js             # MongoDB Atlas connection
+│   ├── env.config.js
+│   ├── firebase.config.js
+│   ├── multer.config.js         # File upload handling
+│   └── nodemailer.config.js
+├── routers/                     # Express routes (API endpoints)
+│   ├── auth.router.js
+│   ├── chat.router.js
+│   ├── cron.router.js           # Scheduled jobs endpoint
+│   ├── form.router.js
+│   ├── guide.router.js          # /guide/generate
+│   ├── ocr.router.js            # /ocr/scan, /ocr/my-medicines, /ocr/check-interactions
+│   ├── reminder.router.js       # Notification/reminder routes
+│   ├── scheme.router.js
+│   └── volunteer.router.js      # Full volunteer CRUD
+├── controllers/                 # Business logic
 │   ├── chat.controller.js       # Gemini primary, Groq fallback, Roman transliteration
+│   ├── cron.controller.js
+│   ├── form.controller.js
 │   ├── guide.controller.js      # AI step guide generator
-│   ├── volunteer.controller.js  # No-verification instant registration
+│   ├── ocr.controller.js        # Tesseract + Gemini + Groq medicine extraction
+│   ├── reminder.controller.js
 │   ├── scheme.controller.js
-│   ├── notification.controller.js
-│   └── form.controller.js
-├── models/
+│   ├── user.controller.js       # Auth and user profile logic
+│   └── volunteer.controller.js  # No-verification instant registration
+├── models/                      # Mongoose schemas
+│   ├── scheme.model.js
 │   ├── user.model.js            # Includes medicines[], preferences, prescription/form history
 │   └── volunteer.model.js       # userId, coordinates, languages[], available, bio
-├── middleware/
-│   └── auth.middleware.js       # Firebase token verification
-└── index.js                     # Express app + route registration
+├── data/
+│   └── schemes.js               # Static scheme data/seed file
+├── utils/                       # Helpers & Middlewares
+│   ├── firebaseAuth.js          # Firebase token verification
+│   └── loader.js
+├── temp/                        # Temporary uploaded images and generated PDFs
+├── .env
+├── .gitignore
+├── app.js                       # Express app setup and middleware registration
+├── index.js                     # Server entry point
+├── package.json
+├── package-lock.json
+├── README.md
+└── vercel.json                  # Vercel deployment configuration
 ```
 
 ---
@@ -265,7 +291,6 @@ NODE_OPTIONS=--max-old-space-size=8192 npx expo start --clear
 # simple start
 npm start
 
-
 # Run on specific platform
 npx expo start --android
 npx expo start --ios
@@ -286,8 +311,8 @@ npm install
 node index.js
 # or with nodemon
 npx nodemon index.js
-# simple command
-npm start 
+#  simple start
+npm start
 ```
 
 ---
@@ -302,6 +327,10 @@ MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/jansathi
 
 # Auth
 JWT_SECRET=your_jwt_secret
+
+# Environment
+NODE_ENV=development
+PORT=5000
 
 # AI
 GEMINI_API_KEY=your_gemini_api_key
@@ -322,6 +351,11 @@ TWILIO_VERIFIED_NUMBERS=+91xxxxxxxxxx,+91xxxxxxxxxx
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+
+# Firebase
+FIREBASE_PROJECT_ID=xxxxxx
+FIREBASE_CLIENT_EMAIL=xxxxx.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n=xxxxx==\n-----END PRIVATE KEY-----\n" 
 ```
 
 ### Frontend — `app.config.js` / `app.json`
@@ -574,6 +608,7 @@ vercel --prod
 ### Required route registrations in `index.js`
 
 ```js
+// example
 import guideRoutes     from "./routes/guide.routes.js";
 import volunteerRoutes from "./routes/volunteer.routes.js";
 
@@ -595,10 +630,5 @@ app.use("/api/volunteer", volunteerRoutes);
 ## Author
 
 **Eshwar Vengala**  
-Built with ❤️ for rural India.
+Built with ❤️.
 
----
-
-## License
-
-MIT

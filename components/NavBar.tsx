@@ -1,7 +1,8 @@
+/* eslint-disable react/jsx-no-undef */
 /* eslint-disable react/display-name */
 // components/NavBar.tsx
 import { useRef, memo } from "react";
-import { View, Text, Pressable, Animated, useWindowDimensions, Platform } from "react-native";
+import { View, Text, Pressable, Animated, useWindowDimensions, Platform,Image } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { Home, Heart, Sparkles, User, Info } from "lucide-react-native";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -60,13 +61,17 @@ const TopNavBar = memo(({ navItems, pathname, onPress, width }: NavProps & { wid
         ...(containerWidth ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" } : {}),
       }}>
         {/* Logo */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+ <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <View style={{
-            width: 34, height: 34, borderRadius: 10, backgroundColor: "#8B5CF6",
+            width: 34, height: 34, borderRadius: 10, backgroundColor: "white", // Changed to white so your logo pops
             alignItems: "center", justifyContent: "center",
-            shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+            shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 4
           }}>
-            <Sparkles size={18} color="white" />
+            <Image 
+              source={require("@/assets/images/icon.png")} 
+              style={{ width: "100%", height: "100%", borderRadius: 10 }} 
+              resizeMode="cover"
+            />
           </View>
           <Text className="text-[#0F172A] dark:text-white"
             style={{ fontSize: 18, fontWeight: "800", letterSpacing: -0.4 }}>

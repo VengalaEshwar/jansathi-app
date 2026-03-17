@@ -4,11 +4,10 @@ import {
   Text,
   Modal,
   Pressable,
-  TextInput,
   ScrollView,
+  Linking, // <-- Added Linking here
 } from "react-native";
-import { Mail, Phone, MessageSquare, ChevronDown } from "lucide-react-native";
-import { useToast } from "@/hooks/useToast";
+import { Mail, Phone, ChevronDown } from "lucide-react-native";
 
 interface HelpSupportDialogProps {
   open: boolean;
@@ -19,19 +18,7 @@ export const HelpSupportDialog = ({
   open,
   onOpenChange,
 }: HelpSupportDialogProps) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const toast = useToast();
-
-  const handleSubmit = () => {
-    toast.success("Support request submitted successfully!");
-    setName("");
-    setEmail("");
-    setMessage("");
-    onOpenChange(false);
-  };
 
   const faqs = [
     {
@@ -66,26 +53,38 @@ export const HelpSupportDialog = ({
       <View className="flex-1 bg-black/50 justify-center items-center">
         <View className="bg-light-card dark:bg-card w-[90%] max-h-[85%] rounded-2xl p-4">
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className="text-2xl font-bold mb-4 text-light-foreground dark:text-foreground">Help & Support</Text>
+            <Text className="text-2xl font-bold mb-4 text-light-foreground dark:text-foreground">
+              Help & Support
+            </Text>
 
             <View className="flex-row justify-between mb-6">
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
+              {/* Changed to Pressable and added Linking for Email */}
+              <Pressable 
+                onPress={() => Linking.openURL('mailto:jansathi.service@gmail.com')}
+                className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border active:opacity-70"
+              >
                 <Mail size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Email</Text>
-                <Text className="text-xs text-muted text-center">support@app.com</Text>
-              </View>
+                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">
+                  Email
+                </Text>
+                <Text className="text-xs text-muted text-center mt-1">
+                  jansathi.service@gmail.com
+                </Text>
+              </Pressable>
 
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
+              {/* Changed to Pressable and added Linking for Phone */}
+              <Pressable 
+                onPress={() => Linking.openURL('tel:+91 8688496180')}
+                className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border active:opacity-70"
+              >
                 <Phone size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Phone</Text>
-                <Text className="text-xs text-muted text-center">1800-123-4567</Text>
-              </View>
-
-              <View className="flex-1 mx-1 p-3 rounded-lg bg-secondary items-center border border-light-border dark:border-border">
-                <MessageSquare size={22} color="#8B5CF6" />
-                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">Live Chat</Text>
-                <Text className="text-xs text-muted text-center">9 AM - 6 PM IST</Text>
-              </View>
+                <Text className="text-sm font-medium mt-2 text-light-foreground dark:text-foreground">
+                  Phone
+                </Text>
+                <Text className="text-xs text-muted text-center mt-1">
+                  8688496180
+                </Text>
+              </Pressable>
             </View>
 
             <Text className="text-lg font-semibold mb-3 text-light-foreground dark:text-foreground">
@@ -100,9 +99,7 @@ export const HelpSupportDialog = ({
                   className="border border-light-border dark:border-border rounded-lg mb-2 bg-light-card dark:bg-card"
                 >
                   <Pressable
-                    onPress={() =>
-                      setOpenFaq(isOpen ? null : index)
-                    }
+                    onPress={() => setOpenFaq(isOpen ? null : index)}
                     className="flex-row justify-between items-center p-3"
                   >
                     <Text className="font-medium flex-1 text-light-foreground dark:text-foreground">
@@ -112,70 +109,27 @@ export const HelpSupportDialog = ({
                       size={18}
                       color="#6B7280"
                       style={{
-                        transform: [
-                          { rotate: isOpen ? "180deg" : "0deg" },
-                        ],
+                        transform: [{ rotate: isOpen ? "180deg" : "0deg" }],
                       }}
                     />
                   </Pressable>
 
                   {isOpen && (
                     <View className="px-3 pb-3">
-                      <Text className="text-muted text-sm">
-                        {faq.answer}
-                      </Text>
+                      <Text className="text-muted text-sm">{faq.answer}</Text>
                     </View>
                   )}
                 </View>
               );
             })}
 
-            <Text className="text-lg font-semibold mt-6 mb-3 text-light-foreground dark:text-foreground">
-              Contact Support
-            </Text>
-
-            <TextInput
-              placeholder="Your name"
-              placeholderTextColor="#94A3B8"
-              value={name}
-              onChangeText={setName}
-              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground"
-            />
-
-            <TextInput
-              placeholder="your.email@example.com"
-              placeholderTextColor="#94A3B8"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-3 text-light-foreground dark:text-foreground"
-            />
-
-            <TextInput
-              placeholder="How can we help you?"
-              placeholderTextColor="#94A3B8"
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              numberOfLines={4}
-              className="border border-light-border dark:border-border bg-light-background dark:bg-background rounded-lg px-3 py-3 mb-4 text-light-foreground dark:text-foreground min-h-[100px]"
-              style={{ textAlignVertical: "top" }}
-            />
-
-            <Pressable
-              onPress={handleSubmit}
-              className="bg-primary py-3.5 rounded-xl items-center"
-            >
-              <Text className="text-white font-semibold">
-                Submit Request
-              </Text>
-            </Pressable>
-
             <Pressable
               onPress={() => onOpenChange(false)}
-              className="mt-4 py-2 items-center"
+              className="mt-6 py-3 items-center bg-secondary rounded-xl border border-light-border dark:border-border active:opacity-70"
             >
-              <Text className="text-muted font-medium">Close</Text>
+              <Text className="text-light-foreground dark:text-foreground font-semibold">
+                Close
+              </Text>
             </Pressable>
           </ScrollView>
         </View>
