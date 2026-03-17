@@ -32,7 +32,8 @@ export default {
   edgeToEdgeEnabled: true,
   predictiveBackGestureEnabled: false,
   permissions: [
-    "RECORD_AUDIO"
+    "RECORD_AUDIO",
+    "POST_NOTIFICATIONS"
   ],
   package: "com.eshwar_1617.jansathiapp"
 },
