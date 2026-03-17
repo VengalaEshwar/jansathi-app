@@ -32,7 +32,7 @@ const WAKE_WORDS = [
   "hey jansathi", "hey jan sathi", "hey jansaathi", "hey jan saathi",
   "hey janjati", "hey jansati", "hey jan sati", "hey jansathy",
   "hey jansathin", "hey jan sathy", "hey jansatbi", "hey jansatri",
-  "hey jansathi,", "hey jansathi.", "hey jan sathi,","agent Sathi","agent Sathy" ,"sathy", "Sathi",
+  "hey jansathi,", "hey jansathi.", "hey jan sathi,",
   "jansathi", "jan sathi", "janjati", "jansati",
   "हे जनसाथी", "హే జనసాథి",
 ];
@@ -152,6 +152,19 @@ export function VoiceAssistantFAB() {
   const webDragRef  = useRef(false);
   const webStartRef = useRef({ mx: 0, my: 0, fx: 0, fy: 0 });
   const [webPosState, setWebPosState] = useState({ x: webPos.current.x, y: webPos.current.y });
+
+  // Re-clamp position when window resizes so FAB never goes off-screen
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    const onResize = () => {
+      const nx = clamp(webPos.current.x, EDGE_PAD, window.innerWidth  - FAB_SIZE - EDGE_PAD);
+      const ny = clamp(webPos.current.y, EDGE_PAD, window.innerHeight - FAB_SIZE - EDGE_PAD);
+      webPos.current = { x: nx, y: ny };
+      setWebPosState({ x: nx, y: ny });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const onWebMouseDown = useCallback((e: any) => {
     if (typeof window === "undefined") return;
