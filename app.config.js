@@ -4,7 +4,7 @@ export default {
     slug: "jansathi-app",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/logo_bg.png",
     scheme: "jansathi",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -39,14 +39,14 @@ export default {
     web: {
       bundler: "metro",
       output: "static",
-      favicon: "./assets/images/icon.png"
+      favicon: "./assets/images/logo_bg.png"
     },
     plugins: [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/splash-icon.png",
+          image: "./assets/images/logo_bg.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",
