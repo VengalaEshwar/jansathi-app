@@ -24,18 +24,18 @@ export default {
       }
     },
     android: {
-      adaptiveIcon: {
-        backgroundColor: "#1E293B",
-        foregroundImage: "./assets/images/icon.png"
-      },
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
-      edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false,
-      permissions: [
-        "android.permission.RECORD_AUDIO"
-      ],
-      package: "com.eshwar_1617.jansathiapp"
-    },
+  adaptiveIcon: {
+    backgroundColor: "#1E293B",
+    foregroundImage: "./assets/images/icon.png"
+  },
+  googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
+  edgeToEdgeEnabled: true,
+  predictiveBackGestureEnabled: false,
+  permissions: [
+    "RECORD_AUDIO"
+  ],
+  package: "com.eshwar_1617.jansathiapp"
+},
     web: {
       bundler: "metro",
       output: "static",
