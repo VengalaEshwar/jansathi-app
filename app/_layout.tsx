@@ -162,7 +162,7 @@ function AppContent() {
           {!isDesktop && <NavBar />}
 
           {/* Global Chat FAB — hidden on voice chatbot screen AND when voice assistant is active */}
-          {pathname !== "/g-assist/voice-chatbot" &&
+          {pathname !== "/g-assist/voice-chatbot" &&  pathname!== "/auth"&&
            !voiceEnabled && (
             <GlobalChatbot />
           )}
