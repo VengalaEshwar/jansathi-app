@@ -7,7 +7,6 @@ import {
 import { useRouter } from "expo-router";
 import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, Send, ChevronUp, ChevronDown } from "lucide-react-native";
 import * as Speech from "expo-speech";
-import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addMessage, setThinking } from "@/store/slices/chatSlice";
 import { HeroSection } from "@/components/HeroSection";
@@ -15,6 +14,7 @@ import { AnimatedPressable } from "@/components/AnimatedPressable";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/useToast";
 import { useSound } from "@/hooks/useSound";
+import { useJanSathi } from "@/hooks/useJanSathi";
 import type { Language } from "@/translations";
 
 let ExpoSpeechRecognitionModule: any;
@@ -30,13 +30,12 @@ if (!useSpeechRecognitionEvent) useSpeechRecognitionEvent = (_e: string, _cb: an
 
 const isNativeVoiceAvailable = !!ExpoSpeechRecognitionModule && Platform.OS !== "web";
 const isWebVoiceAvailable    = () => Platform.OS === "web" && typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-
-// Fallback lookup dictionary
 const LANG_CODES: Record<string, string> = {
   en: "en-IN", hi: "hi-IN", te: "te-IN", ta: "ta-IN",
   kn: "kn-IN", ml: "ml-IN", mr: "mr-IN", bn: "bn-IN",
   gu: "gu-IN", pa: "pa-IN", ur: "ur-IN", or: "or-IN",
 };
+// getLangCode only used for speech recognition input lang — TTS always uses en-IN
 const getLangCode = (lang: string) => LANG_CODES[lang] ?? "en-IN";
 
 const S = {
@@ -96,7 +95,10 @@ export default function VoiceChatbot() {
   const isWide          = width >= 700;
   const isLarge         = width >= 1100;
 
-  const scrollRef         = useRef<ScrollView>(null);
+  // forceTTS: true — voice chatbot always speaks responses
+  const { processCommand } = useJanSathi({ forceTTS: true });
+
+  const scrollRef        = useRef<ScrollView>(null);
   const webRecognitionRef = useRef<any>(null);
 
   const [isListening,   setIsListening]   = useState(false);
@@ -111,6 +113,7 @@ export default function VoiceChatbot() {
   const headerAnim = useFadeIn(0);
   const bodyAnim   = useFadeIn(120);
 
+  // ── Correct width formula ──────────────────────────────────────────────────
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 20;
 
@@ -184,86 +187,83 @@ export default function VoiceChatbot() {
     if (!text.trim()) return;
     if (isListening) stopListening();
     setTranscript(""); setTextInput("");
-    
-    // Calculate input lang to send to backend API
+
+    // Detect script for language hint
     const isHindi  = /[\u0900-\u097F]/.test(text);
     const isTelugu = /[\u0C00-\u0C7F]/.test(text);
-    const inputLang: Language = isHindi ? "hi" : isTelugu ? "te" : language;
+    const detectedLang: Language = isHindi ? "hi" : isTelugu ? "te" : language;
+    void detectedLang; // used implicitly via useJanSathi language selector
 
+    // Add user message to chat
     dispatch(addMessage({ role: "user", content: text, timestamp: new Date().toISOString() }));
     dispatch(setThinking(true));
+
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      const data = await apiRequest("/chat", "POST", { message: text, conversationHistory: history, language: inputLang });
-      dispatch(addMessage({ role: "assistant", content: data.reply, timestamp: new Date().toISOString() }));
-      
-      // Speak the response string
-      speakResponse(data.reply);
-    } catch (e: any) { toast.error(e.message || t.chat.responseFailed); }
-    finally { dispatch(setThinking(false)); }
-  }, [isListening, language, messages, dispatch, stopListening, t, toast]);
+      // processCommand → /voice/command → { message, speakText?, navigateTo? }
+      // Speaks via TTS (forceTTS: true) and navigates if a route is returned
+      const response = await processCommand(text, history);
+      dispatch(addMessage({
+        role: "assistant",
+        content: response.message,
+        timestamp: new Date().toISOString(),
+      }));
+      // Update isSpeaking state for UI sync
+      if (response.speakText) setIsSpeaking(true);
+    } catch (e: any) {
+      toast.error(e.message || t.chat.responseFailed);
+    } finally {
+      dispatch(setThinking(false));
+    }
+  }, [isListening, language, messages, dispatch, stopListening, processCommand, t, toast]);
 
-  // ✅ Fixed `speakResponse` to dynamically detect language of the actual reply
+  // speakText is Roman-script phonetic from backend — en-IN pronounces it correctly
+  // e.g. "Namaste! Meeku ela sahayam cheyali?" — any English TTS reads this fine
   const speakResponse = useCallback((text: string) => {
-    // 1. Detect language of the reply itself
-    const isTelugu = /[\u0C00-\u0C7F]/.test(text);
-    const isHindi  = /[\u0900-\u097F]/.test(text);
-    const langCode = isTelugu ? "te-IN" : isHindi ? "hi-IN" : "en-IN";
+    if (!text?.trim()) return;
 
-    // ── Web TTS ──
+    // ── Web ──────────────────────────────────────────────────────────────
     if (Platform.OS === "web") {
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const doSpeak = () => {
         const voices = window.speechSynthesis.getVoices();
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.rate = 0.9;
-        
-        const match =
-          voices.find((v) => v.lang === langCode) ??
-          voices.find((v) => v.lang.replace('_', '-').toLowerCase() === langCode.toLowerCase()) ??
-          voices.find((v) => v.lang.toLowerCase().startsWith(langCode.split("-")[0].toLowerCase())) ??
-          (isTelugu || isHindi ? null : voices.find((v) => v.lang.startsWith("en"))); // Don't use English for regional scripts
-
-        if (match) utt.voice = match;
-        utt.lang    = match ? match.lang : langCode;
+        const utt    = new SpeechSynthesisUtterance(text);
+        utt.rate     = 0.9;
+        utt.lang     = "en-IN";
+        const voice  =
+          voices.find((v) => v.lang === "en-IN") ??
+          voices.find((v) => v.lang === "en-GB") ??
+          voices.find((v) => v.lang.startsWith("en")) ??
+          null;
+        if (voice) utt.voice = voice;
         utt.onstart = () => setIsSpeaking(true);
         utt.onend   = () => setIsSpeaking(false);
         utt.onerror = () => setIsSpeaking(false);
-        window.speechSynthesis.cancel(); 
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utt);
         setIsSpeaking(true);
       };
-      
       if (window.speechSynthesis.getVoices().length > 0) {
         doSpeak();
       } else {
-        window.speechSynthesis.onvoiceschanged = () => { doSpeak(); window.speechSynthesis.onvoiceschanged = null; };
+        window.speechSynthesis.onvoiceschanged = () => {
+          doSpeak();
+          window.speechSynthesis.onvoiceschanged = null;
+        };
       }
       return;
     }
 
-    // ── Native TTS ──
-    const trySpeak = (code: string) => {
-      setIsSpeaking(true);
-      Speech.speak(text, {
-        language: code,
-        pitch: 1.0,
-        rate: 0.9,
-        onDone:    () => setIsSpeaking(false),
-        onStopped: () => setIsSpeaking(false),
-        onError:   () => {
-          // If e.g. "te-IN" fails, try just "te". 
-          // Do NOT fallback to English if text is Telugu/Hindi (it will be silent)
-          if (code.includes('-')) {
-            trySpeak(code.split('-')[0]);
-          } else {
-            setIsSpeaking(false);
-          }
-        },
-      });
-    };
-    
-    trySpeak(langCode);
+    // ── Native — en-IN is pre-installed on all Android/iOS devices ────────
+    setIsSpeaking(true);
+    Speech.speak(text, {
+      language:  "en-IN",
+      pitch:     1.0,
+      rate:      0.9,
+      onDone:    () => setIsSpeaking(false),
+      onStopped: () => setIsSpeaking(false),
+      onError:   () => setIsSpeaking(false),
+    });
   }, []);
 
   const stopSpeaking = useCallback(() => {
@@ -285,13 +285,13 @@ export default function VoiceChatbot() {
   const canSend = !!textInput.trim() && !isThinking;
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A] py-14"
+    <KeyboardAvoidingView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]"
       behavior={Platform.OS === "ios" ? "padding" : "height"}>
 
-      {/* ── Header ── */}
+      {/* ── Header: back only (no HeroSection here — it goes in ScrollView) ── */}
       <Animated.View
         style={[headerAnim, {
-          paddingHorizontal: sidePad, 
+          paddingHorizontal: sidePad,  // ← was hardcoded 10, now uses responsive sidePad
           paddingTop: 16, paddingBottom: 8, borderBottomWidth: 1,
         }]}
         className="bg-[#F8FAFC] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155]">
@@ -309,12 +309,14 @@ export default function VoiceChatbot() {
           contentContainerStyle={{ paddingBottom: 12 }}
           showsVerticalScrollIndicator={false}>
 
+          {/* ── FULL WIDTH: HeroSection ── */}
           <View style={{ paddingHorizontal: sidePad, paddingTop: 16 }}>
             <HeroSection icon={Mic} title={t.chat.title} subtitle={t.chat.speakHint}
               gradientColors={["#6366F1", "#8B5CF6"]} delay={0} badge={language?.toUpperCase()} />
             {Platform.OS === "web" && <View style={{ height: 8 }} />}
           </View>
 
+          {/* ── CENTERED MESSAGES ── */}
           <View style={{
             paddingHorizontal: sidePad,
             ...(containerWidth ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" } : {}),
@@ -353,6 +355,7 @@ export default function VoiceChatbot() {
           ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" }
           : undefined}>
 
+          {/* Collapse toggle */}
           <View style={{ alignItems: "center", marginBottom: showControls ? 10 : 0 }}>
             <AnimatedPressable onPress={toggleControls} soundType="soft"
               className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-full"

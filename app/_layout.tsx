@@ -12,7 +12,12 @@ import { store } from "@/store";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
 import { setUser, setDbUser, clearUser } from "@/store/slices/authSlice";
-import { setAppLanguage, setAppTheme ,setSoundEnabled} from "@/store/slices/appSlice";
+import {
+  setAppLanguage,
+  setAppTheme,
+  setSoundEnabled,
+  setVoiceAssistantEnabled,   // ← NEW
+} from "@/store/slices/appSlice";
 import { apiRequest } from "@/integrations/api/client";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { ToastContainer } from "@/components/Toast";
@@ -21,6 +26,7 @@ import * as Notifications from "expo-notifications";
 import { scheduleAllReminders } from "@/utils/notificationScheduler";
 import { useToast } from "@/hooks/useToast";
 import { useColorScheme } from "nativewind";
+import { VoiceAssistantFAB } from "@/components/VoiceAssistantFAB";  // ← NEW
 
 const queryClient = new QueryClient();
 LogBox.ignoreAllLogs();
@@ -48,14 +54,15 @@ Notifications.setNotificationHandler({
 function AppContent() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
-  const toast = useToast();
+  const toast    = useToast();
   const notifListenerRef = useRef<any>(null);
+  const isAuth   = pathname === "/auth";
 
-  // ── Theme sync ──────────────────────────────────────────────────
+  // ── Theme sync ──────────────────────────────────────────────────────────────
   const theme = useAppSelector((state) => state.app.theme);
   const { setColorScheme } = useColorScheme();
   setColorScheme(theme);
-  // ───────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (Platform.OS !== "web") {
@@ -80,8 +87,8 @@ function AppContent() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         dispatch(setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
+          uid:         firebaseUser.uid,
+          email:       firebaseUser.email,
           displayName: firebaseUser.displayName,
         }));
 
@@ -89,16 +96,22 @@ function AppContent() {
           const data = await apiRequest("/auth/profile");
           if (data.success && data.user) {
             dispatch(setDbUser(data.user));
+
+            // Restore all persisted preferences from DB
             if (data.user.language) {
               dispatch(setAppLanguage(data.user.language));
             }
-            // Restore theme from DB — works across devices and fresh installs
             if (data.user.theme === "dark" || data.user.theme === "light") {
               dispatch(setAppTheme(data.user.theme));
             }
             if (data.user.soundEnabled !== undefined) {
               dispatch(setSoundEnabled(data.user.soundEnabled));
             }
+            // ── NEW: restore voice assistant preference ────────────────────
+            if (data.user.voiceAssistantEnabled !== undefined) {
+              dispatch(setVoiceAssistantEnabled(data.user.voiceAssistantEnabled));
+            }
+            // ──────────────────────────────────────────────────────────────
 
             if (Platform.OS !== "web") {
               try {
@@ -126,7 +139,8 @@ function AppContent() {
   }, []);
 
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop    = width >= 768;
+  const voiceEnabled = useAppSelector((s: any) => s.app?.voiceAssistantEnabled ?? false);
 
   return (
     <SafeAreaProvider>
@@ -135,18 +149,29 @@ function AppContent() {
           style={theme === "dark" ? "light" : "dark"}
           backgroundColor={theme === "dark" ? "#0F172A" : "#F8FAFC"}
         />
+
         {/* On wide screens: NavBar is at top in normal flow, content scrolls below */}
         {isDesktop && <NavBar />}
+
         <View className="flex-1">
           <View className="w-full h-full">
             <Stack screenOptions={{ headerShown: false }} />
           </View>
+
           {/* On mobile: NavBar is absolute bottom */}
           {!isDesktop && <NavBar />}
-          {pathname !== "/profile" &&
-            pathname !== "/g-assist/voice-chatbot" && <GlobalChatbot />}
+
+          {/* Global Chat FAB — hidden on voice chatbot screen AND when voice assistant is active */}
+          {pathname !== "/g-assist/voice-chatbot" &&
+           !voiceEnabled && (
+            <GlobalChatbot />
+          )}
+
+          {/* Voice Assistant FAB — hidden only on auth screen */}
+          {!isAuth && <VoiceAssistantFAB />}
         </View>
       </SafeAreaView>
+
       <ToastContainer />
       <ConfirmModal />
     </SafeAreaProvider>

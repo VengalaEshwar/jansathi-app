@@ -25,7 +25,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#000000",
+        backgroundColor: "#1E293B",
         foregroundImage: "./assets/images/icon.png"
       },
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",

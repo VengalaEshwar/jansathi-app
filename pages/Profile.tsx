@@ -8,7 +8,7 @@ import {
 import { useRouter } from "expo-router";
 import {
   User, Shield, HelpCircle, LogOut,
-  ChevronRight, Camera, X, Trash2, Sun, Moon, Volume2, VolumeX, Users,
+  ChevronRight, Camera, X, Trash2, Sun, Moon, Volume2, VolumeX, Users, Mic , MicOff
 } from "lucide-react-native";
 import { signOut } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,7 @@ import { HelpSupportDialog } from "@/components/profile/HelpSupportDialog";
 import { ProfileChatbot } from "@/components/profile/ProfileChatbot";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setAppLanguage, setAppTheme, setSoundEnabled } from "@/store/slices/appSlice";
+import { setAppLanguage, setAppTheme, setSoundEnabled , setVoiceAssistantEnabled} from "@/store/slices/appSlice";
 import { updateDbUser } from "@/store/slices/authSlice";
 import { apiRequest, BASE_URL } from "@/integrations/api/client";
 import type { Language } from "@/translations";
@@ -110,6 +110,8 @@ export default function Profile() {
   const dispatch          = useAppDispatch();
   const dbUser            = useAppSelector((s) => s.auth.dbUser);
   const soundEnabled      = useAppSelector((s) => s.app.soundEnabled);
+  const voiceEnabled = useAppSelector((s: any) => s.app?.voiceAssistantEnabled ?? false);
+  const [savingVoice, setSavingVoice] = useState(false);
   const theme             = useAppSelector((s) => s.app.theme);
   const isDark            = theme === "dark";
   const toast             = useToast();
@@ -185,6 +187,17 @@ export default function Profile() {
     } catch { toast.error(t.common.error); dispatch(setSoundEnabled(soundEnabled)); } // rollback
     finally { setSavingSound(false); }
   }, [soundEnabled, dbUser?.preferences, dispatch, t, toast, playClick]);
+
+  const handleToggleVoice = useCallback(async () => {
+  playClick("soft");
+  const next = !voiceEnabled;
+  dispatch(setVoiceAssistantEnabled(next));
+  setSavingVoice(true);
+  try {
+    await apiRequest("/auth/preferences", "PATCH", { voiceAssistantEnabled: next });
+  } catch { toast.error(t.common.error); dispatch(setVoiceAssistantEnabled(voiceEnabled)); }
+  finally { setSavingVoice(false); }
+}, [voiceEnabled, dispatch, t, toast, playClick]);
 
   // ── Language change ───────────────────────────────────────────────────────
   const handleLanguageChange = useCallback(async (lang: Language) => {
@@ -373,6 +386,20 @@ export default function Profile() {
             }
           />
 
+          <SectionRow
+            icon={voiceEnabled ? Mic : MicOff}
+            title={t.voiceAssistant.toggleLabel}
+            desc={voiceEnabled ? t.profile.voiceAssistantOn : t.profile.voiceAssistantOff}
+            iconColor={voiceEnabled ? "#8B5CF6" : "#94A3B8"}
+            delay={120}
+            right={
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                {savingVoice && <ActivityIndicator size="small" color="#8B5CF6" />}
+                <Toggle value={voiceEnabled} onToggle={handleToggleVoice} />
+              </View>
+            }
+          />
+
           {/* Click Sound — own loader, no bleed into theme row */}
           <SectionRow
             icon={soundEnabled ? Volume2 : VolumeX}
@@ -451,7 +478,7 @@ export default function Profile() {
       </ScrollView>
 
       <HelpSupportDialog open={helpSupportOpen} onOpenChange={setHelpSupportOpen} />
-      <ProfileChatbot />
+      {/* <ProfileChatbot /> */}
 
       <Modal visible={avatarModalOpen} transparent animationType="fade" onRequestClose={closeAvatarModal}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.88)", alignItems: "center", justifyContent: "center" }}>
