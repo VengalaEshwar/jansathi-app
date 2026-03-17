@@ -4,7 +4,7 @@ export default {
     slug: "jansathi-app",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/logo_bg.png",
+    icon: "./assets/images/icon.png",
     scheme: "jansathi",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
