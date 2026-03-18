@@ -168,7 +168,7 @@ function AppContent() {
           )}
 
           {/* Voice Assistant FAB — hidden only on auth screen */}
-          {!isAuth && <VoiceAssistantFAB />}
+          {!isAuth && pathname !== "/g-assist/voice-chatbot" && (<VoiceAssistantFAB />)}
         </View>
       </SafeAreaView>
 

@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   View, Text, ScrollView, Pressable, Animated, ActivityIndicator,
-  Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
+  Platform, useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, Send, ChevronUp, ChevronDown } from "lucide-react-native";
+import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, ChevronUp, ChevronDown } from "lucide-react-native";
 import * as Speech from "expo-speech";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addMessage, setThinking } from "@/store/slices/chatSlice";
@@ -35,7 +35,6 @@ const LANG_CODES: Record<string, string> = {
   kn: "kn-IN", ml: "ml-IN", mr: "mr-IN", bn: "bn-IN",
   gu: "gu-IN", pa: "pa-IN", ur: "ur-IN", or: "or-IN",
 };
-// getLangCode only used for speech recognition input lang — TTS always uses en-IN
 const getLangCode = (lang: string) => LANG_CODES[lang] ?? "en-IN";
 
 const S = {
@@ -95,7 +94,6 @@ export default function VoiceChatbot() {
   const isWide          = width >= 700;
   const isLarge         = width >= 1100;
 
-  // forceTTS: true — voice chatbot always speaks responses
   const { processCommand } = useJanSathi({ forceTTS: true });
 
   const scrollRef        = useRef<ScrollView>(null);
@@ -104,7 +102,6 @@ export default function VoiceChatbot() {
   const [isListening,   setIsListening]   = useState(false);
   const [isSpeaking,    setIsSpeaking]    = useState(false);
   const [transcript,    setTranscript]    = useState("");
-  const [textInput,     setTextInput]     = useState("");
   const [hasPermission, setHasPermission] = useState(false);
   const [webVoiceSupported] = useState(isWebVoiceAvailable);
   const [showControls,  setShowControls]  = useState(true);
@@ -113,7 +110,6 @@ export default function VoiceChatbot() {
   const headerAnim = useFadeIn(0);
   const bodyAnim   = useFadeIn(120);
 
-  // ── Correct width formula ──────────────────────────────────────────────────
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 20;
 
@@ -186,29 +182,24 @@ export default function VoiceChatbot() {
   const handleInput = useCallback(async (text: string) => {
     if (!text.trim()) return;
     if (isListening) stopListening();
-    setTranscript(""); setTextInput("");
+    setTranscript("");
 
-    // Detect script for language hint
     const isHindi  = /[\u0900-\u097F]/.test(text);
     const isTelugu = /[\u0C00-\u0C7F]/.test(text);
     const detectedLang: Language = isHindi ? "hi" : isTelugu ? "te" : language;
-    void detectedLang; // used implicitly via useJanSathi language selector
+    void detectedLang; 
 
-    // Add user message to chat
     dispatch(addMessage({ role: "user", content: text, timestamp: new Date().toISOString() }));
     dispatch(setThinking(true));
 
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      // processCommand → /voice/command → { message, speakText?, navigateTo? }
-      // Speaks via TTS (forceTTS: true) and navigates if a route is returned
       const response = await processCommand(text, history);
       dispatch(addMessage({
         role: "assistant",
         content: response.message,
         timestamp: new Date().toISOString(),
       }));
-      // Update isSpeaking state for UI sync
       if (response.speakText) setIsSpeaking(true);
     } catch (e: any) {
       toast.error(e.message || t.chat.responseFailed);
@@ -217,12 +208,9 @@ export default function VoiceChatbot() {
     }
   }, [isListening, language, messages, dispatch, stopListening, processCommand, t, toast]);
 
-  // speakText is Roman-script phonetic from backend — en-IN pronounces it correctly
-  // e.g. "Namaste! Meeku ela sahayam cheyali?" — any English TTS reads this fine
   const speakResponse = useCallback((text: string) => {
     if (!text?.trim()) return;
 
-    // ── Web ──────────────────────────────────────────────────────────────
     if (Platform.OS === "web") {
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const doSpeak = () => {
@@ -254,7 +242,6 @@ export default function VoiceChatbot() {
       return;
     }
 
-    // ── Native — en-IN is pre-installed on all Android/iOS devices ────────
     setIsSpeaking(true);
     Speech.speak(text, {
       language:  "en-IN",
@@ -282,16 +269,13 @@ export default function VoiceChatbot() {
   const getStatusColor = () =>
     isThinking ? "#F59E0B" : isSpeaking ? "#10B981" : isListening ? "#8B5CF6" : "#94A3B8";
 
-  const canSend = !!textInput.trim() && !isThinking;
-
   return (
-    <KeyboardAvoidingView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <View className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A] pb-14">
 
-      {/* ── Header: back only (no HeroSection here — it goes in ScrollView) ── */}
+      {/* ── Header: back only ── */}
       <Animated.View
         style={[headerAnim, {
-          paddingHorizontal: sidePad,  // ← was hardcoded 10, now uses responsive sidePad
+          paddingHorizontal: sidePad, 
           paddingTop: 16, paddingBottom: 8, borderBottomWidth: 1,
         }]}
         className="bg-[#F8FAFC] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155]">
@@ -309,14 +293,12 @@ export default function VoiceChatbot() {
           contentContainerStyle={{ paddingBottom: 12 }}
           showsVerticalScrollIndicator={false}>
 
-          {/* ── FULL WIDTH: HeroSection ── */}
           <View style={{ paddingHorizontal: sidePad, paddingTop: 16 }}>
             <HeroSection icon={Mic} title={t.chat.title} subtitle={t.chat.speakHint}
               gradientColors={["#6366F1", "#8B5CF6"]} delay={0} badge={language?.toUpperCase()} />
             {Platform.OS === "web" && <View style={{ height: 8 }} />}
           </View>
 
-          {/* ── CENTERED MESSAGES ── */}
           <View style={{
             paddingHorizontal: sidePad,
             ...(containerWidth ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" } : {}),
@@ -349,7 +331,7 @@ export default function VoiceChatbot() {
       </Animated.View>
 
       {/* ── Controls ── */}
-      <View className="bg-[#F8FAFC] dark:bg-[#0F172A] border-t border-[#E2E8F0] dark:border-[#334155]"
+      <View className="bg-[#F8FAFC] dark:bg-[#0F172A] border-t border-[#E2E8F0] dark:border-[#334155] "
         style={{ paddingHorizontal: sidePad, paddingBottom: showControls ? 28 : 16, paddingTop: 12 }}>
         <View style={containerWidth
           ? { maxWidth: containerWidth + sidePad * 2, alignSelf: "center" as const, width: "100%" }
@@ -373,7 +355,7 @@ export default function VoiceChatbot() {
               </Text>
 
               {voiceAvailable && (
-                <View style={{ alignItems: "center", marginBottom: 14 }}>
+                <View style={{ alignItems: "center" }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
                     {isSpeaking && (
                       <AnimatedPressable onPress={stopSpeaking} soundType="soft"
@@ -401,27 +383,10 @@ export default function VoiceChatbot() {
                   <Text style={{ color: "#94A3B8", fontSize: 11, marginTop: 8, textAlign: "center" }}>{t.chat.speakHint}</Text>
                 </View>
               )}
-
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <TextInput value={textInput} onChangeText={setTextInput}
-                  placeholder={t.chat.typeMessage} placeholderTextColor="#94A3B8"
-                  returnKeyType="send"
-                  onSubmitEditing={() => { if (canSend) { playClick("mechanical"); handleInput(textInput); } }}
-                  editable={!isThinking}
-                  className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-white text-sm"
-                  style={{ flex: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 }} />
-                <AnimatedPressable onPress={() => { if (canSend) handleInput(textInput); }} disabled={!canSend} soundType="mechanical"
-                  style={{ width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center",
-                    backgroundColor: canSend ? "#8B5CF6" : "#E2E8F0", opacity: canSend ? 1 : 0.6,
-                    ...(canSend ? { shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 4 } : {}) }}
-                  className={canSend ? "" : "dark:bg-[#334155]"}>
-                  <Send size={18} color={canSend ? "white" : "#94A3B8"} />
-                </AnimatedPressable>
-              </View>
             </>
           )}
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

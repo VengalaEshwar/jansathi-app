@@ -3,8 +3,10 @@ import { Platform } from "react-native";
 
 const PRODUCTION_URL = "https://jansathi-server.vercel.app/api";
 const DEV_URL = Platform.OS === "web"
-  ? "http://localhost:5000/api"
-  : "http://10.100.67.143:5000/api";
+  // Web browser on your laptop can safely use localhost
+  ? "http://localhost:5000/api" 
+  // Expo Go on your phone MUST use your laptop's Wi-Fi IP + Port
+  : "http://172.18.139.143:5000/api";
 
 export const BASE_URL = __DEV__ ? DEV_URL : PRODUCTION_URL;
 

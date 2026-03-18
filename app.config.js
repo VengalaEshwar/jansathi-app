@@ -8,7 +8,7 @@ export default {
     scheme: "jansathi",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-    extra: {
+    extra: { 
       SUPABASE_URL: "https://ofgwgfxswtltzteprwvo.supabase.co",
       SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
       router: {},

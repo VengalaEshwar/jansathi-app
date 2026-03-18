@@ -72,6 +72,7 @@ const useFadeIn = (delay = 0) => {
   return { opacity, transform: [{ translateY }] };
 };
 
+// eslint-disable-next-line react/display-name
 const SchemeCard = memo(({ scheme, showScore = false, onPress }: {
   scheme: Scheme; showScore?: boolean; onPress: (s: Scheme) => void;
 }) => {
@@ -151,18 +152,35 @@ const PickerRow = memo(({ label, options, value, onChange }: {
 const ToggleRow = memo(({ label, value, onChange }: {
   label: string; value: boolean; onChange: (v: boolean) => void;
 }) => (
-  <AnimatedPressable onPress={() => onChange(!value)} soundType="soft"
-    style={[{ flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-      padding: 14, borderRadius: 14, borderWidth: 1,
-      backgroundColor: value ? "#8B5CF610" : "transparent",
-      borderColor: value ? "#8B5CF6" : "#E2E8F0" }, S.mb8]}
-    className={value ? "" : "dark:border-[#334155]"}>
-    <Text className="text-sm text-[#0F172A] dark:text-white" style={{ flex: 1 }}>{label}</Text>
-    <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: "#8B5CF6",
-      alignItems: "center", justifyContent: "center",
-      backgroundColor: value ? "#8B5CF6" : "transparent",
-      ...(value ? { shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 3 } : {}) }}>
-      {value && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "white" }} />}
+  <AnimatedPressable onPress={() => onChange(!value)} soundType="soft" style={S.mb8}>
+    <View 
+      style={{ 
+        flexDirection: "row", 
+        alignItems: "center", 
+        justifyContent: "space-between",
+        padding: 14, 
+        borderRadius: 14, 
+        borderWidth: 1,
+        backgroundColor: value ? "#8B5CF610" : "transparent",
+        borderColor: value ? "#8B5CF6" : "#E2E8F0" 
+      }}
+      className={value ? "" : "dark:border-[#334155]"}
+    >
+      <Text 
+        className="text-sm text-[#0F172A] dark:text-white" 
+        style={{ flex: 1, marginRight: 12 }}
+      >
+        {label}
+      </Text>
+      
+      <View style={{ 
+        width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: "#8B5CF6",
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: value ? "#8B5CF6" : "transparent",
+        ...(value ? { shadowColor: "#8B5CF6", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 3 } : {}) 
+      }}>
+        {value && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "white" }} />}
+      </View>
     </View>
   </AnimatedPressable>
 ));
@@ -195,14 +213,13 @@ export default function SchemeFinder() {
     age: "", gender: "", caste: "", state: "", occupation: "", income: "",
     isDisabled: false, isStudent: false, isVeteran: false,
   });
-  const [showFilter,      setShowFilter]      = useState(false);
-  const [showStatePicker, setShowStatePicker] = useState(false);
-  const [selectedScheme,  setSelectedScheme]  = useState<Scheme | null>(null);
+  const [showFilter,       setShowFilter]       = useState(false);
+  const [showStatePicker, setShowStatePicker]   = useState(false);
+  const [selectedScheme,   setSelectedScheme]   = useState<Scheme | null>(null);
 
   const headerAnim = useFadeIn(0);
   const bodyAnim   = useFadeIn(120);
 
-  // ── Correct width formula ──────────────────────────────────────────────────
   const containerWidth = isLarge ? 1100 : isWide ? 860 : undefined;
   const sidePad = containerWidth ? Math.max(24, (width - containerWidth) / 2) : 20;
 
@@ -235,7 +252,7 @@ export default function SchemeFinder() {
   const handleSchemePress = useCallback((s: Scheme) => setSelectedScheme(s), []);
 
   return (
-    <ScrollView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]">
+    <ScrollView className="flex-1 bg-[#F8FAFC] dark:bg-[#0F172A]" showsVerticalScrollIndicator={false}>
 
       {/* ── FULL WIDTH: web spacer + back + HeroSection ── */}
       <Animated.View style={[headerAnim, { paddingHorizontal: sidePad, paddingTop: 16 }]}
@@ -249,7 +266,7 @@ export default function SchemeFinder() {
           <Text className="text-[#8B5CF6] font-semibold text-sm">{t.common.back}</Text>
         </AnimatedPressable>
 
-        {/* HeroSection — full width, no maxWidth here */}
+        {/* HeroSection */}
         <HeroSection
           icon={Sparkles}
           title={ts.title}
@@ -259,7 +276,7 @@ export default function SchemeFinder() {
         />
         {Platform.OS === "web" && <View style={{ height: 8 }} />}
 
-        {/* Mode toggle — sits in full-width header, same sidePad, but NOT maxWidth constrained */}
+        {/* Mode toggle */}
         <View className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]"
           style={{ flexDirection: "row", borderRadius: 16, padding: 4, marginBottom: 8,
             shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
@@ -282,9 +299,9 @@ export default function SchemeFinder() {
 
       {/* ══ BROWSE MODE ══ */}
       {mode === "browse" && (
-        <Animated.View style={[bodyAnim, { flex: 1 }]}>
+        <Animated.View style={[bodyAnim, { flex: 1 }]} className="pb-14">
 
-          {/* Search + filter — uses sidePad but no maxWidth (full width) */}
+          {/* Search + filter */}
           <View style={{ flexDirection: "row", paddingHorizontal: sidePad, gap: 8, marginTop: 8, marginBottom: 6 }}>
             <View className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]"
               style={{ flex: 1, flexDirection: "row", alignItems: "center", borderRadius: 12, paddingHorizontal: 10,
@@ -368,15 +385,15 @@ export default function SchemeFinder() {
               <Text className="text-[#94A3B8] text-sm" style={{ marginTop: 4 }}>{ts.tryDifferent}</Text>
             </View>
           ) : (
-            <FlatList
-              data={schemes}
-              keyExtractor={(item) => item._id || item.slug}
-              contentContainerStyle={{ paddingHorizontal: sidePad, paddingTop: 4, paddingBottom: 100 }}
-              renderItem={({ item }) => (isWide ? null : <SchemeCard scheme={item} onPress={handleSchemePress} />)}
-              numColumns={isWide ? 2 : 1}
-              key={isWide ? "wide" : "narrow"}
-              columnWrapperStyle={isWide ? { gap: 14 } : undefined}
-              ListFooterComponent={totalPages > 1 ? (
+            <View style={{ paddingHorizontal: sidePad, paddingTop: 4, paddingBottom: 100 }}>
+              <View style={{ flexDirection: isWide ? "row" : "column", flexWrap: isWide ? "wrap" : "nowrap", justifyContent: "space-between" }}>
+                {schemes.map((item) => (
+                  <View key={item._id || item.slug} style={{ width: isWide ? "48%" : "100%" }}>
+                    <SchemeCard scheme={item} onPress={handleSchemePress} />
+                  </View>
+                ))}
+              </View>
+              {totalPages > 1 && (
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 14 }}>
                   <AnimatedPressable onPress={() => fetchSchemes(page - 1)} disabled={page === 1} soundType="soft"
                     style={{ padding: 8, borderRadius: 12, borderWidth: 1,
@@ -394,8 +411,8 @@ export default function SchemeFinder() {
                     <ChevronRight size={18} color={page === totalPages ? "#94A3B8" : "#8B5CF6"} />
                   </AnimatedPressable>
                 </View>
-              ) : null}
-            />
+              )}
+            </View>
           )}
         </Animated.View>
       )}
@@ -404,7 +421,7 @@ export default function SchemeFinder() {
       {mode === "eligible" && (
         <Animated.View style={[bodyAnim, { flex: 1 }]}>
           {Platform.OS === "web" && <View style={{ height: 8 }} />}
-          <ScrollView contentContainerStyle={{ paddingHorizontal: sidePad, paddingTop: 8, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingHorizontal: sidePad, paddingTop: 8, paddingBottom: 100 }}>
             {!eligibilityDone ? (
               <View>
                 <View className="bg-primary/10 border border-primary/30" style={{ borderRadius: 16, padding: 16, marginBottom: 20 }}>
@@ -484,7 +501,7 @@ export default function SchemeFinder() {
                 </AnimatedPressable>
               </View>
             )}
-          </ScrollView>
+          </View>
         </Animated.View>
       )}
 
